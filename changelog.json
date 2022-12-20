@@ -1,0 +1,9 @@
+{
+    "1.2.4": "Add dark mode, use cases, and many optimizations.",
+    "1.2.3": "Pull Addons and Help into the sidebar. Internal updates to Vue 3!",
+    "1.2.2": "Added offline support.",
+    "1.2.1": "Scrub script/style tags from post content. Added import via file. Moved `identity.local` to `identity.addons.local` to clean up the data structure. Copy config is base64 encoded to avoid accidents.",
+    "1.2.0": "Re-organized and renamed Addons, including the ability to use and re-use templates.",
+    "1.1.0": "Re-skinned the entire project, fixed audio embeds, and set up the \"smart\" categories of Watch, Read, and Listen.",
+    "1.0.0": "Initial build. Thanks to VueJS for all the hard work making a truly special framework geared for developer productivity!"
+}
