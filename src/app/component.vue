@@ -20,13 +20,13 @@
             >
               <img
                 class="h-8 w-auto"
-                src="./logo.svg"
+                src="../assets/imgs/logo-white.svg"
                 alt="Follow Along"
               >
             </a>
           </div>
           <!-- Search section -->
-          <div class="flex flex-1 justify-center lg:justify-end">
+          <!-- <div class="flex flex-1 justify-center lg:justify-end">
             <div class="w-full">
               <label
                 for="search"
@@ -34,7 +34,7 @@
               >Search...</label>
               <div class="relative text-indigo-200 focus-within:text-gray-400">
                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                  <!-- Heroicon name: mini/magnifying-glass -->
+                  Heroicon name: mini/magnifying-glass
                   <svg
                     class="h-5 w-5"
                     xmlns="http://www.w3.org/2000/svg"
@@ -58,7 +58,7 @@
                 >
               </div>
             </div>
-          </div>
+          </div> -->
           <div
             style="display: none"
             class="flex lg:hidden"
@@ -803,11 +803,11 @@
 </template>
 
 <script>
-import SideBar from '@/app/components/side-bar/component.vue'
-import TopBar from '@/app/components/top-bar/component.vue'
-import Commands from '@/commands/index.js'
-import State from '@/state/index.js'
-import Queries from '@/queries/index.js'
+import SideBar from './components/side-bar/component.vue'
+import TopBar from './components/top-bar/component.vue'
+import Commands from '../commands/index.js'
+import State from '../state/index.js'
+import Queries from '../queries/index.js'
 
 export default {
   components: {

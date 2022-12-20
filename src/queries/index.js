@@ -1,4 +1,4 @@
-import { getAddonAdapterByType } from '@/adapters/addons/index.js'
+import { getAddonAdapterByType } from '../adapters/addons/index.js'
 import sortByReadAndDate from './sorters/sort-by-read-and-date.js'
 import sortByName from './sorters/sort-by-name.js'
 import sortByNeedToUpdate from './sorters/sort-by-need-to-update.js'

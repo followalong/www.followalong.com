@@ -1,9 +1,9 @@
 <template>
-  HOME
+  SIDEBAR
 </template>
 
 <script>
 export default {
-
+  props: ['app']
 }
 </script>

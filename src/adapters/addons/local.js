@@ -1,6 +1,6 @@
 import localForage from 'localforage'
 import AddonAdapter from '../addon.js'
-import sortByReadAndDate from '@/queries/sorters/sort-by-read-and-date.js'
+import sortByReadAndDate from '../../queries/sorters/sort-by-read-and-date.js'
 
 const LIMIT_ITEMS = (n) => {
   let reads = n
