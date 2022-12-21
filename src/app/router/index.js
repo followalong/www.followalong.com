@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import Home from '../views/home/component.vue'
 
 const routes = [
@@ -11,7 +11,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: typeof window !== 'undefined' ? createWebHistory() : createMemoryHistory(),
   scrollBehavior () {
     return { top: 0, behavior: 'smooth' }
   },

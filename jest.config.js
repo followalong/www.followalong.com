@@ -3,9 +3,5 @@ module.exports = {
   testMatch: ['**/*.spec.js'],
   transform: {
     '^.+\\.vue$': 'vue-jest'
-  },
-  coveragePathIgnorePatterns: [
-    'scenarios',
-    'router'
-  ]
+  }
 }

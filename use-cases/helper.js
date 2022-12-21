@@ -1,12 +1,12 @@
 import { mount, flushPromises } from '@vue/test-utils'
+import { vi, describe, test } from 'vitest'
 import { createRouter, createMemoryHistory } from 'vue-router'
-import { routes } from '@/src/app/router/index.js'
-import App from '@/src/app/component.vue'
-import addIcons from '@/add-icons.js'
-import KeychainAdapter from '@/adapters/keychain.js'
-import LocalAddonAdapter from '@/adapters/addons/local.js'
-import { passThrough } from '@/queries/helpers/crypt.js'
-import Queries from '@/queries/index.js'
+import { routes } from '../src/app/router/index.js'
+import App from '../src/app/component.vue'
+// import KeychainAdapter from '../adapters/keychain.js'
+// import LocalAddonAdapter from '../adapters/addons/local.js'
+// import { passThrough } from '../queries/helpers/crypt.js'
+import Queries from '../src/queries/index.js'
 
 class AWSEndpoint {
   constructor (url) {
@@ -25,38 +25,38 @@ const mountApp = (options) => {
     options = options || {}
 
     const addonAdapterOptions = options.addonAdapterOptions || {}
-    addonAdapterOptions.fetch = addonAdapterOptions.fetch || jest.fn(() => Promise.resolve())
+    addonAdapterOptions.fetch = addonAdapterOptions.fetch || vi.fn(() => Promise.resolve())
 
-    const keychainAdapter = new KeychainAdapter({
-      prompt: jest.fn(() => 'abc-123')
-    })
+    //     const keychainAdapter = new KeychainAdapter({
+    //       prompt: vi.fn(() => 'abc-123')
+    //     })
+    //
+    //     await keychainAdapter.db.clear()
 
-    await keychainAdapter.db.clear()
+    // if (options.keychainAdapterData) {
+    //   for (const key in options.keychainAdapterData) {
+    //     if (key === 'storedKeys') {
+    //       for (const a in options.keychainAdapterData[key]) {
+    //         await keychainAdapter.db.setItem(a, options.keychainAdapterData[key][a])
+    //       }
+    //     } else {
+    //       keychainAdapter[key] = options.keychainAdapterData[key]
+    //     }
+    //   }
+    // }
 
-    if (options.keychainAdapterData) {
-      for (const key in options.keychainAdapterData) {
-        if (key === 'storedKeys') {
-          for (const a in options.keychainAdapterData[key]) {
-            await keychainAdapter.db.setItem(a, options.keychainAdapterData[key][a])
-          }
-        } else {
-          keychainAdapter[key] = options.keychainAdapterData[key]
-        }
-      }
-    }
-
-    const localAddonAdapter = new LocalAddonAdapter({})
-
-    await localAddonAdapter.db.clear()
-
-    if (options.localAddonAdapterData) {
-      for (const key in options.localAddonAdapterData) {
-        await localAddonAdapter.save(
-          options.localAddonAdapterData[key],
-          options.localAddonAdapterData[key].encrypt || passThrough()
-        )
-      }
-    }
+    //     const localAddonAdapter = new LocalAddonAdapter({})
+    //
+    //     await localAddonAdapter.db.clear()
+    //
+    //     if (options.localAddonAdapterData) {
+    //       for (const key in options.localAddonAdapterData) {
+    //         await localAddonAdapter.save(
+    //           options.localAddonAdapterData[key],
+    //           options.localAddonAdapterData[key].encrypt || passThrough()
+    //         )
+    //       }
+    //     }
 
     const router = createRouter({
       history: createMemoryHistory(),
@@ -69,13 +69,13 @@ const mountApp = (options) => {
 
     const app = await mount(App, {
       global: {
-        plugins: [router, addIcons]
+        plugins: [router]
       },
       propsData: {
-        keychainAdapter,
-        addonAdapterOptions,
-        noAutomaticFetches: true,
-        window: { scrollTo: () => {} }
+        // keychainAdapter,
+        // addonAdapterOptions,
+        // noAutomaticFetches: true,
+        // window: { scrollTo: () => {} }
       }
     })
 
@@ -127,9 +127,9 @@ const mountApp = (options) => {
     }
 
     app.buildAddonToRespondWith = (buildType, result) => {
-      const fn = jest.fn(() => Promise.resolve(result))
+      const fn = vi.fn(() => Promise.resolve(result))
 
-      return jest.fn((identity, type) => {
+      return vi.fn((identity, type) => {
         if (type === buildType) {
           const addon = new LocalAddonAdapter()
 
@@ -218,15 +218,17 @@ const rawRSS = (item) => {
   `
 }
 
-jest.useFakeTimers()
+vi.useFakeTimers()
 
 const flushPromisesAndTimers = () => {
-  jest.runAllTimers()
+  vi.runAllTimers()
   return flushPromises()
 }
 
 export {
   mountApp,
   rawRSSResponse,
-  rawRSS
+  rawRSS,
+  describe,
+  test
 }
