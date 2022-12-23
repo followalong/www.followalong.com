@@ -3,7 +3,7 @@
 const execa = require('execa')
 const fs = require('fs')
 const deployBranch = 'gh-pages'
-const masterBranch = 'master'
+const masterBranch = 'main'
 const target = 'dist'
 
 const refresh = async () => {
