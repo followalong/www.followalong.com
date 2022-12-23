@@ -30,7 +30,7 @@
                 class="mt-1 text-sm text-gray-500"
               >
                 <router-link
-                  :to="`/${app.queries.urlForEntry(entry)}`"
+                  :to="`/feeds/${app.queries.urlForFeed(entry)}:${app.queries.urlForEntry(entry)}`"
                 >
                   {{ app.queries.titleForFeed(feed) }}
                 </router-link>
@@ -43,7 +43,7 @@
               </div>
             </div>
           </div>
-          <div class="flex space-x-3">
+          <!-- <div class="flex space-x-3">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
@@ -73,7 +73,7 @@
                 d="M4.5 12.75l6 6 9-13.5"
               />
             </svg>
-          </div>
+          </div> -->
         </div>
       </div>
       <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
@@ -91,7 +91,7 @@ export default {
   props: ['app', 'identity', 'entry'],
   computed: {
     feed () {
-      return this.app.queries.feedForIdentity(this.identity, this.entry.feedId)
+      return this.app.queries.feedForIdentity(this.identity, this.entry.feedUrl)
     }
   }
 }

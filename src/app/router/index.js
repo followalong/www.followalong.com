@@ -3,6 +3,12 @@ import Home from '../views/home/component.vue'
 
 const routes = [
   {
+    path: '/:feedUrl/:entryUrl',
+    name: 'redirect',
+    component: Home,
+    props: true
+  },
+  {
     path: '/',
     name: 'home',
     component: Home,

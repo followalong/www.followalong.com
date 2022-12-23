@@ -13,9 +13,9 @@ class Queries {
     return this.state.findAll(identity.id, 'entries')
   }
 
-  feedForIdentity (identity, feedId) {
+  feedForIdentity (identity, feedUrl) {
     return this.state.findAll(identity.id, 'feeds')
-      .find((f) => f.id === feedId)
+      .find((f) => f.url === feedUrl)
   }
 
   latestFeedForIdentity (identity) {

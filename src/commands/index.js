@@ -12,7 +12,7 @@ class Commands {
     this.track(identity, 'identities', identity.id, 'create', identity)
 
     this.addFeedToIdentity(identity, {
-      id: 'followalong',
+      url: 'https://changelog.followalong.com/feed.xml',
       title: 'Follow Along',
       description: 'Stay in-the-know on Follow Along.',
       image: {
@@ -21,13 +21,9 @@ class Commands {
     })
     const feed = this.queries.latestFeedForIdentity(identity)
     this.addEntryToIdentity(identity, {
-      feedId: feed.id,
-      guid: 'intro',
+      feedUrl: feed.url,
+      guid: 'about',
       title: 'Twitter is done. Long live RSS.',
-      author: {
-        name: 'Follow Along',
-        uri: 'https://www.followalong.com'
-      },
       published: new Date().toISOString(),
       'content:encoded': 'Welcome to new.'
     })
@@ -38,8 +34,8 @@ class Commands {
   }
 
   addEntryToIdentity (identity, entry) {
-    if (!entry.feedId) {
-      throw new Error('Entry has no `feedId`')
+    if (!entry.feedUrl) {
+      throw new Error('Entry has no `feedUrl`')
     }
 
     this.track(identity, 'entries', null, 'create', entry)

@@ -15,8 +15,8 @@
           <div class="flex h-16 items-center justify-between">
             <!-- Logo section -->
             <div class="flex items-center px-2 lg:px-0 xl:w-64">
-              <a
-                href="#"
+              <router-link
+                to="/"
                 class="db flex-shrink-0"
               >
                 <img
@@ -24,7 +24,7 @@
                   src="../assets/imgs/logo-white.svg"
                   alt="Follow Along"
                 >
-              </a>
+              </router-link>
             </div>
             <!-- Search section -->
             <!-- <div class="flex flex-1 justify-center lg:justify-end">
@@ -160,8 +160,8 @@
                   <h3 class="pb-1 uppercase text-gray-400 text-xs">
                     Shortcuts
                   </h3>
-                  <a
-                    href="#"
+                  <router-link
+                    to="/"
                     class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
                   >
                     <svg
@@ -172,7 +172,7 @@
                       d="M320 33.9c-10.5-1.2-21.2-1.9-32-1.9-99.8 0-187.8 50.8-239.4 128H320V33.9zM96 192H30.3C11.1 230.6 0 274 0 320h96V192zM352 39.4V160h175.4C487.2 99.9 424.8 55.9 352 39.4zM480 320h96c0-46-11.1-89.4-30.3-128H480v128zm-64 64v96h128c17.7 0 32-14.3 32-32v-96H411.5c2.6 10.3 4.5 20.9 4.5 32zm32-192H128v128h49.8c22.2-38.1 63-64 110.2-64s88 25.9 110.2 64H448V192zM0 448c0 17.7 14.3 32 32 32h128v-96c0-11.1 1.9-21.7 4.5-32H0v96zm288-160c-53 0-96 43-96 96v96h192v-96c0-53-43-96-96-96z"
                     /></svg>
                     Home
-                  </a>
+                  </router-link>
                   <!-- <a href="#" class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                     <svg viewBox="0 0 576 512" class="h-5 w-5 flex-shrink-0 text-gray-300 mr-3"><path fill="currentColor" d="M320 33.9c-10.5-1.2-21.2-1.9-32-1.9-99.8 0-187.8 50.8-239.4 128H320V33.9zM96 192H30.3C11.1 230.6 0 274 0 320h96V192zM352 39.4V160h175.4C487.2 99.9 424.8 55.9 352 39.4zM480 320h96c0-46-11.1-89.4-30.3-128H480v128zm-64 64v96h128c17.7 0 32-14.3 32-32v-96H411.5c2.6 10.3 4.5 20.9 4.5 32zm32-192H128v128h49.8c22.2-38.1 63-64 110.2-64s88 25.9 110.2 64H448V192zM0 448c0 17.7 14.3 32 32 32h128v-96c0-11.1 1.9-21.7 4.5-32H0v96zm288-160c-53 0-96 43-96 96v96h192v-96c0-53-43-96-96-96z"></path></svg>
                     Threads
@@ -217,8 +217,8 @@
                   <h3 class="pt-5 pb-1 uppercase text-gray-400 text-xs">
                     Follow Along
                   </h3>
-                  <a
-                    href="#"
+                  <router-link
+                    to="/feeds/https://changelog.followalong.com/feed.xml"
                     class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
                   >
                     <svg
@@ -230,9 +230,9 @@
                       d="M487.4 315.7l-42.6-24.6c4.3-23.2 4.3-47 0-70.2l42.6-24.6c4.9-2.8 7.1-8.6 5.5-14-11.1-35.6-30-67.8-54.7-94.6-3.8-4.1-10-5.1-14.8-2.3L380.8 110c-17.9-15.4-38.5-27.3-60.8-35.1V25.8c0-5.6-3.9-10.5-9.4-11.7-36.7-8.2-74.3-7.8-109.2 0-5.5 1.2-9.4 6.1-9.4 11.7V75c-22.2 7.9-42.8 19.8-60.8 35.1L88.7 85.5c-4.9-2.8-11-1.9-14.8 2.3-24.7 26.7-43.6 58.9-54.7 94.6-1.7 5.4.6 11.2 5.5 14L67.3 221c-4.3 23.2-4.3 47 0 70.2l-42.6 24.6c-4.9 2.8-7.1 8.6-5.5 14 11.1 35.6 30 67.8 54.7 94.6 3.8 4.1 10 5.1 14.8 2.3l42.6-24.6c17.9 15.4 38.5 27.3 60.8 35.1v49.2c0 5.6 3.9 10.5 9.4 11.7 36.7 8.2 74.3 7.8 109.2 0 5.5-1.2 9.4-6.1 9.4-11.7v-49.2c22.2-7.9 42.8-19.8 60.8-35.1l42.6 24.6c4.9 2.8 11 1.9 14.8-2.3 24.7-26.7 43.6-58.9 54.7-94.6 1.5-5.5-.7-11.3-5.6-14.1zM256 336c-44.1 0-80-35.9-80-80s35.9-80 80-80 80 35.9 80 80-35.9 80-80 80z"
                     /></svg>
                     Changelog
-                  </a>
+                  </router-link>
                   <a
-                    href="#"
+                    href="mailto:followalong@protonmail.com"
                     class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
                   >
                     <svg
@@ -272,7 +272,7 @@
                       </p>
                     </div>
 
-                    <div class="mt-4 flex items-center justify-between sm:mt-0 sm:ml-6 sm:flex-shrink-0 sm:justify-start">
+                    <!-- <div class="mt-4 flex items-center justify-between sm:mt-0 sm:ml-6 sm:flex-shrink-0 sm:justify-start">
                       <div class="relative ml-3 inline-block text-left">
                         <div>
                           <button
@@ -283,7 +283,7 @@
                             aria-haspopup="true"
                           >
                             <span class="sr-only">Open options</span>
-                            <!-- Heroicon name: mini/ellipsis-vertical -->
+                            Heroicon name: mini/ellipsis-vertical
                             <svg
                               class="h-5 w-5"
                               xmlns="http://www.w3.org/2000/svg"
@@ -296,7 +296,6 @@
                           </button>
                         </div>
 
-                        <!--
                           Dropdown menu, show/hide based on menu state.
 
                           Entering: "transition ease-out duration-100"
@@ -305,7 +304,7 @@
                           Leaving: "transition ease-in duration-75"
                             From: "transform opacity-100 scale-100"
                             To: "transform opacity-0 scale-95"
-                        -->
+
                         <div
                           class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
                           role="menu"
@@ -317,7 +316,6 @@
                             class="py-1"
                             role="none"
                           >
-                            <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->
                             <a
                               id="menu-0-item-0"
                               href="#"
@@ -348,7 +346,7 @@
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </div> -->
                   </div>
                 </div>
 
@@ -414,6 +412,10 @@ export default {
   },
   mounted () {
     return this.commands.restoreFromLocal().then(() => {
+      if (!this.queries.allIdentities().length) {
+        this.commands.addIdentity({})
+      }
+
       this.isLoading = false
     })
   }
