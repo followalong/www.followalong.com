@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="Home">
+    <PageTitle title="Welcome home!">
       <template #description>
         Sorting by most recent
       </template>

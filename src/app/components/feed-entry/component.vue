@@ -79,7 +79,7 @@
       <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
         <div
           class="prose max-w-none"
-          v-html="app.queries.contentForEntry(entry)"
+          v-html="content"
         />
       </div>
     </div>
@@ -87,11 +87,18 @@
 </template>
 
 <script>
+const domParser = new DOMParser()
+
 export default {
   props: ['app', 'identity', 'entry'],
   computed: {
     feed () {
       return this.app.queries.feedForIdentity(this.identity, this.entry.feedUrl)
+    },
+    content () {
+      const doc = domParser.parseFromString(this.app.queries.contentForEntry(this.entry), 'text/html')
+
+      return doc.documentElement.textContent
     }
   }
 }

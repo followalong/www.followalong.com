@@ -1,3 +1,11 @@
+const getAttr = (obj, attr) => {
+  if (typeof obj[attr] === 'object') {
+    return obj[attr]._
+  }
+
+  return obj[attr]
+}
+
 class Queries {
   constructor (options) {
     for (const key in options) {
@@ -25,23 +33,23 @@ class Queries {
   }
 
   titleForEntry (entry) {
-    return entry.title
+    return getAttr(entry, 'title')
   }
 
   urlForFeed (feed) {
-    return feed.url
+    return getAttr(feed, 'url')
   }
 
   urlForEntry (entry) {
-    return entry.url
+    return getAttr(entry, 'url')
   }
 
   titleForFeed (feed) {
-    return feed.title
+    return getAttr(feed, 'title')
   }
 
   dateForEntry (entry) {
-    return entry.published
+    return getAttr(entry, 'published')
   }
 
   niceDateForEntry (entry) {
@@ -55,7 +63,7 @@ class Queries {
   }
 
   contentForEntry (entry) {
-    return entry['content:encoded'] || entry.description
+    return getAttr(entry, 'content:encoded') || getAttr(entry, 'content') || getAttr(entry, 'description')
   }
 
   imageForFeed (feed) {

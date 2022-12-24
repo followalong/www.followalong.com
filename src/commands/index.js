@@ -1,3 +1,44 @@
+const ARRAYABLE = 'entry'
+const serializeDOM = ($el, obj = {}) => {
+  const $children = [...$el.children]
+
+  $children.forEach(($child) => {
+    const child = {}
+    const tagName = $child.tagName.toLowerCase()
+
+    $child.getAttributeNames().forEach((attr) => {
+      child[attr] = $child.getAttribute(attr)
+    })
+
+    if (!$child.children.length) {
+      child._ = $child.innerHTML
+      obj[tagName] = child
+      return
+    }
+
+    if (ARRAYABLE.indexOf(tagName) !== -1 && !(obj[tagName] instanceof Array)) {
+      obj[tagName] = typeof obj[tagName] !== 'undefined' ? [obj[tagName]] : []
+    }
+
+    if (obj[tagName] instanceof Array) {
+      obj[tagName].push(serializeDOM($child, {}))
+    } else {
+      obj[tagName] = child
+    }
+  })
+
+  return obj
+}
+
+const parseXML = (xml) => {
+  const $wrapper = document.createElement('div')
+  $wrapper.innerHTML = xml
+
+  const $feed = $wrapper.querySelector('feed')
+
+  return serializeDOM($feed)
+}
+
 class Commands {
   constructor (options) {
     for (const key in options) {
@@ -38,7 +79,11 @@ class Commands {
       throw new Error('Entry has no `feedUrl`')
     }
 
-    this.track(identity, 'entries', null, 'create', entry)
+    if (false && 'exists!') {
+      this.track(identity, 'entries', 'entry.id', 'fetch', 'diff')
+    } else {
+      this.track(identity, 'entries', null, 'create', entry)
+    }
   }
 
   track (identity, collectionName, objectId, action, data) {
@@ -49,8 +94,22 @@ class Commands {
     return this.state.restore()
   }
 
+  fetchUrl (url) {
+    return fetch(url)
+      .then((response) => response.text())
+      .then(parseXML)
+  }
+
   fetchFeed (identity, feed) {
-    return Promise.resolve()
+    const feedUrl = this.queries.urlForFeed(feed)
+
+    return this.fetchUrl(feedUrl)
+      .then((remoteFeed) => {
+        remoteFeed.entry.forEach((entry) => {
+          entry.feedUrl = feedUrl
+          this.addEntryToIdentity(identity, entry)
+        })
+      })
   }
 }
 
