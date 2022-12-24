@@ -30,7 +30,7 @@
                 class="mt-1 text-sm text-gray-500"
               >
                 <router-link
-                  :to="`/feeds/${app.queries.urlForFeed(entry)}:${app.queries.urlForEntry(entry)}`"
+                  :to="`/feeds/${app.queries.urlForFeed(feed)}`"
                 >
                   {{ app.queries.titleForFeed(feed) }}
                 </router-link>

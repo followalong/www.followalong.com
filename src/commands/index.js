@@ -48,6 +48,10 @@ class Commands {
   restoreFromLocal () {
     return this.state.restore()
   }
+
+  fetchFeed (identity, feed) {
+    return Promise.resolve()
+  }
 }
 
 export default Commands

@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import Home from '../views/home/component.vue'
+import Feed from '../views/feed/component.vue'
 
 const routes = [
   {
-    path: '/:feedUrl/:entryUrl',
+    path: '/:feedUrl(.*)',
     name: 'redirect',
-    component: Home,
+    component: Feed,
     props: true
   },
   {
