@@ -93,7 +93,7 @@ export default {
   props: ['app', 'identity', 'entry'],
   computed: {
     feed () {
-      return this.app.queries.feedForIdentity(this.identity, this.entry.feedUrl)
+      return this.app.queries.feedForIdentity(this.identity, this.entry.feedId)
     },
     content () {
       const doc = domParser.parseFromString(this.app.queries.contentForEntry(this.entry), 'text/html')

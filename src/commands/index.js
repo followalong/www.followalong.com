@@ -11,6 +11,11 @@ const serializeDOM = ($el, obj = {}) => {
     })
 
     if (!$child.children.length) {
+      if (typeof obj[tagName] !== 'undefined') {
+        console.log(tagName)
+        return
+      }
+
       child._ = $child.innerHTML
       obj[tagName] = child
       return
@@ -53,7 +58,9 @@ class Commands {
     this.track(identity, 'identities', identity.id, 'create', identity)
 
     this.addFeedToIdentity(identity, {
-      url: 'https://changelog.followalong.com/feed.xml',
+      link: {
+        href: 'https://changelog.followalong.com/feed.xml'
+      },
       title: 'Follow Along',
       description: 'Stay in-the-know on Follow Along.',
       image: {
@@ -61,29 +68,16 @@ class Commands {
       }
     })
     const feed = this.queries.latestFeedForIdentity(identity)
-    this.addEntryToIdentity(identity, {
-      feedUrl: feed.url,
-      guid: 'about',
+    this.upsertEntryForIdentity(identity, feed, {
+      id: 'about',
       title: 'Twitter is done. Long live RSS.',
       published: new Date().toISOString(),
       'content:encoded': 'Welcome to new.'
     })
   }
 
-  addFeedToIdentity (identity, feed) {
-    this.track(identity, 'feeds', null, 'create', feed)
-  }
-
-  addEntryToIdentity (identity, entry) {
-    if (!entry.feedUrl) {
-      throw new Error('Entry has no `feedUrl`')
-    }
-
-    if (false && 'exists!') {
-      this.track(identity, 'entries', 'entry.id', 'fetch', 'diff')
-    } else {
-      this.track(identity, 'entries', null, 'create', entry)
-    }
+  addFeedToIdentity (identity, data) {
+    this.track(identity, 'feeds', null, 'create', { url: this.queries.urlForFeed({ data }), data })
   }
 
   track (identity, collectionName, objectId, action, data) {
@@ -101,15 +95,33 @@ class Commands {
   }
 
   fetchFeed (identity, feed) {
-    const feedUrl = this.queries.urlForFeed(feed)
-
-    return this.fetchUrl(feedUrl)
-      .then((remoteFeed) => {
-        remoteFeed.entry.forEach((entry) => {
-          entry.feedUrl = feedUrl
-          this.addEntryToIdentity(identity, entry)
+    return this.fetchUrl(feed.url)
+      .then((data) => {
+        this.upsertFeedForIdentity(identity, feed, data)
+        data.entry.forEach((entry) => {
+          this.upsertEntryForIdentity(identity, feed, entry)
         })
       })
+  }
+
+  upsertFeedForIdentity (identity, feed, data) {
+    if (this.queries.feedChanged(feed, data)) {
+      this.track(identity, 'feeds', feed.id, 'update', { data })
+    }
+  }
+
+  upsertEntryForIdentity (identity, feed, data) {
+    const key = this.queries.entryKey(data)
+    const found = this.queries.entryForFeedForIdentity(identity, feed, key)
+
+    if (!found) {
+      this.track(identity, 'entries', null, 'create', { feedId: feed.id, data })
+      return
+    }
+
+    if (this.queries.entryChanged(found, data)) {
+      this.track(identity, 'entries', found.id, 'update', { data })
+    }
   }
 }
 

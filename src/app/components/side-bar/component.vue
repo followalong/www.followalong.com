@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed overflow-y-auto border-b border-gray-200 top-0 left-0 bottom-0 bg-white mt-8 p-6 xl:w-64 xl:flex-shrink-0 xl:border-b-0 xl:border-r xl:border-gray-200">
+  <div class="side-bar fixed overflow-y-auto border-b border-gray-200 top-0 left-0 bottom-0 bg-white mt-8 p-6 xl:w-64 xl:flex-shrink-0 xl:border-b-0 xl:border-r xl:border-gray-200">
     <div class="sticky top-0 flex min-h-0 flex-1 flex-col">
       <div class="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
         <nav class="mt-5 flex-1 space-y-1 bg-white px-2">

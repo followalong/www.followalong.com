@@ -1,7 +1,6 @@
 <template>
   <nav
-    class="flex-shrink-0 fixed top-0 left-0 right-0 z-40"
-    style="background: #005B7C"
+    class="top-bar flex-shrink-0 fixed top-0 left-0 right-0 z-40"
   >
     <div class="max-w-5xl px-2 sm:px-4 lg:px-8">
       <div class="flex h-16 items-center justify-between">
