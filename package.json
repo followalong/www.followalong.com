@@ -7,7 +7,7 @@
     "serve": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:unit": "vitest run",
+    "test:unit": "test $CI && vitest run; test $CI || yarn test:watch",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "yarn test:unit --coverage",
