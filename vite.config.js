@@ -6,6 +6,9 @@ export default defineConfig({
   plugins: [vue()],
   test: {
     globals: true,
-    environment: 'happy-dom'
+    environment: 'happy-dom',
+    coverage: {
+      exclude: ['use-cases/*']
+    }
   }
 })
