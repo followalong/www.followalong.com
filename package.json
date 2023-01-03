@@ -7,9 +7,10 @@
     "serve": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:unit": "vitest",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "yarn test:unit --coverage",
     "lint": "eslint"
   },
   "dependencies": {
