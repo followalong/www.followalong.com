@@ -22,5 +22,10 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - run: yarn test:unit
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-20.04
+    timeout-minutes: 5
+    steps:
       - name: Vitest Coverage
         uses: davelosert/vitest-coverage-report-action@v1.3.1
