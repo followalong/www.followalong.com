@@ -22,3 +22,5 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       - run: yarn test:unit
+      - name: Vitest Coverage
+        uses: davelosert/vitest-coverage-report-action@v1.3.1
