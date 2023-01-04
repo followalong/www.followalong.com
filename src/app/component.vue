@@ -55,6 +55,13 @@ export default {
     state: {
       type: Object,
       default: () => new MultiEventStore('follow-along', 'v2.1', runners)
+    },
+    fetch: {
+      type: Function,
+      default: () => {
+        return window.fetch
+          .then((response) => response.text())
+      }
     }
   },
   data () {
@@ -63,6 +70,7 @@ export default {
       state: this.state
     })
     const commands = new Commands({
+      fetch: this.fetch,
       state: this.state,
       queries
     })

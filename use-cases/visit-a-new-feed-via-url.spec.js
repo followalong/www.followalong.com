@@ -1,9 +1,15 @@
-import { mountApp, buildAddonToRespondWith, rawRSSResponse, describe, test } from './helper.js'
+import { /* mountApp, buildAddonToRespondWith, rawRSSResponse, */ describe, test } from './helper.js'
 
 describe('Visit a new feed via URL', () => {
-  // const app = await mountApp()
-  // await app.click('[aria-label="Feeds"]')
-  // expect(app.text()).toContain('Dashboard')
+//   let app
+//
+//   beforeEach(async () => {
+//     app = await mountApp({
+//       fetch: vi.fn(() => Promise.resolve('<feed><title>Remote Name</title></feed>'))
+//     })
+//
+//     await app.click('[aria-label="Visit Changelog"]')
+//   })
 
   test('shows the feed title')
   test('shows the feed image')

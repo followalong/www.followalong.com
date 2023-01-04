@@ -1,3 +1,5 @@
+/* eslint no-async-promise-executor: 0 */
+
 import { mount, flushPromises } from '@vue/test-utils'
 import { vi, describe, test } from 'vitest'
 import { createRouter, createMemoryHistory } from 'vue-router'
@@ -6,19 +8,19 @@ import App from '../src/app/component.vue'
 // import KeychainAdapter from '../adapters/keychain.js'
 // import LocalAddonAdapter from '../adapters/addons/local.js'
 // import { passThrough } from '../queries/helpers/crypt.js'
-import Queries from '../src/queries/index.js'
+// import Queries from '../src/queries/index.js'
 
-class AWSEndpoint {
-  constructor (url) {
-    this.url = url
-  }
-}
-
-class AWSLambda {
-  invoke (data, done) {
-    done(new Error('Request is not stubbed'))
-  }
-}
+// class AWSEndpoint {
+//   constructor (url) {
+//     this.url = url
+//   }
+// }
+//
+// class AWSLambda {
+//   invoke (data, done) {
+//     done(new Error('Request is not stubbed'))
+//   }
+// }
 
 const mountApp = (options) => {
   return new Promise(async (resolve) => {
@@ -60,7 +62,7 @@ const mountApp = (options) => {
 
     const router = createRouter({
       history: createMemoryHistory(),
-      routes: routes
+      routes
     })
 
     router.push('/')
@@ -72,6 +74,7 @@ const mountApp = (options) => {
         plugins: [router]
       },
       propsData: {
+        fetch: options.fetch || vi.fn().mockResolvedValue('')
         // keychainAdapter,
         // addonAdapterOptions,
         // noAutomaticFetches: true,
@@ -126,21 +129,21 @@ const mountApp = (options) => {
       return identity
     }
 
-    app.buildAddonToRespondWith = (buildType, result) => {
-      const fn = vi.fn(() => Promise.resolve(result))
-
-      return vi.fn((identity, type) => {
-        if (type === buildType) {
-          const addon = new LocalAddonAdapter()
-
-          addon[type] = fn
-
-          return addon
-        } else {
-          return new Queries().addonForIdentity(identity, type)
-        }
-      })
-    }
+    //     app.buildAddonToRespondWith = (buildType, result) => {
+    //       const fn = vi.fn(() => Promise.resolve(result))
+    //
+    //       return vi.fn((identity, type) => {
+    //         if (type === buildType) {
+    //           const addon = new LocalAddonAdapter()
+    //
+    //           addon[type] = fn
+    //
+    //           return addon
+    //         } else {
+    //           return new Queries().addonForIdentity(identity, type)
+    //         }
+    //       })
+    //     }
 
     await app.wait()
 
@@ -225,10 +228,19 @@ const flushPromisesAndTimers = () => {
   return flushPromises()
 }
 
+const responses = (values) => {
+  const fn = vi.fn()
+
+  values.forEach((val) => fn.mockResolvedValueOnce(val))
+
+  return fn
+}
+
 export {
   mountApp,
   rawRSSResponse,
   rawRSS,
   describe,
-  test
+  test,
+  responses
 }

@@ -83,47 +83,47 @@ class EventStore {
     return localForage.dropInstance({ name: this._name })
   }
 
-  _findOldRunnerForEvent (event) {
+  _findSpecificRunnerForEvent (event) {
     return this._runners[event.version] && this._runners[event.version][`${event.collection}.${event.action}`]
   }
 
   _runEvent (event) {
-    const runner = this._findOldRunnerForEvent(event) || this._runners[`${event.collection}.${event.action}`]
+    const runner = this._findSpecificRunnerForEvent(event) || this._runners[`${event.collection}.${event.action}`]
 
     if (!runner) {
       return console.warn(`No runner found for event: ${event.collection}.${event.action}`, event)
     }
 
-    runner.call(this, event)
+    runner(this, event)
 
     this._events.push(event)
   }
 }
 
 EventStore.RUNNERS = {
-  CREATE (event) {
-    const collection = this[event.collection]
+  CREATE (store, event) {
+    const collection = store[event.collection]
 
     collection.push(Object.assign({}, event.data, { id: event.objectId, createdAt: event.time, _collection: event.collection }))
   },
 
-  UPDATE (event) {
-    const collection = this[event.collection]
+  UPDATE (store, event) {
+    const collection = store[event.collection]
     const existing = collection.find((item) => item.id === event.objectId)
 
     if (!existing) {
-      return EventStore.RUNNERS.CREATE.call(this, event)
+      return EventStore.RUNNERS.CREATE.call(store, event)
     }
 
     existing.updatedAt = event.time
 
     for (const key in event.data) {
-      existing[key] = event.data[key]
+      existing.data[key] = event.data[key]
     }
   },
 
-  DELETE (event) {
-    const collection = this[event.collection]
+  DELETE (store, event) {
+    const collection = store[event.collection]
     const existing = collection.find((item) => item.id === event.objectId)
 
     existing._deleted = true

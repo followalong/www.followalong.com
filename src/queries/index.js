@@ -1,5 +1,6 @@
 const getAttr = (obj, attr) => {
-  obj = obj.data
+  obj = obj || {}
+  obj = obj.data || {}
 
   const splat = attr.split('.')
   const last = splat.pop()

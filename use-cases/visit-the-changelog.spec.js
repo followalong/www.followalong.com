@@ -1,9 +1,19 @@
-import { mountApp, buildAddonToRespondWith, rawRSSResponse, describe, test } from './helper.js'
+import { mountApp, describe, test, responses } from './helper.js'
 
 describe('Visit the changelog', () => {
-  // const app = await mountApp()
-  // await app.click('[aria-label="Feeds"]')
-  // expect(app.text()).toContain('Dashboard')
+  let app
+
+  beforeEach(async () => {
+    app = await mountApp({
+      fetch: responses([''])
+    })
+
+    await app.click('[aria-label="Visit Changelog"]')
+  })
+
+  test('shows the remote title', () => {
+    expect(app.find('[aria-label="Page title"]').text()).toEqual('Changelog')
+  })
 
   test('seeds the most recent post')
   test('fetches the feed')

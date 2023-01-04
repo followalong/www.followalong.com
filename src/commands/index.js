@@ -1,5 +1,9 @@
 const ARRAYABLE = 'entry'
 const serializeDOM = ($el, obj = {}) => {
+  if (!$el) {
+    return obj
+  }
+
   const $children = [...$el.children]
 
   $children.forEach(($child) => {
@@ -12,7 +16,6 @@ const serializeDOM = ($el, obj = {}) => {
 
     if (!$child.children.length) {
       if (typeof obj[tagName] !== 'undefined') {
-        console.log(tagName)
         return
       }
 
@@ -61,7 +64,7 @@ class Commands {
       link: {
         href: 'https://changelog.followalong.com/feed.xml'
       },
-      title: 'Follow Along',
+      title: 'Changelog',
       description: 'Stay in-the-know on Follow Along.',
       image: {
         url: 'https://www.followalong.net/img/favicon.ico'
@@ -89,8 +92,7 @@ class Commands {
   }
 
   fetchUrl (url) {
-    return fetch(url)
-      .then((response) => response.text())
+    return this.fetch(url)
       .then(parseXML)
   }
 
@@ -98,9 +100,10 @@ class Commands {
     return this.fetchUrl(feed.url)
       .then((data) => {
         this.upsertFeedForIdentity(identity, feed, data)
-        data.entry.forEach((entry) => {
-          this.upsertEntryForIdentity(identity, feed, entry)
-        })
+
+        const entries = (data.entry || [])
+
+        entries.forEach((e) => this.upsertEntryForIdentity(identity, feed, e))
       })
   }
 

@@ -14,6 +14,7 @@
 
     <FeedEntry
       v-for="entry in entries"
+      :key="`entry-${entry.id}`"
       :app="app"
       :identity="identity"
       :entry="entry"
@@ -54,7 +55,6 @@ export default {
   },
 
   mounted () {
-    console.log(this.feed)
     if (this.feed) {
       return this.app.commands.fetchFeed(this.identity, this.feed)
         .then(() => {
