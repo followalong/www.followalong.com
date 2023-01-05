@@ -1,3 +1,6 @@
+import { XMLParser } from 'fast-xml-parser'
+import sanitizeContent from './presenters/sanitize-content.js'
+
 const getAttr = (obj, attr) => {
   obj = obj || {}
   obj = obj.data || {}
@@ -6,7 +9,9 @@ const getAttr = (obj, attr) => {
   const last = splat.pop()
 
   for (var i = 0; i < splat.length; i++) {
-    if (typeof obj[splat[i]] === 'object') {
+    if (typeof obj[splat[i]] === 'string') {
+      return obj[splat[i]]
+    } else if (typeof obj[splat[i]] === 'object') {
       obj = obj[splat[i]]
     } else {
       return ''
@@ -15,10 +20,6 @@ const getAttr = (obj, attr) => {
 
   if (typeof obj !== 'object') {
     return ''
-  }
-
-  if (typeof obj[last] === 'object') {
-    return obj[last]._
   }
 
   return obj[last]
@@ -44,41 +45,40 @@ class Queries {
       .filter((e) => e.feedId === feed.id)
   }
 
+  jsonFromXml (xml) {
+    const parser = new XMLParser({
+      isArray: (name, jpath, isLeafNode, isAttribute) => {
+        return ['entry', 'item'].indexOf(name) !== -1
+      }
+    })
+    const json = parser.parse(xml)
+
+    try {
+      return json.rss.channel
+    } catch (e) { }
+
+    try {
+      return json.rss.feed
+    } catch (e) { }
+
+    return json.feed || json.channel || json
+  }
+
   keyForEntry (entry) {
-    if (typeof entry.id === 'string') {
-      return entry.id
+    const key = getAttr(entry, 'id') ||
+      getAttr(entry, 'guid.href') ||
+      getAttr(entry, 'link.href')
+
+    if (key) {
+      return key
     }
 
-    if (typeof entry.id === 'object' && typeof entry.id._ === 'string') {
-      return entry.id._
-    }
-
-    if (typeof entry.guid === 'string') {
-      return entry.guid
-    }
-
-    if (typeof entry.guid === 'object' && typeof entry.guid._ === 'string') {
-      return entry.guid._
-    }
-
-    if (typeof entry.link === 'string') {
-      return entry.link
-    }
-
-    if (typeof entry.link === 'object' && typeof entry.link._ === 'string') {
-      return entry.link._
-    }
-
-    if (typeof entry.link === 'object' && typeof entry.link.href === 'string') {
-      return entry.link.href
-    }
-
-    throw new Error(`Cannot find a key for ${entry}`)
+    throw new Error(`Cannot find a key for ${JSON.stringify(entry)}`)
   }
 
   entryForFeedForIdentity (identity, feed, key) {
     return this.entriesForFeed(identity, feed)
-      .find((e) => this.urlForEntry(e) === key)
+      .find((e) => this.keyForEntry(e) === key)
   }
 
   feedForIdentity (identity, feedId) {
@@ -105,10 +105,14 @@ class Queries {
     return (feed || {}).url
   }
 
+  linkForFeed (feed) {
+    return getAttr(feed, 'link.href') ||
+      this.urlForFeed(feed)
+  }
+
   urlForEntry (entry) {
     return getAttr(entry, 'link.href') ||
-      getAttr(entry, 'link') ||
-      getAttr(entry, 'url')
+      getAttr(entry, 'url.href')
   }
 
   titleForFeed (feed) {
@@ -116,7 +120,9 @@ class Queries {
   }
 
   dateForEntry (entry) {
-    return getAttr(entry, 'published')
+    return getAttr(entry, 'published') ||
+      getAttr(entry, 'pubdate') ||
+      getAttr(entry, 'pubDate')
   }
 
   niceDateForEntry (entry) {
@@ -130,19 +136,23 @@ class Queries {
   }
 
   contentForEntry (entry) {
-    return getAttr(entry, 'content:encoded') ||
+    const content = getAttr(entry, 'content:encoded') ||
       getAttr(entry, 'content') ||
       getAttr(entry, 'description')
+
+    return sanitizeContent(content)
   }
 
   imageForFeed (feed) {
-    return getAttr(feed, 'image.url')
+    return getAttr(feed, 'image.url') ||
+      getAttr(feed, 'webfeeds:icon')
   }
 
   feedChanged (a, b) {
     b = Object.assign({}, b)
     b.id = a.id
     delete b.entry
+    delete b.item
 
     return JSON.stringify(a.data) !== JSON.stringify(b)
   }

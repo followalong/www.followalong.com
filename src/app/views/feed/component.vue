@@ -3,10 +3,10 @@
     <PageTitle :title="app.queries.titleForFeed(feed)">
       <template #description>
         <a
-          :href="app.queries.urlForFeed(feed)"
+          :href="app.queries.linkForFeed(feed)"
           target="_blank"
         >
-          {{ app.queries.urlForFeed(feed) }} &rarr;
+          {{ app.queries.linkForFeed(feed) }} &rarr;
           <span v-if="!remoteFeed">Loading...</span>
         </a>
       </template>
@@ -18,6 +18,7 @@
       :app="app"
       :identity="identity"
       :entry="entry"
+      :feed="feed"
     />
   </div>
 </template>
@@ -76,9 +77,10 @@ export default {
 
     this.app.commands.fetchUrl(this.url)
       .then((data) => {
-        const entries = data.entry || []
+        const entries = (data.entry || data.item) || []
 
         delete data.entry
+        delete data.item
 
         this.remoteFeed = Object.assign({}, {
           url: this.url,

@@ -8,6 +8,7 @@
 
     <FeedEntry
       v-for="entry in app.queries.entriesForIdentity(identity)"
+      :key="app.queries.keyForEntry(entry)"
       :app="app"
       :identity="identity"
       :entry="entry"
@@ -25,6 +26,12 @@ export default {
     PageTitle
   },
 
-  props: ['app', 'identity']
+  props: ['app', 'identity'],
+
+  beforeMount () {
+    if (this.$route.query.feedUrl) {
+      return this.$router.push(`/feeds/${this.$route.query.feedUrl}`)
+    }
+  }
 }
 </script>

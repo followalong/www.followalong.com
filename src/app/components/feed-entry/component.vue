@@ -8,32 +8,33 @@
         <div class="flex justify-between">
           <div class="flex space-x-3 flex-shrink-0">
             <router-link
-              :to="`/feeds/${app.queries.urlForFeed(feed)}`"
+              :to="`/feeds/${app.queries.urlForFeed(theFeed)}`"
               class="block flex-shrink-0 mr-2"
             >
               <img
-                v-if="feed"
+                v-if="theFeed"
                 class="h-10 w-10 rounded-full bg-gray-100"
-                :src="app.queries.imageForFeed(feed)"
-                :alt="app.queries.titleForFeed(feed)"
+                :src="app.queries.imageForFeed(theFeed)"
+                :alt="app.queries.titleForFeed(theFeed)"
               >
             </router-link>
             <div>
               <router-link
-                :to="`/${app.queries.urlForFeed(feed)}`"
+                v-if="app.queries.titleForEntry(entry)"
+                :to="`/${app.queries.urlForFeed(theFeed)}`"
                 class="font-medium text-gray-900"
                 aria-label="Entry title"
               >
                 {{ app.queries.titleForEntry(entry) }}
               </router-link>
               <div
-                v-if="feed"
+                v-if="theFeed"
                 class="mt-1 text-sm text-gray-500"
               >
                 <router-link
-                  :to="`/feeds/${app.queries.urlForFeed(feed)}`"
+                  :to="`/feeds/${app.queries.urlForFeed(theFeed)}`"
                 >
-                  {{ app.queries.titleForFeed(feed) }}
+                  {{ app.queries.titleForFeed(theFeed) }}
                 </router-link>
                 &nbsp;
                 <span class="font-medium">·</span>
@@ -80,7 +81,7 @@
       <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
         <div
           class="prose max-w-none"
-          v-html="content"
+          v-html="app.queries.contentForEntry(entry)"
         />
       </div>
     </div>
@@ -88,18 +89,11 @@
 </template>
 
 <script>
-const domParser = new DOMParser()
-
 export default {
-  props: ['app', 'identity', 'entry'],
+  props: ['app', 'identity', 'entry', 'feed'],
   computed: {
-    feed () {
-      return this.app.queries.feedForIdentity(this.identity, this.entry.feedId)
-    },
-    content () {
-      const doc = domParser.parseFromString(this.app.queries.contentForEntry(this.entry), 'text/html')
-
-      return doc.documentElement.textContent
+    theFeed () {
+      return this.feed || this.app.queries.feedForIdentity(this.identity, this.entry.feedId)
     }
   }
 }

@@ -19,6 +19,7 @@
     "babel-helper-vue-jsx-merge-props": "^2.0.3",
     "copy-to-clipboard": "^3.1.0",
     "core-js": "^3.6.5",
+    "fast-xml-parser": "^4.0.12",
     "file-saver": "^2.0.1",
     "js-base64": "^2.5.1",
     "load-external": "^1.0.2",

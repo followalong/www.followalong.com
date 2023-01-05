@@ -1,52 +1,3 @@
-const ARRAYABLE = 'entry'
-const serializeDOM = ($el, obj = {}) => {
-  if (!$el) {
-    return obj
-  }
-
-  const $children = [...$el.children]
-
-  $children.forEach(($child) => {
-    const child = {}
-    const tagName = $child.tagName.toLowerCase()
-
-    $child.getAttributeNames().forEach((attr) => {
-      child[attr] = $child.getAttribute(attr)
-    })
-
-    if (!$child.children.length) {
-      if (typeof obj[tagName] !== 'undefined') {
-        return
-      }
-
-      child._ = $child.innerHTML
-      obj[tagName] = child
-      return
-    }
-
-    if (ARRAYABLE.indexOf(tagName) !== -1 && !(obj[tagName] instanceof Array)) {
-      obj[tagName] = typeof obj[tagName] !== 'undefined' ? [obj[tagName]] : []
-    }
-
-    if (obj[tagName] instanceof Array) {
-      obj[tagName].push(serializeDOM($child, {}))
-    } else {
-      obj[tagName] = child
-    }
-  })
-
-  return obj
-}
-
-const parseXML = (xml) => {
-  const $wrapper = document.createElement('div')
-  $wrapper.innerHTML = xml
-
-  const $feed = $wrapper.querySelector('feed')
-
-  return serializeDOM($feed)
-}
-
 class Commands {
   constructor (options) {
     for (const key in options) {
@@ -90,7 +41,7 @@ class Commands {
 
   fetchUrl (url) {
     return this.fetch(url)
-      .then(parseXML)
+      .then(this.queries.jsonFromXml)
   }
 
   fetchFeed (identity, feed) {
@@ -98,7 +49,7 @@ class Commands {
       .then((data) => {
         this.upsertFeedForIdentity(identity, feed, data)
 
-        const entries = (data.entry || [])
+        const entries = data.entry || data.item || []
 
         entries.forEach((e) => this.upsertEntryForIdentity(identity, feed, e))
       })
@@ -111,7 +62,7 @@ class Commands {
   }
 
   upsertEntryForIdentity (identity, feed, data) {
-    const key = this.queries.keyForEntry(data)
+    const key = this.queries.keyForEntry({ data })
     const found = this.queries.entryForFeedForIdentity(identity, feed, key)
 
     if (!found) {
