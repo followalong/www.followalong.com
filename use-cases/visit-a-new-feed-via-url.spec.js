@@ -1,27 +1,30 @@
-import { /* mountApp, buildAddonToRespondWith, rawRSSResponse, */ describe, test } from './helper.js'
+import { mountApp, describe, test, responses } from './helper.js'
 
 describe('Visit a new feed via URL', () => {
-//   let app
-//
-//   beforeEach(async () => {
-//     app = await mountApp({
-//       fetch: vi.fn(() => Promise.resolve('<feed><title>Remote Name</title></feed>'))
-//     })
-//
-//     await app.click('[aria-label="Visit Changelog"]')
-//   })
+  const expectedFeed = {
+    title: 'Feed Title',
+    url: 'https://foo.bar',
+    entries: [{
+      title: 'Entry title'
+    }]
+  }
 
-  test('shows the feed title')
-  test('shows the feed image')
-  test('shows the fetched items')
+  let app
 
-  // event('journeys.create', {
-  //   collection: 'journeys',
-  //   action: 'create',
-  //   data: { color, name }
-  // }, () => { return { app } })
-
-  describe('when the feed already exists', () => {
-    test('shows the existing items')
+  beforeEach(async () => {
+    app = await mountApp({
+      path: `/feeds/${expectedFeed.url}`,
+      fetch: responses([`<feed><title>${expectedFeed.title}</title><entry><id>123</id><title>${expectedFeed.entries[0].title}</title></entry></feed>`])
+    })
   })
+
+  test('shows the feed title', () => {
+    expect(app.find('[aria-label="Page title"]').text()).toEqual(expectedFeed.title)
+  })
+
+  test('shows the entries', () => {
+    expect(app.find('[aria-label="Entry title"]').text()).toEqual(expectedFeed.entries[0].title)
+  })
+
+  // test('shows the feed image')
 })

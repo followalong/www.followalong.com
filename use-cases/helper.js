@@ -4,6 +4,8 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { vi, describe, test } from 'vitest'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { routes } from '../src/app/router/index.js'
+import runners from '../src/state/runners.js'
+import MultiEventStore from '../src/state/multi-event-store.js'
 import App from '../src/app/component.vue'
 // import KeychainAdapter from '../adapters/keychain.js'
 // import LocalAddonAdapter from '../adapters/addons/local.js'
@@ -26,8 +28,8 @@ const mountApp = (options) => {
   return new Promise(async (resolve) => {
     options = options || {}
 
-    const addonAdapterOptions = options.addonAdapterOptions || {}
-    addonAdapterOptions.fetch = addonAdapterOptions.fetch || vi.fn(() => Promise.resolve())
+    // const addonAdapterOptions = options.addonAdapterOptions || {}
+    // addonAdapterOptions.fetch = addonAdapterOptions.fetch || vi.fn(() => Promise.resolve())
 
     //     const keychainAdapter = new KeychainAdapter({
     //       prompt: vi.fn(() => 'abc-123')
@@ -47,25 +49,25 @@ const mountApp = (options) => {
     //   }
     // }
 
-    //     const localAddonAdapter = new LocalAddonAdapter({})
-    //
-    //     await localAddonAdapter.db.clear()
-    //
-    //     if (options.localAddonAdapterData) {
-    //       for (const key in options.localAddonAdapterData) {
-    //         await localAddonAdapter.save(
-    //           options.localAddonAdapterData[key],
-    //           options.localAddonAdapterData[key].encrypt || passThrough()
-    //         )
-    //       }
-    //     }
+    const store = new MultiEventStore('follow-along', 'v2.1', runners)
+
+    await store.reset()
+
+    if (options.state) {
+      for (const id in options.state) {
+        const identity = options.state[id]
+
+        store.createDB(id, identity.config)
+        await store.importRaw(identity.data)
+      }
+    }
 
     const router = createRouter({
       history: createMemoryHistory(),
       routes
     })
 
-    router.push('/')
+    router.push(options.path || '/')
 
     await router.isReady()
 
@@ -74,7 +76,8 @@ const mountApp = (options) => {
         plugins: [router]
       },
       propsData: {
-        fetch: options.fetch || vi.fn().mockResolvedValue('')
+        fetch: options.fetch || vi.fn().mockResolvedValue(''),
+        state: store
         // keychainAdapter,
         // addonAdapterOptions,
         // noAutomaticFetches: true,

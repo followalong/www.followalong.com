@@ -14,7 +14,7 @@
 
     <FeedEntry
       v-for="entry in entries"
-      :key="`entry-${entry.id}`"
+      :key="`entry-${app.queries.keyForEntry(entry)}`"
       :app="app"
       :identity="identity"
       :entry="entry"
@@ -41,16 +41,28 @@ export default {
   },
 
   computed: {
+    existingFeed () {
+      return this.app.queries.feedForIdentityByUrl(this.identity, this.url)
+    },
+
     feed () {
-      return this.app.queries.feedForIdentityByUrl(this.identity, this.url) || this.remoteFeed
+      return this.existingFeed || this.remoteFeed
     },
 
     url () {
       return this.$route.params.feedUrl.replace(/^feeds\//, '')
     },
 
+    remoteEntries () {
+      if (!this.remoteFeed) {
+        return []
+      }
+
+      return this.remoteFeed._entries
+    },
+
     entries () {
-      return this.feed ? this.app.queries.entriesForFeed(this.identity, this.feed) : this.remoteFeed.entry || []
+      return this.existingFeed ? this.app.queries.entriesForFeed(this.identity, this.existingFeed) : this.remoteEntries
     }
   },
 
@@ -64,7 +76,15 @@ export default {
 
     this.app.commands.fetchUrl(this.url)
       .then((data) => {
-        this.remoteFeed = { data }
+        const entries = data.entry || []
+
+        delete data.entry
+
+        this.remoteFeed = Object.assign({}, {
+          url: this.url,
+          data,
+          _entries: entries.map((data) => { return { id: data.id, data } })
+        })
       })
   }
 }

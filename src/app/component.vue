@@ -58,10 +58,7 @@ export default {
     },
     fetch: {
       type: Function,
-      default: () => {
-        return window.fetch
-          .then((response) => response.text())
-      }
+      default: () => window.fetch.then((response) => response.text())
     }
   },
   data () {

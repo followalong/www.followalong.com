@@ -44,7 +44,7 @@ class Queries {
       .filter((e) => e.feedId === feed.id)
   }
 
-  entryKey (entry) {
+  keyForEntry (entry) {
     if (typeof entry.id === 'string') {
       return entry.id
     }

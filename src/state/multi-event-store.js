@@ -33,7 +33,7 @@ class MultipleEventStore extends EventStore {
   createDB (dbId) {
     dbId = dbId || uuidv4()
 
-    this.setConfig(dbId, {})
+    this._setConfig(dbId, {})
     this._initDB(dbId)
 
     return dbId
@@ -50,7 +50,7 @@ class MultipleEventStore extends EventStore {
     ])
   }
 
-  setConfig (dbId, config) {
+  _setConfig (dbId, config) {
     return this._config.setItem(dbId, config)
   }
 

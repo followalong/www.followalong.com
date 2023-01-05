@@ -114,7 +114,7 @@ class Commands {
   }
 
   upsertEntryForIdentity (identity, feed, data) {
-    const key = this.queries.entryKey(data)
+    const key = this.queries.keyForEntry(data)
     const found = this.queries.entryForFeedForIdentity(identity, feed, key)
 
     if (!found) {
