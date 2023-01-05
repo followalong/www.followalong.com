@@ -58,7 +58,7 @@ export default {
     },
     fetch: {
       type: Function,
-      default: () => window.fetch.then((response) => response.text())
+      default: (url) => window.fetch(url).then((response) => response.text())
     }
   },
   data () {
