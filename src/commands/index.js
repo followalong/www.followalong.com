@@ -60,8 +60,7 @@ class Commands {
 
     this.track(identity, 'identities', identity.id, 'create', identity)
 
-    this.addFeedToIdentity(identity, {
-      link: 'https://changelog.followalong.com/feed.xml',
+    this.addFeedToIdentity(identity, 'https://changelog.followalong.com/feed.xml', {
       title: 'Changelog',
       description: 'Stay in-the-know on Follow Along.',
       image: {
@@ -77,8 +76,8 @@ class Commands {
     })
   }
 
-  addFeedToIdentity (identity, data) {
-    this.track(identity, 'feeds', null, 'create', { url: this.queries.urlForFeed({ data }), data })
+  addFeedToIdentity (identity, url, data) {
+    this.track(identity, 'feeds', null, 'create', { url, data })
   }
 
   track (identity, collectionName, objectId, action, data) {
@@ -95,7 +94,7 @@ class Commands {
   }
 
   fetchFeed (identity, feed) {
-    return this.fetchUrl(feed.url)
+    return this.fetchUrl(this.queries.urlForFeed(feed))
       .then((data) => {
         this.upsertFeedForIdentity(identity, feed, data)
 
