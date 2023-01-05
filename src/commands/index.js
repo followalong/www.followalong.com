@@ -61,9 +61,7 @@ class Commands {
     this.track(identity, 'identities', identity.id, 'create', identity)
 
     this.addFeedToIdentity(identity, {
-      link: {
-        href: 'https://changelog.followalong.com/feed.xml'
-      },
+      link: 'https://changelog.followalong.com/feed.xml',
       title: 'Changelog',
       description: 'Stay in-the-know on Follow Along.',
       image: {

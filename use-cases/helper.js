@@ -58,7 +58,7 @@ const mountApp = (options) => {
         const identity = options.state[id]
 
         store.createDB(id, identity.config)
-        await store.importRaw(identity.data)
+        await store.importRaw(id, identity.data)
       }
     }
 

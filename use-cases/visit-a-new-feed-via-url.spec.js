@@ -3,7 +3,7 @@ import { mountApp, describe, test, responses } from './helper.js'
 describe('Visit a new feed via URL', () => {
   const expectedFeed = {
     title: 'Feed Title',
-    url: 'https://foo.bar',
+    url: 'https://foo.bar/feed.xml',
     entries: [{
       title: 'Entry title'
     }]

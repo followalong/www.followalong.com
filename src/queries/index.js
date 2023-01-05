@@ -102,7 +102,7 @@ class Queries {
   }
 
   urlForFeed (feed) {
-    return getAttr(feed, 'link.href') ||
+    return (feed || {}).url || getAttr(feed, 'link.href') ||
       getAttr(feed, 'link') ||
       getAttr(feed, 'url')
   }
