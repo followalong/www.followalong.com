@@ -24,6 +24,7 @@
 </template>
 
 <script>
+import SORT_BY_TIME from '../../../queries/sorters/sort-by-time.js'
 import FeedEntry from '../../components/feed-entry/component.vue'
 import PageTitle from '../../components/page-title/component.vue'
 
@@ -59,7 +60,7 @@ export default {
         return []
       }
 
-      return this.remoteFeed._entries
+      return this.remoteFeed._entries.sort(SORT_BY_TIME(this.app.queries))
     },
 
     entries () {

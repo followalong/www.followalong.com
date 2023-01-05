@@ -1,5 +1,12 @@
 import { XMLParser } from 'fast-xml-parser'
+import SORT_BY_TIME from './sorters/sort-by-time.js'
 import sanitizeContent from './presenters/sanitize-content.js'
+
+const parser = new XMLParser({
+  isArray: (name, jpath, isLeafNode, isAttribute) => {
+    return ['entry', 'item'].indexOf(name) !== -1
+  }
+})
 
 const getAttr = (obj, attr) => {
   obj = obj || {}
@@ -38,30 +45,35 @@ class Queries {
 
   entriesForIdentity (identity) {
     return this.state.findAll(identity.id, 'entries')
+      .sort(SORT_BY_TIME(this))
   }
 
   entriesForFeed (identity, feed) {
     return this.state.findAll(identity.id, 'entries')
       .filter((e) => e.feedId === feed.id)
+      .sort(SORT_BY_TIME(this))
   }
 
   jsonFromXml (xml) {
-    const parser = new XMLParser({
-      isArray: (name, jpath, isLeafNode, isAttribute) => {
-        return ['entry', 'item'].indexOf(name) !== -1
-      }
-    })
-    const json = parser.parse(xml)
+    let obj = parser.parse(xml)
 
-    try {
-      return json.rss.channel
-    } catch (e) { }
+    if (typeof obj.rss === 'object') {
+      obj = obj.rss
+    }
 
-    try {
-      return json.rss.feed
-    } catch (e) { }
+    if (typeof obj.feed === 'object') {
+      obj = obj.feed
+    }
 
-    return json.feed || json.channel || json
+    if (typeof obj.channel === 'object') {
+      obj = obj.channel
+    }
+
+    if (typeof obj.feed === 'object') {
+      obj = obj.feed
+    }
+
+    return obj
   }
 
   keyForEntry (entry) {
@@ -120,13 +132,15 @@ class Queries {
   }
 
   dateForEntry (entry) {
-    return getAttr(entry, 'published') ||
+    const date = getAttr(entry, 'published') ||
       getAttr(entry, 'pubdate') ||
       getAttr(entry, 'pubDate')
+
+    return new Date(date)
   }
 
   niceDateForEntry (entry) {
-    const date = new Date(this.dateForEntry(entry))
+    const date = this.dateForEntry(entry)
 
     if (date.toDateString() === new Date().toDateString()) {
       return date.toLocaleTimeString('en-us', { hour: '2-digit', minute: '2-digit' })
