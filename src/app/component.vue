@@ -59,6 +59,10 @@ export default {
     fetch: {
       type: Function,
       default: (url) => window.fetch(url).then((response) => response.text())
+    },
+    automaticFetch: {
+      type: Boolean,
+      default: true
     }
   },
   data () {
@@ -92,7 +96,20 @@ export default {
       }
 
       this.isLoading = false
+
+      if (this.automaticFetch) {
+        this.pollFeeds()
+      }
     })
+  },
+  methods: {
+    pollFeeds () {
+      const POLL = 15000
+
+      this.commands.fetchOutdatedFeeds(this.identity).then(() => {
+        setTimeout(() => this.pollFeeds(), POLL)
+      })
+    }
   }
 }
 </script>

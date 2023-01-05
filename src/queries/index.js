@@ -1,5 +1,6 @@
 import { XMLParser } from 'fast-xml-parser'
 import SORT_BY_TIME from './sorters/sort-by-time.js'
+import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
 import sanitizeContent from './presenters/sanitize-content.js'
 
 const parser = new XMLParser({
@@ -93,8 +94,25 @@ class Queries {
       .find((e) => this.keyForEntry(e) === key)
   }
 
-  feedForIdentity (identity, feedId) {
+  feedsForIdentity (identity) {
     return this.state.findAll(identity.id, 'feeds')
+  }
+
+  lastUpdatedForFeed (feed) {
+    return feed.updatedAt
+  }
+
+  findOutdatedFeedsForIdentity (identity) {
+    const OUTDATED_MINUTES = 10
+    const outdatedDate = Date.now() - (OUTDATED_MINUTES * (60 * 1000))
+
+    return this.feedsForIdentity(identity)
+      .filter((feed) => this.lastUpdatedForFeed(feed) < outdatedDate)
+      .sort(SORT_BY_NEED_TO_UPDATE(this))
+  }
+
+  feedForIdentity (identity, feedId) {
+    return this.feedsForIdentity(identity)
       .find((f) => f.id === feedId)
   }
 

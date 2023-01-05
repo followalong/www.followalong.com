@@ -74,6 +74,31 @@ class Commands {
       this.track(identity, 'entries', found.id, 'update', { data })
     }
   }
+
+  fetchOutdatedFeeds (identity) {
+    const feeds = this.queries.findOutdatedFeedsForIdentity(identity)
+
+    return this._fetchFeedsInSeries(identity, feeds)
+  }
+
+  _fetchFeedsInSeries (identity, feeds) {
+    let promise = Promise.resolve()
+
+    if (!feeds.length) {
+      return promise
+    }
+
+    feeds.forEach((feed) => {
+      promise = promise.then(() => {
+        return new Promise((resolve) => {
+          this.fetchFeed(identity, feed)
+            .finally(() => setTimeout(resolve, 0))
+        })
+      })
+    })
+
+    return promise
+  }
 }
 
 export default Commands
