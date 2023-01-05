@@ -51,7 +51,7 @@ export default {
     },
 
     url () {
-      return this.$route.params.feedUrl.replace(/^feeds\//, '')
+      return this.$route.fullPath.replace(/^\/feeds\//, '')
     },
 
     remoteEntries () {
