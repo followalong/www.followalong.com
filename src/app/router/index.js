@@ -2,11 +2,17 @@ import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import Home from '../views/home/component.vue'
 import Feed from '../views/feed/component.vue'
 import Settings from '../views/settings/component.vue'
+import Help from '../views/help/component.vue'
 
 const routes = [
   {
     path: '/settings',
     component: Settings,
+    props: true
+  },
+  {
+    path: '/help',
+    component: Help,
     props: true
   },
   {
