@@ -16,10 +16,6 @@ export default defineConfig({
         appleTouchIcon: 'img/icons/apple-touch-icon.png',
         maskIcon: 'img/icons/safari-pinned-tab.svg',
         msTileImage: 'img/icons/msapplication-icon-144x144.png'
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        maximumFileSizeToCacheInBytes: 5000000
       }
     })
   ],
