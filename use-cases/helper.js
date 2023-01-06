@@ -76,9 +76,10 @@ const mountApp = (options) => {
         plugins: [router]
       },
       propsData: {
-        fetch: options.fetch || vi.fn().mockResolvedValue(''),
+        fetch: options.fetch || responses(['']),
         state: store,
-        confirm: options.confirm || vi.fn().mockResolvedValue()
+        confirm: options.confirm || vi.fn().mockResolvedValue(),
+        automaticFetch: false
         // keychainAdapter,
         // addonAdapterOptions,
         // noAutomaticFetches: true,

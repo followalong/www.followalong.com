@@ -76,7 +76,9 @@ class Commands {
   }
 
   fetchOutdatedFeeds (identity) {
-    const feeds = this.queries.findOutdatedFeedsForIdentity(identity)
+    // TODO: We can use the outdated feeds once we have a "last fetched at" mechanism
+    // const feeds = this.queries.findOutdatedFeedsForIdentity(identity)
+    const feeds = this.queries.feedsForIdentity(identity)
 
     return this._fetchFeedsInSeries(identity, feeds)
   }

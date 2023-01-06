@@ -46,6 +46,9 @@ import MultiEventStore from '../state/multi-event-store.js'
 import runners from '../state/runners.js'
 import Queries from '../queries/index.js'
 
+const POLL_INTERVAL = 15000
+let POLL_TIMEOUT
+
 export default {
   components: {
     SideBar,
@@ -97,6 +100,13 @@ export default {
       return this.queries.allIdentities()[0]
     }
   },
+  watch: {
+    identity (val) {
+      if (val && this.automaticFetch) {
+        setTimeout(() => this.pollFeeds(), 100)
+      }
+    }
+  },
   mounted () {
     return this.commands.restoreFromLocal().then(() => {
       if (!this.queries.allIdentities().length) {
@@ -104,18 +114,14 @@ export default {
       }
 
       this.isLoading = false
-
-      if (this.automaticFetch) {
-        this.pollFeeds()
-      }
     })
   },
   methods: {
     pollFeeds () {
-      const POLL = 15000
+      clearTimeout(POLL_TIMEOUT)
 
       this.commands.fetchOutdatedFeeds(this.identity).then(() => {
-        setTimeout(() => this.pollFeeds(), POLL)
+        POLL_TIMEOUT = setTimeout(() => this.pollFeeds(), POLL_INTERVAL)
       })
     }
   }
