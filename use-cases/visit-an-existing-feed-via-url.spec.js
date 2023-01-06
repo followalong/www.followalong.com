@@ -21,7 +21,7 @@ describe('Visit an existing feed via URL', () => {
         abc123: {
           config: {},
           data: `
-            0/identities/abc123/create/v2.1 {"id":"abc123"}
+            0/identities/abc123/create/v2.1
             1/feeds/${expectedFeed.id}/create/v2.1 {"url":"${expectedFeed.url}","data":{"title":"${expectedFeed.title}"}}
             2/entries/765/create/v2.1 {"feedId":"${expectedFeed.id}","data":{"guid":"987","title":"${localEntryTitle}"}}
           `

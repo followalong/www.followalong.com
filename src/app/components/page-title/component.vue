@@ -15,10 +15,11 @@
         </p>
       </div>
 
-      <!-- <div class="mt-4 flex items-center justify-between sm:mt-0 sm:ml-6 sm:flex-shrink-0 sm:justify-start">
+      <div class="flex items-center justify-between sm:ml-6 sm:flex-shrink-0 sm:justify-start">
         <div class="relative ml-3 inline-block text-left">
           <div>
-            <button
+            <slot name="meta" />
+            <!-- <button
               id="menu-0-button"
               type="button"
               class="-my-2 flex items-center rounded-full bg-white p-2 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -36,19 +37,19 @@
               >
                 <path d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM11.5 15.5a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0z" />
               </svg>
-            </button>
+            </button> -->
           </div>
 
-            Dropdown menu, show/hide based on menu state.
+          <!-- Dropdown menu, show/hide based on menu state.
 
-            Entering: "transition ease-out duration-100"
-              From: "transform opacity-0 scale-95"
-              To: "transform opacity-100 scale-100"
-            Leaving: "transition ease-in duration-75"
-              From: "transform opacity-100 scale-100"
-              To: "transform opacity-0 scale-95"
+          Entering: "transition ease-out duration-100"
+          From: "transform opacity-0 scale-95"
+          To: "transform opacity-100 scale-100"
+          Leaving: "transition ease-in duration-75"
+          From: "transform opacity-100 scale-100"
+          To: "transform opacity-0 scale-95" -->
 
-          <div
+          <!-- <div
             class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
             role="menu"
             aria-orientation="vertical"
@@ -88,8 +89,9 @@
               </button>
             </div>
           </div>
+        </div> -->
         </div>
-      </div> -->
+      </div>
     </div>
   </div>
 </template>

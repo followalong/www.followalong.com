@@ -10,6 +10,15 @@
           <span v-if="!remoteFeed">Loading...</span>
         </a>
       </template>
+      <template #meta>
+        <button
+          class="rounded-md border border-transparent bg-green-100 px-4 py-2 font-medium text-green-700 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:text-sm"
+          :aria-label="`${existingFeed ? 'Unf' : 'F'}ollow ${app.queries.titleForFeed(feed)}`"
+          @click="toggleFollow"
+        >
+          Follow<span v-if="existingFeed">ing</span>
+        </button>
+      </template>
     </PageTitle>
 
     <FeedEntry
@@ -60,7 +69,7 @@ export default {
         return []
       }
 
-      return this.remoteFeed._entries.sort(SORT_BY_TIME(this.app.queries))
+      return (this.remoteFeed.entries || []).sort(SORT_BY_TIME(this.app.queries))
     },
 
     entries () {
@@ -69,26 +78,44 @@ export default {
   },
 
   mounted () {
-    if (this.feed) {
-      return this.app.commands.fetchFeed(this.identity, this.feed)
-        .then(() => {
-          this.remoteFeed = true
+    this.fetchFeed()
+  },
+
+  methods: {
+    toggleFollow () {
+      if (this.existingFeed) {
+        this.app.commands.removeFeedFromIdentity(this.identity, this.existingFeed)
+        this.fetchFeed()
+        return
+      }
+
+      this.app.commands.addFeedToIdentity(this.identity, this.remoteFeed.url, this.remoteFeed.data, this.remoteFeed.entries.map((e) => e.data))
+    },
+
+    fetchFeed () {
+      this.remoteFeed = null
+
+      if (this.feed) {
+        return this.app.commands.fetchFeed(this.identity, this.feed)
+          .then(() => {
+            this.remoteFeed = true
+          })
+      }
+
+      this.app.commands.fetchUrl(this.url)
+        .then((data) => {
+          const entries = (data.entry || data.item) || []
+
+          delete data.entry
+          delete data.item
+
+          this.remoteFeed = Object.assign({}, {
+            url: this.url,
+            data,
+            entries: entries.map((data) => { return { id: data.id, data } })
+          })
         })
     }
-
-    this.app.commands.fetchUrl(this.url)
-      .then((data) => {
-        const entries = (data.entry || data.item) || []
-
-        delete data.entry
-        delete data.item
-
-        this.remoteFeed = Object.assign({}, {
-          url: this.url,
-          data,
-          _entries: entries.map((data) => { return { id: data.id, data } })
-        })
-      })
   }
 }
 </script>

@@ -130,12 +130,19 @@ const dig = (obj, key) => {
 }
 
 const objectsMatch = (a, b, key) => {
-  if (typeof a[key] === 'object') {
-    return Object.keys(a[key]).filter((k) => {
+  const aVal = dig(a, key)
+  const bVal = dig(b, key)
+
+  if (typeof aVal === 'object') {
+    return Object.keys(aVal).filter((k) => {
+      return !objectsMatch(a, b, `${key}.${k}`)
+    }).length === 0
+  } else if (typeof bVal === 'object') {
+    return Object.keys(bVal).filter((k) => {
       return !objectsMatch(a, b, `${key}.${k}`)
     }).length === 0
   } else {
-    return dig(a, key) === dig(b, key)
+    return aVal === bVal
   }
 }
 
@@ -152,10 +159,15 @@ const event = (description, payload, optionsFunc) => {
 
       return true
     })
+
+    if (!ev) {
+      throw new Error(`Event was not found for ${JSON.stringify(payload)}`)
+    }
+
     expect(ev).toMatchObject(payload)
 
-    const journey = options.app.vm.queries.allJourneys()[0]
-    const localDB = options.app.vm.state._dbs[journey.id]._db
+    const identity = options.app.vm.queries.allIdentities()[0]
+    const localDB = options.app.vm.state._dbs[identity.id]._db
     const eventData = await localDB.getItem(ev.key)
     expect(eventData).toEqual(ev.toLocal())
   })

@@ -17,18 +17,29 @@ class Commands {
       image: {
         url: 'https://www.followalong.net/img/favicon.ico'
       }
-    })
-    const feed = this.queries.latestFeedForIdentity(identity)
-    this.upsertEntryForIdentity(identity, feed, {
+    }, [{
       id: 'about',
       title: 'Twitter is done. Long live RSS.',
       published: new Date().toISOString(),
       'content:encoded': 'Welcome to new.'
+    }])
+  }
+
+  addFeedToIdentity (identity, url, data, entries = []) {
+    this.track(identity, 'feeds', null, 'create', { url, data })
+
+    const feed = this.queries.latestFeedForIdentity(identity)
+    entries.forEach((entry) => {
+      this.upsertEntryForIdentity(identity, feed, entry)
     })
   }
 
-  addFeedToIdentity (identity, url, data) {
-    this.track(identity, 'feeds', null, 'create', { url, data })
+  removeFeedFromIdentity (identity, feed) {
+    this.track(identity, 'feeds', feed.id, 'delete')
+
+    this.queries.entriesForFeed(identity, feed).forEach((entry) => {
+      this.track(identity, 'entries', entry.id, 'delete')
+    })
   }
 
   track (identity, collectionName, objectId, action, data) {
