@@ -45,9 +45,19 @@ class MultipleEventStore extends EventStore {
     delete this._dbs[dbId]
 
     return Promise.all([
-      db.teardown(),
+      db ? db.teardown() : Promise.resolve(),
       this._config.removeItem(dbId)
     ])
+  }
+
+  teardownDBs () {
+    const promises = []
+
+    for (const id in this._dbs) {
+      promises.push(this.deleteDB(id))
+    }
+
+    return Promise.all(promises)
   }
 
   _setConfig (dbId, config) {

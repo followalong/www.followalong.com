@@ -12,7 +12,7 @@ const mountApp = (options) => {
   return new Promise(async (resolve) => {
     options = options || {}
 
-    const store = new MultiEventStore('follow-along', 'v2.1', runners)
+    const store = new MultiEventStore(Math.random(), 'v2.1', runners)
 
     await store.reset()
 
