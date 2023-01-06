@@ -32,7 +32,7 @@
                 >
                   <img
                     v-if="app.queries.imageForFeed(feed)"
-                    class="h-10 w-10"
+                    class="h-10 w-10 rounded-full"
                     :src="app.queries.imageForFeed(feed)"
                   >
                 </p>
