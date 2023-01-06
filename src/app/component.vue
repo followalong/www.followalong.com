@@ -63,6 +63,14 @@ export default {
     automaticFetch: {
       type: Boolean,
       default: true
+    },
+    confirm: {
+      type: Function,
+      default: (question) => {
+        return new Promise((resolve, reject) => {
+          window.confirm(question) ? resolve() : reject(new Error('Not confirmed'))
+        })
+      }
     }
   },
   data () {

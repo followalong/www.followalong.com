@@ -77,7 +77,8 @@ const mountApp = (options) => {
       },
       propsData: {
         fetch: options.fetch || vi.fn().mockResolvedValue(''),
-        state: store
+        state: store,
+        confirm: options.confirm || vi.fn().mockResolvedValue()
         // keychainAdapter,
         // addonAdapterOptions,
         // noAutomaticFetches: true,

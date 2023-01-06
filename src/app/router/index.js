@@ -1,17 +1,21 @@
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import Home from '../views/home/component.vue'
 import Feed from '../views/feed/component.vue'
+import Settings from '../views/settings/component.vue'
 
 const routes = [
   {
+    path: '/settings',
+    component: Settings,
+    props: true
+  },
+  {
     path: '/:feedUrl(.*)',
-    name: 'redirect',
     component: Feed,
     props: true
   },
   {
     path: '/',
-    name: 'home',
     component: Home,
     props: true
   }

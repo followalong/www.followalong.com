@@ -99,6 +99,18 @@ class Commands {
 
     return promise
   }
+
+  forgetIdentity (identity) {
+    return new Promise((resolve, reject) => {
+      this.state.deleteDB(identity.id)
+
+      if (!this.queries.allIdentities().length) {
+        this.addIdentity({})
+      }
+
+      resolve()
+    })
+  }
 }
 
 export default Commands
