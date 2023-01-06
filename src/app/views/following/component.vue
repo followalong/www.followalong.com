@@ -44,7 +44,10 @@
                         {{ app.queries.titleForFeed(feed) }}
                       </p>
                       <p class="ml-1 flex-shrink-0 font-normal text-gray-500">
-                        &mdash; {{ app.queries.entriesForFeed(identity, feed).length }} items
+                        &nbsp;
+                        <span class="font-medium">·</span>
+                        &nbsp;
+                        {{ app.queries.entriesForFeed(identity, feed).length }} items
                       </p>
                     </div>
                     <div class="mt-2 flex">
