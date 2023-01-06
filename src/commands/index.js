@@ -100,6 +100,12 @@ class Commands {
     return this._fetchFeedsInSeries(identity, feeds)
   }
 
+  fetchFeedsForIdentity (identity) {
+    const feeds = this.queries.feedsForIdentity(identity)
+
+    return this._fetchFeedsInSeries(identity, feeds)
+  }
+
   _fetchFeedsInSeries (identity, feeds) {
     let promise = Promise.resolve()
 
