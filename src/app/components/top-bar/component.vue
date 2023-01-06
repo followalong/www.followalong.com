@@ -111,6 +111,7 @@
     <div
       id="mobile-menu"
       class="lg:hidden"
+      style="display: none"
     >
       <div class="px-2 pt-2 pb-3">
         <a
