@@ -1,8 +1,9 @@
 import { createRouter, createWebHistory, createMemoryHistory } from 'vue-router'
 import Home from '../views/home/component.vue'
 import Feed from '../views/feed/component.vue'
-import Settings from '../views/settings/component.vue'
+import Following from '../views/following/component.vue'
 import Help from '../views/help/component.vue'
+import Settings from '../views/settings/component.vue'
 
 const routes = [
   {
@@ -13,6 +14,11 @@ const routes = [
   {
     path: '/help',
     component: Help,
+    props: true
+  },
+  {
+    path: '/following',
+    component: Following,
     props: true
   },
   {

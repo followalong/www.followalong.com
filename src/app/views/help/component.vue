@@ -12,7 +12,10 @@
           Contact us via email
         </p>
       </template>
-      <template #content>
+      <template
+        #content
+        class="prose"
+      >
         <p>
           Email us at followalong@protonmail.com for a quick response.
         </p>

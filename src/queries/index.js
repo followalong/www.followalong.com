@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser'
+import SORT_BY_NAME from './sorters/sort-by-name.js'
 import SORT_BY_TIME from './sorters/sort-by-time.js'
 import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
 import sanitizeContent from './presenters/sanitize-content.js'
@@ -55,6 +56,10 @@ class Queries {
       .sort(SORT_BY_TIME(this))
   }
 
+  lastEntryForFeed (identity, feed) {
+    return this.entriesForFeed(identity, feed)[0]
+  }
+
   jsonFromXml (xml) {
     let obj = parser.parse(xml)
 
@@ -96,6 +101,7 @@ class Queries {
 
   feedsForIdentity (identity) {
     return this.state.findAll(identity.id, 'feeds')
+      .sort(SORT_BY_NAME(this))
   }
 
   lastUpdatedForFeed (feed) {

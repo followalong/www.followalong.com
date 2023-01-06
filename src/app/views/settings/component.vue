@@ -12,7 +12,10 @@
           Forget this identity
         </p>
       </template>
-      <template #content>
+      <template
+        #content
+        class="prose"
+      >
         <p>
           Forgetting this identity will remove all traces of it on this device.
           Ensure you have a backup before proceeding.

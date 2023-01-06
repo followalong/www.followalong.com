@@ -11,7 +11,7 @@
           </div>
         </div>
       </div>
-      <div class="border-t border-gray-200 px-4 py-5 sm:px-6 prose max-w-none">
+      <div :class="`border-t border-gray-200 ${hasPadding ? 'px-4 py-5 sm:px-6' : ''} max-w-none`">
         <slot name="content" />
       </div>
     </div>
@@ -20,5 +20,11 @@
 
 <script>
 export default {
+  props: {
+    hasPadding: {
+      type: Boolean,
+      default: true
+    }
+  }
 }
 </script>

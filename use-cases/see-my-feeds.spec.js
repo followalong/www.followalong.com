@@ -1,6 +1,6 @@
-import { mountApp, describe, test, responses, story } from './helper.js'
+import { mountApp, describe, responses, story } from './helper.js'
 
-describe('Visit an existing feed via URL', () => {
+describe('See my feeds', () => {
   const localEntryTitle = 'Local entry'
   const expectedFeed = {
     id: 'zxy987',
@@ -28,17 +28,12 @@ describe('Visit an existing feed via URL', () => {
         }
       }
     })
+
+    await app.click('[aria-label="Following"]')
   })
 
-  story('shows the feed title', () => {
-    expect(app.find('[aria-label="Page title"]').text()).toEqual(expectedFeed.title)
-  })
-
-  test('shows the local entries', () => {
-    expect(app.findAll('[aria-label="Entry title"]')[0].text()).toEqual(localEntryTitle)
-  })
-
-  test('shows the remote entries', () => {
-    expect(app.findAll('[aria-label="Entry title"]')[1].text()).toEqual(expectedFeed.entries[0].title)
+  story('shows the feeds I am following', () => {
+    expect(app.find('[aria-label="Page title"]').text()).toEqual('Following')
+    expect(app.text()).toContain(expectedFeed.title)
   })
 })

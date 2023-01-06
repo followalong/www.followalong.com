@@ -15,7 +15,7 @@ describe('Unfollow a feed', () => {
 
   beforeEach(async () => {
     app = await mountApp({
-      path: `/feeds/${expectedFeed.url}`,
+      path: `/${expectedFeed.url}`,
       fetch: responses([
         '<changelog></changelog>',
         `<feed><title>${expectedFeed.title}</title><entry><id>123</id><title>${expectedFeed.entries[0].title}</title></entry></feed>`

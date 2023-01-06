@@ -30,7 +30,7 @@ export default {
 
   beforeMount () {
     if (this.$route.query.feedUrl) {
-      return this.$router.push(`/feeds/${this.$route.query.feedUrl}`)
+      return this.$router.push(`/${this.$route.query.feedUrl}`)
     }
   }
 }
