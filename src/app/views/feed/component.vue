@@ -77,6 +77,12 @@ export default {
     }
   },
 
+  watch: {
+    url () {
+      this.fetchFeed()
+    }
+  },
+
   mounted () {
     this.fetchFeed()
   },

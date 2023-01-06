@@ -17,16 +17,18 @@
             >
           </router-link>
         </div>
-        <!-- Search section -->
-        <!-- <div class="flex flex-1 justify-center lg:justify-end">
-          <div class="w-full">
+        <div class="flex flex-1 justify-center lg:justify-end">
+          <form
+            class="w-full"
+            aria-label="Search"
+            @submit.prevent="search"
+          >
             <label
               for="search"
               class="sr-only"
             >Search...</label>
             <div class="relative text-indigo-200 focus-within:text-gray-400">
               <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                Heroicon name: mini/magnifying-glass
                 <svg
                   class="h-5 w-5"
                   xmlns="http://www.w3.org/2000/svg"
@@ -43,14 +45,16 @@
               </div>
               <input
                 id="search"
+                v-model="q"
                 name="search"
                 class="block w-full rounded-md border border-transparent bg-indigo-400 bg-opacity-25 py-2 pl-10 pr-3 leading-5 text-indigo-100 placeholder-indigo-200 focus:bg-white focus:text-gray-900 focus:placeholder-gray-400 focus:outline-none focus:ring-0"
-                placeholder="Search..."
+                placeholder="Search or RSS URL..."
                 type="search"
+                aria-label="Search input"
               >
             </div>
-          </div>
-        </div> -->
+          </form>
+        </div>
         <div
           style="display: none"
           class="flex lg:hidden"
@@ -145,6 +149,16 @@
 
 <script>
 export default {
-  props: ['app']
+  props: ['app'],
+  data () {
+    return {
+      q: ''
+    }
+  },
+  methods: {
+    search () {
+      this.app.search(this.q)
+    }
+  }
 }
 </script>

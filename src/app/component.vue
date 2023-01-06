@@ -123,6 +123,13 @@ export default {
       this.commands.fetchOutdatedFeeds(this.identity).then(() => {
         POLL_TIMEOUT = setTimeout(() => this.pollFeeds(), POLL_INTERVAL)
       })
+    },
+    search (q) {
+      q = q.toLowerCase()
+
+      if (q.indexOf('http') !== -1) {
+        this.$router.push(`/${q}`)
+      }
     }
   }
 }
