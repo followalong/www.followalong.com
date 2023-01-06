@@ -8,6 +8,7 @@
         <div class="flex justify-between">
           <div class="flex space-x-3 flex-shrink-0">
             <router-link
+              v-if="app.queries.imageForFeed(theFeed)"
               :to="`/feeds/${app.queries.urlForFeed(theFeed)}`"
               class="block flex-shrink-0 mr-2"
             >
@@ -21,7 +22,7 @@
             <div>
               <router-link
                 v-if="app.queries.titleForEntry(entry)"
-                :to="`/${app.queries.urlForFeed(theFeed)}`"
+                :to="`/feeds/${app.queries.urlForFeed(theFeed)}`"
                 class="font-medium text-gray-900"
                 aria-label="Entry title"
               >
