@@ -1,3 +1,5 @@
+const CHANGELOG_URL = 'https://changelog.followalong.com/feed.xml'
+
 class Commands {
   constructor (options) {
     for (const key in options) {
@@ -11,22 +13,26 @@ class Commands {
 
     this.track(identity, 'identities', identity.id, 'create', identity)
 
-    this.addFeedToIdentity(identity, 'https://changelog.followalong.com/feed.xml', {
+    this.addFeedToIdentity(identity, CHANGELOG_URL, {
       title: 'Changelog',
       description: 'Stay in-the-know on Follow Along.',
       image: {
         url: 'https://www.followalong.net/img/favicon.ico'
       }
-    }, [{
-      id: 'about',
-      title: 'Twitter is done. Long live RSS.',
-      published: new Date().toISOString(),
-      'content:encoded': 'Welcome to new.'
-    }])
+    })
   }
 
   addFeedToIdentity (identity, url, data, entries = []) {
     this.track(identity, 'feeds', null, 'create', { url, data })
+
+    if (url === CHANGELOG_URL) {
+      entries.unshift({
+        id: 'about',
+        title: 'Twitter is done. Long live RSS.',
+        published: new Date().toISOString(),
+        content: 'Welcome to new.'
+      })
+    }
 
     const feed = this.queries.latestFeedForIdentity(identity)
     entries.forEach((entry) => {
