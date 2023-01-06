@@ -14,11 +14,12 @@
       </template>
       <template
         #content
-        class="prose"
       >
-        <p>
-          Email us at followalong@protonmail.com for a quick response.
-        </p>
+        <div class="prose">
+          <p>
+            Email us at followalong@protonmail.com for a quick response.
+          </p>
+        </div>
       </template>
     </PageCard>
   </div>

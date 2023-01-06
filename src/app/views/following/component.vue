@@ -26,7 +26,17 @@
               :to="`/${app.queries.urlForFeed(feed)}`"
               class="block px-5 sm:px-6"
             >
-              <div class="flex items-center py-4">
+              <div class="flex space-x-3 flex-shrink-0 items-center py-4">
+                <p
+                  class="h-10 w-10 mr-3 rounded-full bg-gray-100"
+                >
+                  <img
+                    v-if="app.queries.imageForFeed(feed)"
+                    class="h-10 w-10"
+                    :src="app.queries.imageForFeed(feed)"
+                  >
+                </p>
+
                 <div class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between">
                   <div class="truncate">
                     <div class="flex text-sm">
