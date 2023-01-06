@@ -1,4 +1,4 @@
-import { mountApp, describe, test, responses } from './helper.js'
+import { mountApp, describe, test, responses, story } from './helper.js'
 
 describe('Visit the changelog', () => {
   const remoteEntryName = 'Remote title'
@@ -13,7 +13,7 @@ describe('Visit the changelog', () => {
     await app.click('[aria-label="Visit Changelog"]')
   })
 
-  test('shows the remote title', () => {
+  story('shows the remote title', () => {
     expect(app.find('[aria-label="Page title"]').text()).toEqual('Changelog')
   })
 

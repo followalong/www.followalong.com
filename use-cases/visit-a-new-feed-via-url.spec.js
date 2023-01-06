@@ -1,4 +1,4 @@
-import { mountApp, describe, test, responses } from './helper.js'
+import { mountApp, describe, test, responses, story } from './helper.js'
 
 describe('Visit a new feed via URL', () => {
   const expectedFeed = {
@@ -18,13 +18,11 @@ describe('Visit a new feed via URL', () => {
     })
   })
 
-  test('shows the feed title', () => {
+  story('shows the feed title', () => {
     expect(app.find('[aria-label="Page title"]').text()).toEqual(expectedFeed.title)
   })
 
   test('shows the entries', () => {
     expect(app.find('[aria-label="Entry title"]').text()).toEqual(expectedFeed.entries[0].title)
   })
-
-  // test('shows the feed image')
 })

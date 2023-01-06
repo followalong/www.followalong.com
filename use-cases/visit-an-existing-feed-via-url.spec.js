@@ -1,4 +1,4 @@
-import { mountApp, describe, test, responses } from './helper.js'
+import { mountApp, describe, test, responses, story } from './helper.js'
 
 describe('Visit an existing feed via URL', () => {
   const localEntryTitle = 'Local entry'
@@ -30,7 +30,7 @@ describe('Visit an existing feed via URL', () => {
     })
   })
 
-  test('shows the feed title', () => {
+  story('shows the feed title', () => {
     expect(app.find('[aria-label="Page title"]').text()).toEqual(expectedFeed.title)
   })
 
@@ -41,6 +41,4 @@ describe('Visit an existing feed via URL', () => {
   test('shows the remote entries', () => {
     expect(app.findAll('[aria-label="Entry title"]')[1].text()).toEqual(expectedFeed.entries[0].title)
   })
-
-  // test('shows the feed image')
 })
