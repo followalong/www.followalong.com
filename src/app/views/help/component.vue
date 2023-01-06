@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="Settings">
+    <PageTitle title="Help">
       <template #description>
         <p>Get support for Follow Along</p>
       </template>
@@ -14,7 +14,7 @@
       </template>
       <template #content>
         <p>
-          Email us at followalong@protonmail.com.
+          Email us at followalong@protonmail.com for a quick response.
         </p>
       </template>
     </PageCard>
