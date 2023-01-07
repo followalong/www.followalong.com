@@ -207,6 +207,10 @@ class Queries {
 
     return JSON.stringify(a.data) !== JSON.stringify(b)
   }
+
+  isEntryRead (entry) {
+    return entry.readAt
+  }
 }
 
 export default Queries

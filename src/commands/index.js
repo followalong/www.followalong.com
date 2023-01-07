@@ -136,6 +136,14 @@ class Commands {
       resolve()
     })
   }
+
+  markEntryAsReadForIdentity (identity, entry) {
+    this.track(identity, 'entries', entry.id, 'read')
+  }
+
+  markEntryAsUnreadForIdentity (identity, entry) {
+    this.track(identity, 'entries', entry.id, 'unread')
+  }
 }
 
 export default Commands

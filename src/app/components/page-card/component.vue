@@ -6,9 +6,7 @@
     <div class="bg-white shadow sm:rounded-lg">
       <div class="px-4 py-5 sm:px-6">
         <div class="flex justify-between">
-          <div class="flex space-x-3 flex-shrink-0">
-            <slot name="title" />
-          </div>
+          <slot name="title" />
         </div>
       </div>
       <div :class="`border-t border-gray-200 ${hasPadding ? 'px-4 py-5 sm:px-6' : ''} max-w-none`">

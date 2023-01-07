@@ -21,6 +21,28 @@ export default {
   'entries.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because feedId is outside of data; OK because these are immutable for now
   'entries.update': EVENT_WITH_POSSIBLE_NESTED_DATA('UPDATE'),
   'entries.delete': EventStore.RUNNERS.DELETE,
+  'entries.read': (store, event) => {
+    const collection = store[event.collection]
+    const existing = collection.find((item) => item.id === event.objectId)
+
+    if (!existing) {
+      console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+      return
+    }
+
+    existing.readAt = event.time
+  },
+  'entries.unread': (store, event) => {
+    const collection = store[event.collection]
+    const existing = collection.find((item) => item.id === event.objectId)
+
+    if (!existing) {
+      console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+      return
+    }
+
+    delete existing.readAt
+  },
   'identities.create': EventStore.RUNNERS.CREATE,
   'identities.delete': EventStore.RUNNERS.DELETE
 }
