@@ -30,7 +30,31 @@ class Commands {
         id: 'about',
         title: 'Twitter is done. Long live RSS.',
         published: new Date().toISOString(),
-        content: 'Welcome to new.'
+        content: `
+        <p>
+          It's not <em>just</em> Twitter. It's all the rest of the them as well!
+        </p>
+
+        <p>
+          If you're not tech-savvy, Follow Along is a place where you can follow the people and communities that you care about.
+          The underlying technology of Follow Along (RSS feeds) has been around for <em>decades</em>, so a large chunk of the internet is already here – calendars, blogs, bizapps, and some traditional social media too!
+        </p>
+
+        <p>
+          If you're interested in the tech specs, Follow Along is a 100%-client-side PWA that fetches RSS feeds for you.
+          We don't track <em>anything</em> about you or the feeds you follow.
+          Have a look at our <a href="https://github.com/followalong/www.followalong.com">open source code</a> (and host it yourself!)
+        </p>
+
+        <p>
+          Finally, we have big plans that are laid out in <a href="https://changelog.followalong.com/2022/12/23/the-path-to-v3">The Path to V3 in 2023</a>.
+          We'd ❤️ to have you follow along for the ride!
+        </p>
+
+        <p>
+          Cheers!
+        </p>
+        `.trim()
       })
     }
 
