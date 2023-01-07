@@ -15,10 +15,10 @@ const EVENT_WITH_POSSIBLE_NESTED_DATA = (type) => {
 }
 
 export default {
-  'feeds.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because URL is outside of data; OK because these are immutable for now
+  'feeds.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because URL is outside of data; OK because URL is immutable for now
   'feeds.update': EVENT_WITH_POSSIBLE_NESTED_DATA('UPDATE'),
   'feeds.delete': EventStore.RUNNERS.DELETE,
-  'entries.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because feedId is outside of data; OK because these are immutable for now
+  'entries.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because feedId is outside of data; OK because feedId is immutable for now
   'entries.update': EVENT_WITH_POSSIBLE_NESTED_DATA('UPDATE'),
   'entries.delete': EventStore.RUNNERS.DELETE,
   'entries.read': (store, event) => {

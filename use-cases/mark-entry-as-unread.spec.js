@@ -14,21 +14,22 @@ describe('Mark entry as read', () => {
             0/identities/abc123/create/v2.1
             1/feeds/543/create/v2.1 {"url":"https://foo.bar/rss.xml","data":{"title":"Feed title"}}
             2/entries/${entryId}/create/v2.1 {"feedId":"543","data":{"guid":"987","title":"Entry title"}}
+            3/entries/${entryId}/read/v2.1
           `
         }
       }
     })
 
-    await app.click(`[aria-label="Mark as read ${entryId}"]`)
+    await app.click(`[aria-label="Mark as unread ${entryId}"]`)
   })
 
   story('toggles the marker', () => {
-    expect(app.findAll(`[aria-label="Mark as unread ${entryId}"]`).length).toEqual(1)
+    expect(app.findAll(`[aria-label="Mark as read ${entryId}"]`).length).toEqual(1)
   })
 
-  event('entries.read', {
+  event('entries.unread', {
     collection: 'entries',
-    action: 'read',
+    action: 'unread',
     objectId: entryId
   }, () => { return { app } })
 })
