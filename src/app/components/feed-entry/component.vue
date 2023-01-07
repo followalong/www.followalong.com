@@ -38,6 +38,17 @@
             <span :title="app.queries.dateForEntry(entry)">
               {{ app.queries.niceDateForEntry(entry) }}
             </span>
+            <span v-if="app.queries.linkForEntry(entry)">
+              &nbsp;
+              <span class="font-medium">·</span>
+                &nbsp;
+              <a
+                :href="app.queries.linkForEntry(entry)"
+                target="_blank"
+              >
+                Source
+              </a>
+            </span>
           </div>
         </div>
       </div>
