@@ -137,6 +137,6 @@
 
 <script>
 export default {
-  props: ['app']
+  props: ['app', 'identity']
 }
 </script>

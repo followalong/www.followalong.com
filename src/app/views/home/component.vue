@@ -1,5 +1,11 @@
 <template>
   <div>
+    <NewBar
+      :app="app"
+      :identity="identity"
+      :entries="entries"
+    />
+
     <PageTitle title="Welcome home!">
       <template #description>
         Sorting by most recent
@@ -7,7 +13,7 @@
     </PageTitle>
 
     <FeedEntry
-      v-for="entry in app.queries.entriesForIdentity(identity, limit)"
+      v-for="entry in shownEntries"
       :key="app.queries.keyForEntry(entry)"
       :app="app"
       :identity="identity"
@@ -18,6 +24,7 @@
 
 <script>
 import FeedEntry from '../../components/feed-entry/component.vue'
+import NewBar from '../../components/new-bar/component.vue'
 import PageTitle from '../../components/page-title/component.vue'
 import PullToRefresh from 'pulltorefreshjs'
 
@@ -27,6 +34,7 @@ const LIMIT = 4
 export default {
   components: {
     FeedEntry,
+    NewBar,
     PageTitle
   },
 
@@ -39,6 +47,16 @@ export default {
     }
   },
 
+  computed: {
+    entries () {
+      return this.app.queries.entriesForIdentity(this.identity)
+    },
+
+    shownEntries () {
+      return this.app.queries.filterNonNewEntries(this.entries).slice(0, this.limit)
+    }
+  },
+
   beforeMount () {
     if (this.$route.query.feedUrl) {
       return this.$router.push(`/${this.$route.query.feedUrl}`)
@@ -47,6 +65,7 @@ export default {
 
   mounted () {
     window.addEventListener('scroll', this.infiniteScrollListener)
+    this.app.commands.showNewEntries()
     this.startPullToRefresh()
   },
 

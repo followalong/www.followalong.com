@@ -149,7 +149,7 @@
 
 <script>
 export default {
-  props: ['app'],
+  props: ['app', 'identity'],
   data () {
     return {
       q: ''

@@ -1,5 +1,11 @@
 <template>
   <div v-if="feed || remoteFeed">
+    <NewBar
+      :app="app"
+      :identity="identity"
+      :entries="existingEntries"
+    />
+
     <PageTitle :title="app.queries.titleForFeed(feed)">
       <template #description>
         <a
@@ -35,11 +41,13 @@
 <script>
 import SORT_BY_TIME from '../../../queries/sorters/sort-by-time.js'
 import FeedEntry from '../../components/feed-entry/component.vue'
+import NewBar from '../../components/new-bar/component.vue'
 import PageTitle from '../../components/page-title/component.vue'
 
 export default {
   components: {
     FeedEntry,
+    NewBar,
     PageTitle
   },
 
@@ -72,8 +80,18 @@ export default {
       return (this.remoteFeed.entries || []).sort(SORT_BY_TIME(this.app.queries))
     },
 
+    existingEntries () {
+      return this.existingFeed ? this.app.queries.entriesForFeed(this.identity, this.existingFeed) : []
+    },
+
     entries () {
-      return this.existingFeed ? this.app.queries.entriesForFeed(this.identity, this.existingFeed) : this.remoteEntries
+      if (!this.existingFeed) {
+        return this.remoteEntries
+      }
+
+      return this.app.queries.filterNonNewEntries(
+        this.existingEntries
+      )
     }
   },
 
@@ -84,6 +102,7 @@ export default {
   },
 
   mounted () {
+    this.app.commands.showNewEntries()
     this.fetchFeed()
   },
 

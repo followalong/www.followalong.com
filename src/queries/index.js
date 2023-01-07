@@ -45,15 +45,9 @@ class Queries {
     return this.state.findAll(null, 'identities')
   }
 
-  entriesForIdentity (identity, limit = null) {
-    const entries = this.state.findAll(identity.id, 'entries')
+  entriesForIdentity (identity) {
+    return this.state.findAll(identity.id, 'entries')
       .sort(SORT_BY_TIME(this))
-
-    if (limit) {
-      return entries.slice(0, limit)
-    }
-
-    return entries
   }
 
   entriesForFeed (identity, feed) {
@@ -210,6 +204,16 @@ class Queries {
 
   isEntryRead (entry) {
     return entry.readAt
+  }
+
+  filterNewEntries (entries) {
+    return entries
+      .filter((e) => e.createdAt > this.lastBackgroundFetch)
+  }
+
+  filterNonNewEntries (entries) {
+    return entries
+      .filter((e) => e.createdAt <= this.lastBackgroundFetch)
   }
 }
 

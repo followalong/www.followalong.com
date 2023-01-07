@@ -189,5 +189,6 @@ export {
   responses,
   story,
   event,
-  storage
+  storage,
+  vi
 }

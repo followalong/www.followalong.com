@@ -6,13 +6,19 @@
       aria-hidden="true"
     />
     <div class="flex min-h-screen flex-col">
-      <TopBar :app="app" />
+      <TopBar
+        :app="app"
+        :identity="identity"
+      />
 
       <!-- 3 column wrapper -->
       <div class="w-full max-w-5xl flex-grow lg:flex">
         <!-- Left sidebar & main wrapper -->
         <div class="min-w-0 pl-7 flex-1 bg-white xl:flex">
-          <SideBar :app="app" />
+          <SideBar
+            :app="app"
+            :identity="identity"
+          />
 
           <div
             class="bg-gray-50 lg:min-w-0 lg:flex-1"
@@ -74,17 +80,23 @@ export default {
           window.confirm(question) ? resolve() : reject(new Error('Not confirmed'))
         })
       }
+    },
+    window: {
+      type: Object,
+      default () { return window }
     }
   },
   data () {
     window.followAlong = this
     const queries = new Queries({
-      state: this.state
+      state: this.state,
+      lastBackgroundFetch: Date.now()
     })
     const commands = new Commands({
       fetch: this.fetch,
       state: this.state,
-      queries
+      queries,
+      window
     })
 
     return {

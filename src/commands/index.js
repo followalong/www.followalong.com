@@ -168,6 +168,19 @@ class Commands {
   markEntryAsUnreadForIdentity (identity, entry) {
     this.track(identity, 'entries', entry.id, 'unread')
   }
+
+  showNewEntries () {
+    this.queries.lastBackgroundFetch = Date.now()
+    this.scrollToTop()
+  }
+
+  scrollToTop () {
+    this.window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth'
+    })
+  }
 }
 
 export default Commands
