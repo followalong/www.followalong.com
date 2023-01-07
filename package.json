@@ -59,6 +59,7 @@
     "vite-plugin-pwa": "^0.14.1",
     "vitest": "^0.26.1",
     "vue-jest": "^5.0.0-0",
+    "workbox-core": "^6.5.4",
     "workbox-precaching": "^6.5.4"
   },
   "browserslist": [

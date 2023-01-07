@@ -1,9 +1,10 @@
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching'
+import { clientsClaim } from 'workbox-core'
 
-self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting()
-})
+self.skipWaiting()
 
-cleanupOutdatedCaches()
+clientsClaim()
 
 precacheAndRoute(self.__WB_MANIFEST)
+
+cleanupOutdatedCaches()
