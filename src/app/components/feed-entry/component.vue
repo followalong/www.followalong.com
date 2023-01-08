@@ -1,5 +1,5 @@
 <template>
-  <PageCard>
+  <PageCard :has-padding="false">
     <template #title>
       <div class="flex space-x-3 flex-shrink-0">
         <router-link
@@ -73,8 +73,18 @@
       </a>
     </template>
     <template #content>
+      <ImagePlayer
+        :app="app"
+        :identity="identity"
+        :entry="entry"
+      />
+      <VideoPlayer
+        :app="app"
+        :identity="identity"
+        :entry="entry"
+      />
       <div
-        class="prose max-w-none"
+        class="prose max-w-none px-4 py-5 sm:px-6"
         v-html="app.queries.contentForEntry(entry)"
       />
     </template>
@@ -83,10 +93,14 @@
 
 <script>
 import PageCard from '../../components/page-card/component.vue'
+import ImagePlayer from '../../components/image-player/component.vue'
+import VideoPlayer from '../../components/video-player/component.vue'
 
 export default {
   components: {
-    PageCard
+    PageCard,
+    ImagePlayer,
+    VideoPlayer
   },
   props: ['app', 'identity', 'entry', 'feed'],
   computed: {

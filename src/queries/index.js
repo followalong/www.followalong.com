@@ -5,6 +5,7 @@ import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
 import sanitizeContent from './presenters/sanitize-content.js'
 
 const parser = new XMLParser({
+  ignoreAttributes: false,
   isArray: (name, jpath, isLeafNode, isAttribute) => {
     return ['entry', 'item'].indexOf(name) !== -1
   }
@@ -214,6 +215,19 @@ class Queries {
   filterNonNewEntries (entries) {
     return entries
       .filter((e) => e.createdAt <= this.lastBackgroundFetch)
+  }
+
+  videoForEntry (entry) {
+    if (getAttr(entry, 'media:content.@_medium') === 'video') {
+      return getAttr(entry, 'media:content.@_url')
+    }
+  }
+
+  imageForEntry (entry) {
+    console.log(entry)
+    if (getAttr(entry, 'media:content.@_medium') === 'image') {
+      return getAttr(entry, 'media:content.@_url')
+    }
   }
 }
 
