@@ -1,5 +1,6 @@
 import { XMLParser } from 'fast-xml-parser'
 import SORT_BY_NAME from './sorters/sort-by-name.js'
+import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
 import SORT_BY_TIME from './sorters/sort-by-time.js'
 import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
 import sanitizeContent from './presenters/sanitize-content.js'
@@ -102,7 +103,7 @@ class Queries {
 
   feedsForIdentity (identity) {
     return this.state.findAll(identity.id, 'feeds')
-      .sort(SORT_BY_NAME(this))
+      .sort(SORT_BY_FEED_TITLE(this))
   }
 
   lastUpdatedForFeed (feed) {
@@ -224,7 +225,6 @@ class Queries {
   }
 
   imageForEntry (entry) {
-    console.log(entry)
     if (getAttr(entry, 'media:content.@_medium') === 'image') {
       return getAttr(entry, 'media:content.@_url')
     }
