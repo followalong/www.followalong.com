@@ -1,3 +1,3 @@
 export default (a, b) => {
-  return a.order - b.order
+  return a.data.order - b.data.order
 }
