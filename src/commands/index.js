@@ -10,7 +10,6 @@ class Commands {
   addIdentity (identity) {
     identity.name = identity.name || 'My Account'
     identity.id = this.state.createDB(null, {})
-    identity.defaultSignal = 'home'
 
     this.track(identity, 'identities', identity.id, 'create', identity)
 
@@ -24,7 +23,8 @@ class Commands {
     this.addSignalToIdentity(identity, {
       title: 'Home',
       description: 'Sorting all entries by most recent',
-      permalink: identity.defaultSignal,
+      permalink: 'home',
+      order: 0,
       icon: `
         <svg
           xmlns="http://www.w3.org/2000/svg"

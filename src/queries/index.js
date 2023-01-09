@@ -1,5 +1,5 @@
 import { XMLParser } from 'fast-xml-parser'
-import SORT_BY_NAME from './sorters/sort-by-name.js'
+import SORT_BY_ORDER from './sorters/sort-by-order.js'
 import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
 import SORT_BY_TIME from './sorters/sort-by-time.js'
 import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
@@ -236,7 +236,7 @@ class Queries {
 
   signalsForIdentity (identity) {
     return this.state.findAll(identity.id, 'signals')
-      .sort(SORT_BY_NAME(this))
+      .sort(SORT_BY_ORDER)
   }
 
   permalinkForSignal (signal) {
@@ -261,7 +261,7 @@ class Queries {
   }
 
   defaultSignalForIdentity (identity) {
-    return this.signalForIdentity(identity, identity.defaultSignal)
+    return this.signalsForIdentity(identity)[0]
   }
 }
 

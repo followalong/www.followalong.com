@@ -61,9 +61,15 @@ export default {
     }
   },
 
+  watch: {
+    signal () {
+      this.app.commands.showNewEntries()
+    }
+  },
+
   mounted () {
-    window.addEventListener('scroll', this.infiniteScrollListener)
     this.app.commands.showNewEntries()
+    window.addEventListener('scroll', this.infiniteScrollListener)
     this.startPullToRefresh()
   },
 
