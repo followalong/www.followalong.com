@@ -44,5 +44,8 @@ export default {
     delete existing.readAt
   },
   'identities.create': EventStore.RUNNERS.CREATE,
-  'identities.delete': EventStore.RUNNERS.DELETE
+  'identities.delete': EventStore.RUNNERS.DELETE,
+  'signals.create': EventStore.RUNNERS.CREATE,
+  'signals.update': EventStore.RUNNERS.UPDATE,
+  'signals.delete': EventStore.RUNNERS.DELETE
 }

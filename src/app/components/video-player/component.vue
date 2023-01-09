@@ -1,11 +1,11 @@
 <template>
   <div
     v-if="src"
-    class="aspect-ratio-box -mt-1"
+    class="-mt-1"
   >
     <iframe
       :src="src"
-      class="aspect-ratio-box-inside"
+      class="w-full aspect-video"
       frameborder="0"
       allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
       allowfullscreen

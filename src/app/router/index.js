@@ -4,6 +4,7 @@ import Feed from '../views/feed/component.vue'
 import Following from '../views/following/component.vue'
 import Help from '../views/help/component.vue'
 import Settings from '../views/settings/component.vue'
+import Signal from '../views/signal/component.vue'
 
 const routes = [
   {
@@ -19,6 +20,11 @@ const routes = [
   {
     path: '/following',
     component: Following,
+    props: true
+  },
+  {
+    path: '/signals/:signal',
+    component: Signal,
     props: true
   },
   {

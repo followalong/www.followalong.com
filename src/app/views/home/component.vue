@@ -1,114 +1,23 @@
 <template>
-  <div>
-    <NewBar
-      :app="app"
-      :identity="identity"
-      :entries="entries"
-    />
-
-    <PageTitle title="Welcome home!">
-      <template #description>
-        Sorting by most recent
-      </template>
-    </PageTitle>
-
-    <FeedEntry
-      v-for="entry in shownEntries"
-      :key="app.queries.keyForEntry(entry)"
-      :app="app"
-      :identity="identity"
-      :entry="entry"
-    />
-  </div>
+  <div />
 </template>
 
 <script>
-import FeedEntry from '../../components/feed-entry/component.vue'
-import NewBar from '../../components/new-bar/component.vue'
-import PageTitle from '../../components/page-title/component.vue'
-import PullToRefresh from 'pulltorefreshjs'
-
-const DISTANCE_FROM_BOTTOM = 500
-const LIMIT = 4
-
 export default {
-  components: {
-    FeedEntry,
-    NewBar,
-    PageTitle
-  },
-
   props: ['app', 'identity'],
-
-  data () {
-    return {
-      limit: LIMIT,
-      infiniteScrollListener: this.infiniteScroll()
-    }
-  },
-
-  computed: {
-    entries () {
-      return this.app.queries.entriesForIdentity(this.identity)
-    },
-
-    shownEntries () {
-      return this.app.queries.filterNonNewEntries(this.entries).slice(0, this.limit)
-    }
-  },
 
   beforeMount () {
     if (this.$route.query.feedUrl) {
       return this.$router.push(`/${this.$route.query.feedUrl}`)
     }
-  },
 
-  mounted () {
-    window.addEventListener('scroll', this.infiniteScrollListener)
-    this.app.commands.showNewEntries()
-    this.startPullToRefresh()
-  },
+    let signal = this.app.queries.signalForIdentity(this.identity, this.$route.query.feedUrl)
 
-  unmounted () {
-    window.removeEventListener('scroll', this.infiniteScrollListener)
-    this.endPullToRefresh()
-  },
-
-  methods: {
-    startPullToRefresh () {
-      PullToRefresh.init({
-        mainElement: 'body',
-        onRefresh: () => {
-          setTimeout(() => this.app.commands.fetchFeedsForIdentity(this.identity), 100)
-        }
-      })
-    },
-
-    endPullToRefresh () {
-      PullToRefresh.destroyAll()
-    },
-
-    infiniteScroll () {
-      let LOADING
-
-      return () => {
-        if (LOADING) {
-          return
-        }
-
-        const documentHeight = document.body.scrollHeight
-        const windowHeight = window.innerHeight || document.documentElement.clientHeight
-        const windowScrolled = Math.max(window.pageYOffset || 0, document.documentElement.scrollTop)
-
-        if (documentHeight - windowScrolled - windowHeight < DISTANCE_FROM_BOTTOM) {
-          this.limit += LIMIT
-
-          setTimeout(function () {
-            LOADING = false
-          }, 100)
-        }
-      }
+    if (!signal) {
+      signal = this.app.queries.defaultSignalForIdentity(this.identity)
     }
+
+    return this.$router.push(`/signals/${this.app.queries.permalinkForSignal(signal)}`)
   }
 }
 </script>

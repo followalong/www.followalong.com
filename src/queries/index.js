@@ -52,6 +52,10 @@ class Queries {
       .sort(SORT_BY_TIME(this))
   }
 
+  entriesForSignal (identity, signal) {
+    return this.entriesForIdentity(identity)
+  }
+
   entriesForFeed (identity, feed) {
     return this.state.findAll(identity.id, 'entries')
       .filter((e) => e.feedId === feed.id)
@@ -228,6 +232,36 @@ class Queries {
     if (getAttr(entry, 'media:content.@_medium') === 'image') {
       return getAttr(entry, 'media:content.@_url')
     }
+  }
+
+  signalsForIdentity (identity) {
+    return this.state.findAll(identity.id, 'signals')
+      .sort(SORT_BY_NAME(this))
+  }
+
+  permalinkForSignal (signal) {
+    return getAttr(signal, 'permalink')
+  }
+
+  iconForSignal (signal) {
+    return getAttr(signal, 'icon')
+  }
+
+  titleForSignal (signal) {
+    return getAttr(signal, 'title')
+  }
+
+  descriptionForSignal (signal) {
+    return getAttr(signal, 'description')
+  }
+
+  signalForIdentity (identity, permalink) {
+    return this.signalsForIdentity(identity)
+      .find((s) => this.permalinkForSignal(s) === permalink)
+  }
+
+  defaultSignalForIdentity (identity) {
+    return this.signalForIdentity(identity, identity.defaultSignal)
   }
 }
 

@@ -27,7 +27,7 @@ describe('Forget an identity', () => {
   })
 
   test('redirects back to the home page', () => {
-    expect(app.find('[aria-label="Page title"]').text()).toEqual('Welcome home!')
+    expect(app.find('[aria-label="Page title"]').text()).toEqual('Home')
   })
 
   test('removes the identity from the config database', async () => {
