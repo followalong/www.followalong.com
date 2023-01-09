@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="Following">
+    <PageTitle title="Feeds you follow">
       <template #description>
         <p>The feeds you follow</p>
       </template>
@@ -10,7 +10,7 @@
     <PageCard :has-padding="false">
       <template #title>
         <p class="font-medium text-gray-900">
-          Feeds you follow
+          Following
         </p>
       </template>
       <template #content>

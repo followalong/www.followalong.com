@@ -33,7 +33,7 @@ describe('See my feeds', () => {
   })
 
   story('shows the feeds I am following', () => {
-    expect(app.find('[aria-label="Page title"]').text()).toEqual('Following')
+    expect(app.find('[aria-label="Page title"]').text()).toEqual('Feeds you follow')
     expect(app.text()).toContain(expectedFeed.title)
   })
 })
