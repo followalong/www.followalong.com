@@ -53,7 +53,38 @@ class Queries {
   }
 
   entriesForSignal (identity, signal) {
-    return this.entriesForIdentity(identity)
+    const queries = this // eslint-disable-line no-unused-vars
+    let entries = this.entriesForIdentity(identity)
+    let filter
+    let sort
+
+    if (signal && signal.data && signal.data.filter) {
+      try {
+        filter = eval(signal.data.filter) // eslint-disable-line no-eval
+      } catch (e) { }
+
+      if (typeof filter === 'function') {
+        entries = entries.filter(filter)
+      }
+    }
+
+    if (signal && signal.data && signal.data.sort) {
+      try {
+        sort = eval(signal.data.sort) // eslint-disable-line no-eval
+      } catch (e) { }
+
+      if (typeof sort === 'function') {
+        entries = entries.sort(sort)
+      }
+    }
+
+    return entries
+  }
+
+  unreadEntriesForSignalLength (identity, signal) {
+    return this.entriesForSignal(identity, signal)
+      .filter((entry) => !this.isEntryRead(entry))
+      .length
   }
 
   entriesForFeed (identity, feed) {

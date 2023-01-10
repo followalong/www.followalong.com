@@ -36,15 +36,50 @@ class Commands {
           <path d="M12 5.432l8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 01-.75-.75v-4.5a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75V21a.75.75 0 01-.75.75H5.625a1.875 1.875 0 01-1.875-1.875v-6.198a2.29 2.29 0 00.091-.086L12 5.43z" />
         </svg>
       `,
-      algorithm: `
-        return (a, b) => {
-          if (queries.isEntryRead(a) && !queries.isEntryRead(b)) return 1
-          if (!queries.isEntryRead(a) && queries.isEntryRead(b)) return -1
+      filter: `
+        (entry) => {
+          return !entry.readAt
+        }
+      `.trim(),
+      sort: `
+        (a, b) => {
           if (queries.dateForEntry(a).getTime() < queries.dateForEntry(b).getTime()) return 1
           if (queries.dateForEntry(b).getTime() < queries.dateForEntry(a).getTime()) return -1
           return 0
         }
-      `
+      `.trim()
+    })
+    this.addSignalToIdentity(identity, {
+      title: 'Done',
+      description: 'Entries that have recently been marked as done',
+      permalink: 'done',
+      order: 1,
+      icon: `
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          class="h-5 w-5 flex-shrink-0 text-gray-300 mr-3"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      `,
+      filter: `
+        (entry) => {
+          return !!entry.readAt
+        }
+      `.trim(),
+      sort: `
+        (a, b) => {
+          if (a.readAt < b.readAt) return 1
+          if (a.readAt > b.readAt) return -1
+          return 0
+        }
+      `.trim()
     })
   }
 
