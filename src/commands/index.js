@@ -40,12 +40,56 @@ class Commands {
         (entry) => {
           return !entry.readAt
         }
-      `.trim(),
-      sort: `
-        (a, b) => {
-          if (queries.dateForEntry(a).getTime() < queries.dateForEntry(b).getTime()) return 1
-          if (queries.dateForEntry(b).getTime() < queries.dateForEntry(a).getTime()) return -1
-          return 0
+      `.trim()
+    })
+    this.addSignalToIdentity(identity, {
+      title: 'Watch',
+      description: 'Entries that have videos',
+      permalink: 'watch',
+      order: 1,
+      icon: `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 flex-shrink-0 text-gray-300 mr-3">
+          <path d="M3.25 4A2.25 2.25 0 001 6.25v7.5A2.25 2.25 0 003.25 16h7.5A2.25 2.25 0 0013 13.75v-7.5A2.25 2.25 0 0010.75 4h-7.5zM19 4.75a.75.75 0 00-1.28-.53l-3 3a.75.75 0 00-.22.53v4.5c0 .199.079.39.22.53l3 3a.75.75 0 001.28-.53V4.75z" />
+        </svg>
+      `,
+      filter: `
+        (entry) => {
+          return !entry.readAt && queries.videoForEntry(entry)
+        }
+      `.trim()
+    })
+    this.addSignalToIdentity(identity, {
+      title: 'Listen',
+      description: 'Entries that have audio',
+      permalink: 'listen',
+      order: 2,
+      icon: `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 flex-shrink-0 text-gray-300 mr-3">
+          <path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z" />
+          <path d="M5.5 9.643a.75.75 0 00-1.5 0V10c0 3.06 2.29 5.585 5.25 5.954V17.5h-1.5a.75.75 0 000 1.5h4.5a.75.75 0 000-1.5h-1.5v-1.546A6.001 6.001 0 0016 10v-.357a.75.75 0 00-1.5 0V10a4.5 4.5 0 01-9 0v-.357z" />
+        </svg>
+      `,
+      filter: `
+        (entry) => {
+          return !entry.readAt && queries.audioForEntry(entry)
+        }
+      `.trim()
+    })
+    this.addSignalToIdentity(identity, {
+      title: 'Read',
+      description: 'Entries that have reading content',
+      permalink: 'read',
+      order: 3,
+      icon: `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 flex-shrink-0 text-gray-300 mr-3">
+          <path d="M10.75 16.82A7.462 7.462 0 0115 15.5c.71 0 1.396.098 2.046.282A.75.75 0 0018 15.06v-11a.75.75 0 00-.546-.721A9.006 9.006 0 0015 3a8.963 8.963 0 00-4.25 1.065V16.82zM9.25 4.065A8.963 8.963 0 005 3c-.85 0-1.673.118-2.454.339A.75.75 0 002 4.06v11a.75.75 0 00.954.721A7.506 7.506 0 015 15.5c1.579 0 3.042.487 4.25 1.32V4.065z" />
+        </svg>
+      `,
+      filter: `
+        (entry) => {
+          return !entry.readAt &&
+            !queries.videoForEntry(entry) &&
+            !queries.audioForEntry(entry)
         }
       `.trim()
     })
@@ -53,7 +97,7 @@ class Commands {
       title: 'Done',
       description: 'Entries that have recently been marked as done',
       permalink: 'done',
-      order: 1,
+      order: 4,
       icon: `
         <svg
           xmlns="http://www.w3.org/2000/svg"

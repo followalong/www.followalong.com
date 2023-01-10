@@ -76,6 +76,8 @@ class Queries {
       if (typeof sort === 'function') {
         entries = entries.sort(sort)
       }
+    } else {
+      entries = entries.sort(SORT_BY_TIME)
     }
 
     return entries
@@ -255,6 +257,12 @@ class Queries {
 
   videoForEntry (entry) {
     if (getAttr(entry, 'media:content.@_medium') === 'video') {
+      return getAttr(entry, 'media:content.@_url')
+    }
+  }
+
+  audioForEntry (entry) {
+    if (getAttr(entry, 'media:content.@_medium') === 'audio') {
       return getAttr(entry, 'media:content.@_url')
     }
   }
