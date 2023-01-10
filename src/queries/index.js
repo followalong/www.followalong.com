@@ -2,6 +2,7 @@ import { XMLParser } from 'fast-xml-parser'
 import SORT_BY_ORDER from './sorters/sort-by-order.js'
 import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
 import SORT_BY_TIME from './sorters/sort-by-time.js'
+import SORT_BY_TIME_AND_READ from './sorters/sort-by-time-and-read.js'
 import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
 import sanitizeContent from './presenters/sanitize-content.js'
 
@@ -91,7 +92,7 @@ class Queries {
   entriesForFeed (identity, feed) {
     return this.state.findAll(identity.id, 'entries')
       .filter((e) => e.feedId === feed.id)
-      .sort(SORT_BY_TIME(this))
+      .sort(SORT_BY_TIME_AND_READ(this))
   }
 
   lastEntryForFeed (identity, feed) {
@@ -142,6 +143,11 @@ class Queries {
       .sort(SORT_BY_FEED_TITLE(this))
   }
 
+  unpausedFeedsForIdentity (identity) {
+    return this.feedsForIdentity(identity)
+      .filter((feed) => !this.isFeedPaused(feed))
+  }
+
   lastUpdatedForFeed (feed) {
     return feed.updatedAt
   }
@@ -150,7 +156,7 @@ class Queries {
     const OUTDATED_MINUTES = 15
     const outdatedDate = Date.now() - (OUTDATED_MINUTES * (60 * 1000))
 
-    return this.feedsForIdentity(identity)
+    return this.unpausedFeedsForIdentity(identity)
       .filter((feed) => this.lastUpdatedForFeed(feed) < outdatedDate)
       .sort(SORT_BY_NEED_TO_UPDATE(this))
   }
@@ -242,6 +248,10 @@ class Queries {
 
   isEntryRead (entry) {
     return entry.readAt
+  }
+
+  isFeedPaused (feed) {
+    return feed.pausedAt
   }
 
   filterNewEntries (entries) {

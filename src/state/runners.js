@@ -18,6 +18,28 @@ export default {
   'feeds.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because URL is outside of data; OK because URL is immutable for now
   'feeds.update': EVENT_WITH_POSSIBLE_NESTED_DATA('UPDATE'),
   'feeds.delete': EventStore.RUNNERS.DELETE,
+  'feeds.pause': (store, event) => {
+    const collection = store[event.collection]
+    const existing = collection.find((item) => item.id === event.objectId)
+
+    if (!existing) {
+      console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+      return
+    }
+
+    existing.pausedAt = event.time
+  },
+  'feeds.unpause': (store, event) => {
+    const collection = store[event.collection]
+    const existing = collection.find((item) => item.id === event.objectId)
+
+    if (!existing) {
+      console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+      return
+    }
+
+    delete existing.pausedAt
+  },
   'entries.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because feedId is outside of data; OK because feedId is immutable for now
   'entries.update': EVENT_WITH_POSSIBLE_NESTED_DATA('UPDATE'),
   'entries.delete': EventStore.RUNNERS.DELETE,

@@ -236,13 +236,13 @@ class Commands {
   fetchOutdatedFeeds (identity) {
     // TODO: We can use the outdated feeds once we have a "last fetched at" mechanism
     // const feeds = this.queries.findOutdatedFeedsForIdentity(identity)
-    const feeds = this.queries.feedsForIdentity(identity)
+    const feeds = this.queries.unpausedFeedsForIdentity(identity)
 
     return this._fetchFeedsInSeries(identity, feeds)
   }
 
   fetchFeedsForIdentity (identity) {
-    const feeds = this.queries.feedsForIdentity(identity)
+    const feeds = this.queries.unpausedFeedsForIdentity(identity)
 
     return this._fetchFeedsInSeries(identity, feeds)
   }
@@ -301,6 +301,14 @@ class Commands {
 
   addSignalToIdentity (identity, data) {
     this.track(identity, 'signals', null, 'create', { data })
+  }
+
+  pauseFeedForIdentity (identity, feed) {
+    this.track(identity, 'feeds', feed.id, 'pause')
+  }
+
+  unpauseFeedForIdentity (identity, feed) {
+    this.track(identity, 'feeds', feed.id, 'unpause')
   }
 }
 

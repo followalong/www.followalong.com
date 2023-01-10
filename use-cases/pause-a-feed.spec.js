@@ -1,16 +1,23 @@
-import { /* mountApp, buildAddonToRespondWith, rawRSSResponse, */ describe /* test */ } from './helper.js'
+import { mountApp, describe, story, event } from './helper.js'
 
-describe('Pause a new feed', () => {
-  // const app = await mountApp()
-  // await app.click('[aria-label="Feeds"]')
-  // expect(app.text()).toContain('Dashboard')
+describe('Pause a feed', () => {
+  let app
 
-  describe('from the home page', () => {
-    it('creates the event AND stores it')
-    // event('journeys.create', {
-    //   collection: 'journeys',
-    //   action: 'create',
-    //   data: { color, name }
-    // }, () => { return { app } })
+  beforeEach(async () => {
+    app = await mountApp({
+      path: '/https://changelog.followalong.com/feed.xml'
+    })
+
+    await app.click('[aria-label="Show feed menu"]')
+    await app.click('[aria-label="Pause feed"]')
   })
+
+  story('pauses the feed', async () => {
+    expect(app.findAll('[aria-label="Unpause feed"]').length).toEqual(1)
+  })
+
+  event('feeds.pause', {
+    collection: 'feeds',
+    action: 'pause'
+  }, () => { return { app } })
 })
