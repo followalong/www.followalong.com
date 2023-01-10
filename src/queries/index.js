@@ -13,9 +13,12 @@ const parser = new XMLParser({
   }
 })
 
-const getAttr = (obj, attr) => {
+const getAttr = (obj, attr, baseObj = false) => {
   obj = obj || {}
-  obj = obj.data || {}
+
+  if (!baseObj) {
+    obj = obj.data || {}
+  }
 
   const splat = attr.split('.')
   const last = splat.pop()
@@ -124,7 +127,8 @@ class Queries {
   keyForEntry (entry) {
     const key = getAttr(entry, 'id') ||
       getAttr(entry, 'guid.href') ||
-      getAttr(entry, 'link.href')
+      getAttr(entry, 'link.href') ||
+      getAttr(entry, 'guid.#text')
 
     if (key) {
       return key
@@ -265,20 +269,26 @@ class Queries {
   }
 
   videoForEntry (entry) {
-    if (getAttr(entry, 'media:content.@_medium') === 'video') {
-      return getAttr(entry, 'media:content.@_url')
+    const media = getAttr(entry, 'media:content') || getAttr(entry, 'enclosure')
+
+    if (media && (getAttr(media, '@_type', true) || '').indexOf('video') !== -1) {
+      return getAttr(media, '@_url', true)
     }
   }
 
   audioForEntry (entry) {
-    if (getAttr(entry, 'media:content.@_medium') === 'audio') {
-      return getAttr(entry, 'media:content.@_url')
+    const media = getAttr(entry, 'media:content') || getAttr(entry, 'enclosure')
+
+    if (media && (getAttr(media, '@_type', true) || '').indexOf('audio') !== -1) {
+      return getAttr(media, '@_url', true)
     }
   }
 
   imageForEntry (entry) {
-    if (getAttr(entry, 'media:content.@_medium') === 'image') {
-      return getAttr(entry, 'media:content.@_url')
+    const media = getAttr(entry, 'media:content') || getAttr(entry, 'enclosure')
+
+    if (media && (getAttr(media, '@_type', true) || '').indexOf('image') !== -1) {
+      return getAttr(media, '@_url', true)
     }
   }
 

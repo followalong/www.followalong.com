@@ -83,6 +83,11 @@
         :identity="identity"
         :entry="entry"
       />
+      <AudioPlayer
+        :app="app"
+        :identity="identity"
+        :entry="entry"
+      />
       <div
         class="prose max-w-none px-4 py-5 sm:px-6"
         v-html="app.queries.contentForEntry(entry)"
@@ -93,12 +98,14 @@
 
 <script>
 import PageCard from '../../components/page-card/component.vue'
+import AudioPlayer from '../../components/audio-player/component.vue'
 import ImagePlayer from '../../components/image-player/component.vue'
 import VideoPlayer from '../../components/video-player/component.vue'
 
 export default {
   components: {
     PageCard,
+    AudioPlayer,
     ImagePlayer,
     VideoPlayer
   },
