@@ -37,8 +37,10 @@ class Commands {
         </svg>
       `,
       filter: `
-        (entry) => {
-          return !entry.readAt
+        (queries) => {
+          return (entry) => {
+            return !entry.readAt
+          }
         }
       `.trim()
     })
@@ -53,8 +55,10 @@ class Commands {
         </svg>
       `,
       filter: `
-        (entry) => {
-          return !entry.readAt && queries.videoForEntry(entry)
+        (queries) => {
+          return (entry) => {
+            return !entry.readAt && queries.videoForEntry(entry)
+          }
         }
       `.trim()
     })
@@ -70,8 +74,10 @@ class Commands {
         </svg>
       `,
       filter: `
-        (entry) => {
-          return !entry.readAt && queries.audioForEntry(entry)
+        (queries) => {
+          return (entry) => {
+            return !entry.readAt && queries.audioForEntry(entry)
+          }
         }
       `.trim()
     })
@@ -86,10 +92,12 @@ class Commands {
         </svg>
       `,
       filter: `
-        (entry) => {
-          return !entry.readAt &&
-            !queries.videoForEntry(entry) &&
-            !queries.audioForEntry(entry)
+        (queries) => {
+          return (entry) => {
+            return !entry.readAt &&
+              !queries.videoForEntry(entry) &&
+              !queries.audioForEntry(entry)
+          }
         }
       `.trim()
     })
@@ -113,15 +121,19 @@ class Commands {
         </svg>
       `,
       filter: `
-        (entry) => {
-          return !!entry.readAt
+        (queries) => {
+          return (entry) => {
+            return !!entry.readAt
+          }
         }
       `.trim(),
       sort: `
-        (a, b) => {
-          if (a.readAt < b.readAt) return 1
-          if (a.readAt > b.readAt) return -1
-          return 0
+        (queries) => {
+          return (a, b) => {
+            if (a.readAt < b.readAt) return 1
+            if (a.readAt > b.readAt) return -1
+            return 0
+          }
         }
       `.trim()
     })

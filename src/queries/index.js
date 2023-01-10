@@ -53,14 +53,13 @@ class Queries {
   }
 
   entriesForSignal (identity, signal) {
-    const queries = this // eslint-disable-line no-unused-vars
     let entries = this.entriesForIdentity(identity)
     let filter
     let sort
 
     if (signal && signal.data && signal.data.filter) {
       try {
-        filter = eval(signal.data.filter) // eslint-disable-line no-eval
+        filter = eval(signal.data.filter)(this) // eslint-disable-line no-eval
       } catch (e) { }
 
       if (typeof filter === 'function') {
@@ -70,14 +69,14 @@ class Queries {
 
     if (signal && signal.data && signal.data.sort) {
       try {
-        sort = eval(signal.data.sort) // eslint-disable-line no-eval
+        sort = eval(signal.data.sort)(this) // eslint-disable-line no-eval
       } catch (e) { }
 
       if (typeof sort === 'function') {
         entries = entries.sort(sort)
       }
     } else {
-      entries = entries.sort(SORT_BY_TIME)
+      entries = entries.sort(SORT_BY_TIME(this))
     }
 
     return entries
