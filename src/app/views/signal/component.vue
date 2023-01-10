@@ -12,18 +12,33 @@
       </template>
     </PageTitle>
 
-    <FeedEntry
-      v-for="entry in shownEntries"
-      :key="app.queries.keyForEntry(entry)"
-      :app="app"
-      :identity="identity"
-      :entry="entry"
-    />
+    <div v-if="shownEntries.length">
+      <FeedEntry
+        v-for="entry in shownEntries"
+        :key="app.queries.keyForEntry(entry)"
+        :app="app"
+        :identity="identity"
+        :entry="entry"
+      />
+    </div>
+
+    <div v-else>
+      <PageCard>
+        <template #title>
+          <div class="prose">
+            <p>
+              It looks like you've seen all there is to see here!
+            </p>
+          </div>
+        </template>
+      </PageCard>
+    </div>
   </div>
 </template>
 
 <script>
 import FeedEntry from '../../components/feed-entry/component.vue'
+import PageCard from '../../components/page-card/component.vue'
 import NewBar from '../../components/new-bar/component.vue'
 import PageTitle from '../../components/page-title/component.vue'
 import PullToRefresh from 'pulltorefreshjs'
@@ -35,6 +50,7 @@ export default {
   components: {
     FeedEntry,
     NewBar,
+    PageCard,
     PageTitle
   },
 

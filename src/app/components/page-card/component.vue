@@ -9,7 +9,10 @@
           <slot name="title" />
         </div>
       </div>
-      <div :class="`border-t border-gray-200 ${hasPadding ? 'px-4 py-5 sm:px-6' : ''} max-w-none`">
+      <div
+        v-if="$slots.content"
+        :class="`border-t border-gray-200 ${hasPadding ? 'px-4 py-5 sm:px-6' : ''} max-w-none`"
+      >
         <slot name="content" />
       </div>
     </div>
