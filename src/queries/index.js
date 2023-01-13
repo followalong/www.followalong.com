@@ -80,7 +80,7 @@ class Queries {
         entries = entries.sort(sort)
       }
     } else {
-      entries = entries.sort(SORT_BY_TIME(this))
+      entries = entries.sort(SORT_BY_TIME_AND_READ(this))
     }
 
     return entries

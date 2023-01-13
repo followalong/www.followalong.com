@@ -57,7 +57,7 @@ class Commands {
       filter: `
         (queries) => {
           return (entry) => {
-            return !entry.readAt && queries.videoForEntry(entry)
+            return queries.videoForEntry(entry)
           }
         }
       `.trim()
@@ -76,7 +76,7 @@ class Commands {
       filter: `
         (queries) => {
           return (entry) => {
-            return !entry.readAt && queries.audioForEntry(entry)
+            return queries.audioForEntry(entry)
           }
         }
       `.trim()
@@ -94,8 +94,7 @@ class Commands {
       filter: `
         (queries) => {
           return (entry) => {
-            return !entry.readAt &&
-              !queries.videoForEntry(entry) &&
+            return !queries.videoForEntry(entry) &&
               !queries.audioForEntry(entry)
           }
         }
