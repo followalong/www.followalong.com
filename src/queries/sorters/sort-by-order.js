@@ -1,3 +1,3 @@
 export default (a, b) => {
-  return a.data.order - b.data.order
+  return parseInt(typeof a.data.order !== 'undefined' ? a.data.order : 100) - parseInt(typeof b.data.order !== 'undefined' ? b.data.order : 100)
 }
