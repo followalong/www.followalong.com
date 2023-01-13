@@ -95,3 +95,13 @@
 .primary-color {
   color: #005B7C;
 }
+
+@media (min-width: 768px) {
+  .md\:ml-sidebar {
+    margin-left: 16rem;
+  }
+
+  .md\:mb-8 {
+    margin-bottom: 2rem;
+  }
+}

@@ -1,5 +1,5 @@
 <template>
-  <div class="border-b border-gray-200 pb-5 mb-8">
+  <div class="border-b border-gray-200 p-4 md:mb-8 md:px-0">
     <div class="sm:flex sm:justify-between">
       <div class="sm:w-0 sm:flex-1">
         <h1
