@@ -14,6 +14,7 @@
     <video
       v-else
       class="w-full aspect-video"
+      preload="none"
       controls
     >
       <source
