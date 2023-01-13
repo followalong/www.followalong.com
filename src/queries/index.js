@@ -13,6 +13,22 @@ const parser = new XMLParser({
   }
 })
 
+const objHasNewData = (existingObj, newData) => {
+  for (const key in newData) {
+    if (typeof newData[key] === 'object') {
+      if (objHasNewData(existingObj[key], newData[key])) {
+        return true
+      }
+    } else {
+      if (getAttr(newData, key, true) !== getAttr(existingObj, key, true)) {
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
 const getAttr = (obj, attr, baseObj = false) => {
   obj = obj || {}
 
@@ -234,20 +250,21 @@ class Queries {
       getAttr(feed, 'webfeeds:icon')
   }
 
-  feedChanged (a, b) {
-    b = Object.assign({}, b)
-    b.id = a.id
-    delete b.entry
-    delete b.item
+  feedChanged (feed, newData) {
+    const feedClone = Object.assign({}, feed)
+    const newDataClone = Object.assign({}, newData)
 
-    return JSON.stringify(a.data) !== JSON.stringify(b)
+    delete feedClone.entry
+    delete newDataClone.entry
+
+    delete feedClone.item
+    delete newDataClone.item
+
+    return objHasNewData(feedClone, { data: newDataClone })
   }
 
-  entryChanged (a, b) {
-    b = Object.assign({}, b)
-    b.id = a.id
-
-    return JSON.stringify(a.data) !== JSON.stringify(b)
+  entryChanged (entry, newData) {
+    return objHasNewData(entry, { data: newData })
   }
 
   isEntryRead (entry) {

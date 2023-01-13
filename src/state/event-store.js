@@ -116,6 +116,7 @@ EventStore.RUNNERS = {
     }
 
     existing.updatedAt = event.time
+    existing.data = existing.data || {}
 
     for (const key in event.data) {
       existing.data[key] = event.data[key]

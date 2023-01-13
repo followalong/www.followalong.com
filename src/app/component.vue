@@ -132,7 +132,7 @@ export default {
     pollFeeds () {
       clearTimeout(POLL_TIMEOUT)
 
-      this.commands.fetchOutdatedFeeds(this.identity).then(() => {
+      return this.commands.fetchOutdatedFeeds(this.identity).then(() => {
         POLL_TIMEOUT = setTimeout(() => this.pollFeeds(), POLL_INTERVAL)
       })
     },

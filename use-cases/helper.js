@@ -42,7 +42,7 @@ const mountApp = (options) => {
         fetch: options.fetch || responses(['']),
         state: store,
         confirm: options.confirm || vi.fn().mockResolvedValue(),
-        automaticFetch: false
+        automaticFetch: options.automaticFetch || false
       }
     })
 
@@ -77,7 +77,6 @@ const mountApp = (options) => {
     }
 
     app.wait = async () => {
-      await flushPromisesAndTimers()
       await flushPromisesAndTimers()
     }
 
