@@ -31,6 +31,5 @@ describe('Visit the primary signal', () => {
 
   story('redirects to the primary signal', () => {
     expect(app.find('[aria-label="Page title"]').text()).toEqual(expectedSignal.title)
-    expect(app.find('[aria-label="Page title"]').text()).toEqual(expectedSignal.title)
   })
 })
