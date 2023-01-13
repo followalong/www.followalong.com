@@ -3,7 +3,7 @@
     class="block mb-8"
     aria-labelledby="applicant-information-title"
   >
-    <div class="bg-white shadow sm:rounded-lg">
+    <div class="bg-white shadow md:rounded-lg">
       <div class="px-4 py-5 sm:px-6">
         <div class="flex justify-between">
           <slot name="title" />

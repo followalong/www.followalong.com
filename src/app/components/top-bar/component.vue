@@ -2,22 +2,27 @@
   <nav
     class="top-bar flex-shrink-0 fixed top-0 left-0 right-0 z-40"
   >
-    <div class="max-w-5xl px-2 sm:px-4 lg:px-8">
+    <div class="max-w-5xl px-2 sm:px-4 md:px-8">
       <div class="flex h-16 items-center justify-between">
         <!-- Logo section -->
-        <div class="flex items-center px-2 lg:px-0 xl:w-64">
+        <div class="flex items-center px-2 md:px-0 md:w-64">
           <router-link
             to="/"
             class="db flex-shrink-0"
           >
             <img
-              class="h-8 w-auto"
+              class="h-8 w-auto md:hidden"
+              src="../../../assets/imgs/logo-mobile.svg"
+              alt="Follow Along"
+            >
+            <img
+              class="h-8 w-auto hidden md:block"
               src="../../../assets/imgs/logo-white.svg"
               alt="Follow Along"
             >
           </router-link>
         </div>
-        <div class="flex flex-1 justify-center lg:justify-end">
+        <div class="flex flex-1 justify-center md:justify-end">
           <form
             class="w-full"
             aria-label="Search"
@@ -56,44 +61,28 @@
           </form>
         </div>
         <div
-          style="display: none"
-          class="flex lg:hidden"
+          class="flex md:hidden"
         >
-          <!-- Mobile menu button -->
           <button
             type="button"
-            class="inline-flex items-center justify-center rounded-md bg-indigo-600 p-2 text-indigo-400 hover:bg-indigo-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-600"
+            class="inline-flex items-center justify-center rounded-md p-2 text-white"
             aria-controls="mobile-menu"
             aria-expanded="false"
+            @click="showMenu = !showMenu"
           >
-            <span class="sr-only">Open main menu</span>
-            <!--
-          Icon when menu is closed.
-          Heroicon name: outline/bars-3-center-left
-          Menu open: "hidden", Menu closed: "block"
-          -->
             <svg
-              class="block h-6 w-6"
+              v-if="!showMenu"
+              class="h-6 w-6"
               xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
+              viewBox="0 0 20 20"
+              fill="currentColor"
               aria-hidden="true"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M3.75 6.75h16.5M3.75 12H12m-8.25 5.25h16.5"
-              />
+              <path d="M10 3a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM10 8.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM11.5 15.5a1.5 1.5 0 10-3 0 1.5 1.5 0 003 0z" />
             </svg>
-            <!--
-          Icon when menu is open.
-          Heroicon name: outline/x-mark
-          Menu open: "block", Menu closed: "hidden"
-          -->
             <svg
-              class="hidden h-6 w-6"
+              v-else
+              class="h-6 w-6"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -111,48 +100,36 @@
         </div>
       </div>
     </div>
-    <!-- Mobile menu, show/hide based on menu state. -->
     <div
+      v-if="showMenu"
       id="mobile-menu"
-      class="lg:hidden"
-      style="display: none"
+      class="md:hidden"
     >
-      <div class="px-2 pt-2 pb-3">
-        <a
-          href="#"
-          class="block rounded-md bg-indigo-800 px-3 py-2 text-white"
-        >Dashboard</a>
-        <a
-          href="#"
-          class="mt-1 block rounded-md px-3 py-2 text-indigo-200 hover:bg-indigo-600 hover:text-indigo-100"
-        >Support</a>
-      </div>
-      <div class="border-t border-indigo-800 pt-4 pb-3">
-        <div class="px-2">
-          <a
-            href="#"
-            class="block rounded-md px-3 py-2 text-indigo-200 hover:bg-indigo-600 hover:text-indigo-100"
-          >Your Profile</a>
-          <a
-            href="#"
-            class="mt-1 block rounded-md px-3 py-2 text-indigo-200 hover:bg-indigo-600 hover:text-indigo-100"
-          >Settings</a>
-          <a
-            href="#"
-            class="mt-1 block rounded-md px-3 py-2 text-indigo-200 hover:bg-indigo-600 hover:text-indigo-100"
-          >Sign out</a>
-        </div>
+      <div
+        class="fixed top-0 mt-16 bottom-0 bg-white p-4 pb-16 h-full w-full overflow-auto"
+        @click="showMenu = false"
+      >
+        <NavLinks
+          :app="app"
+          :identity="identity"
+        />
       </div>
     </div>
   </nav>
 </template>
 
 <script>
+import NavLinks from '../nav-links/component.vue'
+
 export default {
+  components: {
+    NavLinks
+  },
   props: ['app', 'identity'],
   data () {
     return {
-      q: ''
+      q: '',
+      showMenu: false
     }
   },
   methods: {

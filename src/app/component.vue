@@ -12,19 +12,19 @@
       />
 
       <!-- 3 column wrapper -->
-      <div class="w-full max-w-5xl flex-grow lg:flex">
+      <div class="w-full max-w-5xl flex-grow md:flex">
         <!-- Left sidebar & main wrapper -->
-        <div class="min-w-0 pl-7 flex-1 bg-white xl:flex">
+        <div class="min-w-0 md:pl-7 flex-1 bg-white md:flex">
           <SideBar
             :app="app"
             :identity="identity"
+            class="hidden md:block"
           />
 
           <div
-            class="bg-gray-50 lg:min-w-0 lg:flex-1"
-            style="margin-left: 14rem"
+            class="bg-gray-50 md:min-w-0 md:flex-1 md:ml-sidebar"
           >
-            <div class="h-full mt-16 py-6 px-4 sm:px-6 lg:px-8">
+            <div class="h-full mt-16 md:py-6 md:px-8">
               <!-- Start main area-->
               <div
                 class="relative h-full"
