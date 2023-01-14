@@ -53,6 +53,7 @@
         </div>
       </div>
       <a
+        v-if="feedFromIdentity"
         href="javascript:;"
         :class="`block float-right ${app.queries.isEntryRead(entry) ? 'text-green-500' : 'text-gray-300'}`"
         :aria-label="`Mark as ${app.queries.isEntryRead(entry) ? 'un' : ''}read ${entry.id}`"
@@ -112,7 +113,11 @@ export default {
   props: ['app', 'identity', 'entry', 'feed'],
   computed: {
     entryFeed () {
-      return this.feed || this.app.queries.feedForIdentity(this.identity, this.entry.feedId)
+      return this.feed || this.feedFromIdentity
+    },
+
+    feedFromIdentity () {
+      return this.app.queries.feedForIdentity(this.identity, this.entry.feedId)
     }
   },
   methods: {
