@@ -1,13 +1,13 @@
 <template>
   <nav class="mt-5 flex-1 space-y-1 bg-white px-2 pb-8">
-    <h3 class="pb-1 uppercase text-gray-400 text-xs">
+    <h3 class="pb-1 uppercase text-gray-400 text-sm sm:text-xs">
       Signals
     </h3>
     <router-link
       v-for="signal in app.queries.signalsForIdentity(identity)"
       :key="`sidebar-signal-${signal.id}`"
       :to="`/signals/${app.queries.permalinkForSignal(signal)}`"
-      class="relative text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 text-sm font-medium rounded-md"
+      class="relative text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 sm:text-sm font-medium rounded-md"
       :aria-label="`Visit ${app.queries.titleForSignal(signal)}`"
     >
       <span v-html="app.queries.iconForSignal(signal)" />
