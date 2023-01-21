@@ -16,8 +16,5 @@ describe('Pause a feed', () => {
     expect(app.findAll('[aria-label="Unpause feed"]').length).toEqual(1)
   })
 
-  event('feeds.pause', {
-    collection: 'feeds',
-    action: 'pause'
-  }, () => { return { app } })
+  event('feeds.pause', {}, () => { return { app } })
 })

@@ -25,8 +25,6 @@ describe('Follow a feed', () => {
   })
 
   event('feeds.create', {
-    collection: 'feeds',
-    action: 'create',
     data: {
       url: expectedFeed.url,
       data: {
@@ -36,8 +34,6 @@ describe('Follow a feed', () => {
   }, () => { return { app } })
 
   event('entries.create', {
-    collection: 'entries',
-    action: 'create',
     data: {
       data: {
         title: expectedFeed.entries[0].title

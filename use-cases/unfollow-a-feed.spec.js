@@ -40,14 +40,10 @@ describe('Unfollow a feed', () => {
   })
 
   event('feeds.delete', {
-    collection: 'feeds',
-    action: 'delete',
     objectId: expectedFeed.id
   }, () => { return { app } })
 
   event('entries.delete', {
-    collection: 'entries',
-    action: 'delete',
     objectId: expectedFeed.entries[0].id
   }, () => { return { app } })
 })

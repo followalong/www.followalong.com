@@ -147,6 +147,16 @@ const objectsMatch = (a, b, key) => {
 
 const event = (description, payload, optionsFunc) => {
   return it(`Event: ${description}`, async () => {
+    const descriptionSplat = description.split('.')
+
+    if (!payload.collection) {
+      payload.collection = descriptionSplat[0]
+    }
+
+    if (!payload.action) {
+      payload.action = descriptionSplat[1]
+    }
+
     const options = optionsFunc()
     const stateEvents = options.app.vm.state.events
     const ev = stateEvents.find((e) => {
