@@ -40,7 +40,7 @@
                 aria-label="Catch up on feed"
                 @click="catchUpOnFeed"
               >
-                <span>Catch me up</span>
+                <span>Catch me on</span>
               </a>
               <a
                 href="javascript:;"
@@ -175,7 +175,7 @@ export default {
     },
 
     catchUpOnFeed () {
-      this.unreadEntries.forEach((entry) => {
+      this.unreadEntries.reverse().forEach((entry) => {
         this.app.commands.markEntryAsReadForIdentity(this.identity, entry)
       })
     },
