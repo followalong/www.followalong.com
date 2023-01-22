@@ -94,6 +94,7 @@ export default {
   data () {
     window.followAlong = this
     const queries = new Queries({
+      fetch: this.fetch,
       state: this.state,
       lastBackgroundFetch: Date.now()
     })

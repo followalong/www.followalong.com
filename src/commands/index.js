@@ -195,7 +195,11 @@ class Commands {
   }
 
   fetchFeed (identity, feed) {
-    return this.fetchUrl(this.queries.urlForFeed(feed))
+    const url = this.queries.urlForFeed(feed)
+    const adapter = this.queries.adapterForAddonForIdentity(identity, 'rss')
+
+    return adapter.rss(url)
+      .then(this.queries.jsonFromXml)
       .then((data) => {
         this.upsertFeedForIdentity(identity, feed, data)
 

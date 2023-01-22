@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser'
+import { ADDONS, ADAPTERS } from './addons.js'
 import SORT_BY_ORDER from './sorters/sort-by-order.js'
 import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
 import SORT_BY_TIME from './sorters/sort-by-time.js'
@@ -119,6 +120,10 @@ class Queries {
   }
 
   jsonFromXml (xml) {
+    if (!xml) {
+      return {}
+    }
+
     let obj = parser.parse(xml)
 
     if (typeof obj.rss === 'object') {
@@ -337,6 +342,36 @@ class Queries {
 
   defaultSignalForIdentity (identity) {
     return this.signalsForIdentity(identity)[0]
+  }
+
+  findAddon (type) {
+    return ADDONS.find((addon) => addon.type === type)
+  }
+
+  findAdapter (type) {
+    return ADAPTERS.find((adapter) => adapter.name === type)
+  }
+
+  adapterDataForIdentityAndAddon (identity, type) {
+    const addon = this.findAddon(type)
+
+    return getAttr(identity, `addons.${type}`, true) || { type: addon.adapters[0].name, data: (new addon.adapters[0]()).data }
+  }
+
+  adapterPreviewName (Adapter) {
+    return new Adapter().preview()
+  }
+
+  adapterName (Adapter) {
+    return new Adapter().name
+  }
+
+  adapterForAddonForIdentity (identity, type) {
+    const data = this.adapterDataForIdentityAndAddon(identity, type)
+    const Adapter = this.findAdapter(data.type)
+    const adapter = new Adapter({ fetch: this.fetch }, data.data)
+
+    return adapter
   }
 }
 

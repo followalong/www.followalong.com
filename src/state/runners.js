@@ -67,6 +67,18 @@ export default {
   },
   'identities.create': EventStore.RUNNERS.CREATE,
   'identities.delete': EventStore.RUNNERS.DELETE,
+  'identities.setProxy': (store, event) => {
+    const collection = store[event.collection]
+    const existing = collection.find((item) => item.id === event.objectId)
+
+    if (!existing) {
+      console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+      return
+    }
+
+    existing.addons = existing.addons || {}
+    existing.addons[event.data.addonType] = event.data.data
+  },
   'signals.create': EventStore.RUNNERS.CREATE,
   'signals.update': EventStore.RUNNERS.UPDATE,
   'signals.delete': EventStore.RUNNERS.DELETE
