@@ -40,7 +40,7 @@
                 aria-label="Catch up on feed"
                 @click="catchUpOnFeed"
               >
-                <span>Catch me on</span>
+                <span>Catch me up</span>
               </a>
               <a
                 href="javascript:;"
