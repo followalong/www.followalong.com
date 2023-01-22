@@ -54,7 +54,7 @@ const mountApp = (options) => {
         $el = await app.find(el)
       } catch (e) { }
 
-      if (!$el) {
+      if (!Object.keys($el).length) {
         throw new Error(`Could not find element: ${el} in ${app.text()}`)
       }
 
@@ -69,7 +69,7 @@ const mountApp = (options) => {
         $el = await app.find(el)
       } catch (e) { }
 
-      if (!$el) {
+      if (!Object.keys($el).length) {
         throw new Error(`Could not find element: ${el} in ${app.text()}`)
       }
 
