@@ -143,9 +143,7 @@ export default {
       })
     },
     search (q) {
-      q = q.toLowerCase()
-
-      if (q.indexOf('http') !== -1) {
+      if (q.toLowerCase().indexOf('http') !== -1) {
         this.$router.push(`/${q}`)
       }
     }

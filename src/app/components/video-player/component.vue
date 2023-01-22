@@ -34,7 +34,7 @@ export default {
       return this.app.queries.videoForEntry(this.entry)
     },
     useIframe () {
-      return !/mp4|ogg$/.test(this.src)
+      return /youtube/.test(this.src) || !/mp4|ogg/.test(this.src)
     }
   }
 }

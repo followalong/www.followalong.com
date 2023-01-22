@@ -164,12 +164,12 @@ export default {
 
       if (this.feed) {
         return this.app.commands.fetchFeed(this.identity, this.feed)
-          .then(() => {
+          .then((a) => {
             this.remoteFeed = true
           })
       }
 
-      this.app.commands.fetchUrl(this.url)
+      this.app.commands.fetchUrl(this.identity, 'rss', this.url)
         .then((data) => {
           const entries = (data.entry || data.item) || []
 

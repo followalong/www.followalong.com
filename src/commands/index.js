@@ -189,17 +189,17 @@ class Commands {
     return this.state.restore()
   }
 
-  fetchUrl (url) {
-    return this.fetch(url)
+  fetchUrl (identity, type, url) {
+    const adapter = this.queries.adapterForAddonForIdentity(identity, type)
+
+    return adapter[type](url)
       .then(this.queries.jsonFromXml)
   }
 
   fetchFeed (identity, feed) {
     const url = this.queries.urlForFeed(feed)
-    const adapter = this.queries.adapterForAddonForIdentity(identity, 'rss')
 
-    return adapter.rss(url)
-      .then(this.queries.jsonFromXml)
+    return this.fetchUrl(identity, 'rss', url)
       .then((data) => {
         this.upsertFeedForIdentity(identity, feed, data)
 

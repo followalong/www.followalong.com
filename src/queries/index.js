@@ -245,9 +245,10 @@ class Queries {
   contentForEntry (entry) {
     const content = getAttr(entry, 'content:encoded') ||
       getAttr(entry, 'content') ||
-      getAttr(entry, 'description')
+      getAttr(entry, 'description') ||
+      getAttr(entry, 'media:group.media:description')
 
-    return sanitizeContent(content)
+    return sanitizeContent(content || '')
   }
 
   imageForFeed (feed) {
@@ -291,6 +292,15 @@ class Queries {
   }
 
   videoForEntry (entry) {
+    const youtubeId = getAttr(entry, 'id')
+    if (typeof youtubeId === 'string' && youtubeId.slice(0, 9) === 'yt:video:') {
+      return `https://www.youtube.com/embed/${youtubeId.slice(9)}?&rel=0&modestbranding=1&playsinline=1`
+    }
+
+    if (getAttr(entry, 'media:player')) {
+      return getAttr(entry, 'media:player')
+    }
+
     const media = getAttr(entry, 'media:content') || getAttr(entry, 'enclosure')
 
     if (media && (getAttr(media, '@_type', true) || '').indexOf('video') !== -1) {
