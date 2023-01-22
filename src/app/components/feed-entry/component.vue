@@ -29,6 +29,7 @@
           >
             <router-link
               :to="`/${app.queries.urlForFeed(entryFeed)}`"
+              aria-label="Feed link"
             >
               {{ app.queries.titleForFeed(entryFeed) }}
             </router-link>

@@ -32,6 +32,17 @@
           >
             <template #items>
               <a
+                v-if="unreadEntries.length"
+                href="javascript:;"
+                class="text-gray-700 flex justify-between px-4 py-2 text-sm"
+                role="menuitem"
+                tabindex="-1"
+                aria-label="Catch up on feed"
+                @click="catchUpOnFeed"
+              >
+                <span>Catch me up</span>
+              </a>
+              <a
                 href="javascript:;"
                 class="text-gray-700 flex justify-between px-4 py-2 text-sm"
                 role="menuitem"
@@ -116,6 +127,10 @@ export default {
       )
     },
 
+    unreadEntries () {
+      return this.entries.filter((e) => !this.app.queries.isEntryRead(e))
+    },
+
     title () {
       let title = this.app.queries.titleForFeed(this.feed)
 
@@ -157,6 +172,12 @@ export default {
       }
 
       this.app.commands.pauseFeedForIdentity(this.identity, this.existingFeed)
+    },
+
+    catchUpOnFeed () {
+      this.unreadEntries.forEach((entry) => {
+        this.app.commands.markEntryAsReadForIdentity(this.identity, entry)
+      })
     },
 
     fetchFeed () {
