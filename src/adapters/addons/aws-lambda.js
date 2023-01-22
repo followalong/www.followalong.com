@@ -1,18 +1,19 @@
-import AddonAdapter from '../addon.js'
+import Adapter from './adapter.js'
 
-class AWSAddonAdapter extends AddonAdapter {
+class AWSLambda extends Adapter {
   constructor (adapterOptions, addonData) {
     super(adapterOptions, addonData)
 
     this.adapter = 'aws-lambda'
     this.name = this.data.name || 'AWS Lambda'
-    this.supports = []
   }
 
   preview () {
     return this.data.name
   }
 }
+
+AWSLambda.FIELDS = []
 
 // function lambdaPassthrough (override) {
 //   override = override || {}
@@ -51,7 +52,6 @@ class AWSAddonAdapter extends AddonAdapter {
 // //   id: 'aws-lambda',
 // //   name: 'AWS Lambda',
 // //   description: 'Use our source code <a href="https://github.com/followalong/followalong" target="_blank" class="link" onclick="event.stopImmediatePropagation();">here</a> to quickly deploy your own passthrough server to Amazon\'s Lambda.',
-// //   supports: 'rss',
 // //   fields: {
 // //     name: {
 // //       type: 'text',
@@ -91,4 +91,4 @@ class AWSAddonAdapter extends AddonAdapter {
 // //   request: lambdaPassthrough()
 // // }
 
-export default AWSAddonAdapter
+export default AWSLambda

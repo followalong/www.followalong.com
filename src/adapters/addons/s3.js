@@ -1,49 +1,16 @@
-import AddonAdapter from '../addon.js'
+import Adapter from './adapter.js'
 
 const STRIP_BEGINNING_AND_END_SLASHES = /^\/|\/$/g
 
-class S3AddonAdapter extends AddonAdapter {
+class S3Adapter extends Adapter {
   constructor (adapterOptions, addonData) {
     super(adapterOptions, addonData)
 
     this.adapter = 's3'
     this.name = this.data.name || 'S3'
     this.description = 'Store data directly to an S3-compatible server.'
-    this.supports = ['sync']
     this.data.key = this.data.key || '/identities/' + 'generateId()' + '.json'
     this.data.endpoint = this.data.endpoint || 's3.us-east-1.amazonaws.com'
-    this.fields = {
-      endpoint: {
-        type: 'text',
-        label: 'Endpoint',
-        required: true
-      },
-      region: {
-        type: 'text',
-        label: 'Region',
-        required: true
-      },
-      key: {
-        type: 'text',
-        label: 'Key',
-        required: true
-      },
-      accessKeyId: {
-        type: 'text',
-        label: 'Access Key ID',
-        required: true
-      },
-      secretAccessKey: {
-        type: 'password',
-        label: 'Secret Access Key',
-        required: true
-      },
-      bucket: {
-        type: 'text',
-        label: 'Bucket',
-        required: true
-      }
-    }
   }
 
   save (identityData, encrypt) {
@@ -101,4 +68,37 @@ class S3AddonAdapter extends AddonAdapter {
   }
 }
 
-export default S3AddonAdapter
+S3Adapter.FIELDS = {
+  endpoint: {
+    type: 'text',
+    label: 'Endpoint',
+    required: true
+  },
+  region: {
+    type: 'text',
+    label: 'Region',
+    required: true
+  },
+  key: {
+    type: 'text',
+    label: 'Key',
+    required: true
+  },
+  accessKeyId: {
+    type: 'text',
+    label: 'Access Key ID',
+    required: true
+  },
+  secretAccessKey: {
+    type: 'password',
+    label: 'Secret Access Key',
+    required: true
+  },
+  bucket: {
+    type: 'text',
+    label: 'Bucket',
+    required: true
+  }
+}
+
+export default S3Adapter

@@ -1,5 +1,5 @@
 import localForage from 'localforage'
-import AddonAdapter from '../addon.js'
+import Adapter from './adapter.js'
 import sortByReadAndDate from '../../queries/sorters/sort-by-read-and-date.js'
 
 const LIMIT_ITEMS = (n) => {
@@ -23,24 +23,14 @@ const LIMIT_ITEMS = (n) => {
   }
 }
 
-class LocalAddonAdapter extends AddonAdapter {
+class Local extends Adapter {
   constructor (adapterOptions, addonData) {
     super(adapterOptions, addonData)
 
     this.adapter = 'local'
     this.name = this.data.name || 'Local Storage'
-    this.supports = ['local']
     this.data.encryptionStrategy = this.data.encryptionStrategy || 'none'
     this.data.maxReadLimit = this.data.maxReadLimit || 150
-    this.fields = {
-      maxReadLimit: {
-        type: 'number',
-        label: 'Maximum number of "read" items to keep',
-        hint: 'Unread and Saved items are always kept.',
-        required: true,
-        placeholder: 150
-      }
-    }
 
     this.db = localForage.createInstance({
       name: 'followalong-v1'
@@ -81,4 +71,14 @@ class LocalAddonAdapter extends AddonAdapter {
   }
 }
 
-export default LocalAddonAdapter
+Local.FIELDS = {
+  maxReadLimit: {
+    type: 'number',
+    label: 'Maximum number of "read" items to keep',
+    hint: 'Unread and Saved items are always kept.',
+    required: true,
+    placeholder: 150
+  }
+}
+
+export default Local

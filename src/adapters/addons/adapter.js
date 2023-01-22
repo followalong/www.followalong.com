@@ -1,4 +1,4 @@
-class AddonAdapter {
+class Adapter {
   constructor (adapterOptions, addonData) {
     this.data = addonData || {}
     this.fields = []
@@ -88,4 +88,4 @@ class AddonAdapter {
   }
 }
 
-export default AddonAdapter
+export default Adapter

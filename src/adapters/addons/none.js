@@ -1,13 +1,12 @@
-import AddonAdapter from '../addon.js'
+import Adapter from './adapter.js'
 
-class NoneAddonAdapter extends AddonAdapter {
+class None extends Adapter {
   constructor (adapterOptions, addonData) {
     super(adapterOptions, addonData)
 
     this.adapter = 'none'
     this.name = this.data.name || 'None'
     this.description = 'No addon will be used.'
-    this.supports = ['rss', 'search', 'sync']
   }
 
   get () {
@@ -22,8 +21,8 @@ class NoneAddonAdapter extends AddonAdapter {
     return Promise.resolve()
   }
 
-  rss () {
-    return Promise.resolve()
+  rss (url) {
+    return this.fetch(url)
   }
 
   search () {
@@ -31,4 +30,6 @@ class NoneAddonAdapter extends AddonAdapter {
   }
 }
 
-export default NoneAddonAdapter
+None.FIELDS = []
+
+export default None
