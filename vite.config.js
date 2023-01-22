@@ -22,7 +22,7 @@ export default defineConfig({
   ],
   test: {
     globals: true,
-    environment: 'happy-dom',
+    environment: 'jsdom',
     coverage: {
       exclude: ['use-cases/*']
     }
