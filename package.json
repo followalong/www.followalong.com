@@ -9,7 +9,7 @@
     "lint": "eslint",
     "deploy": "node scripts/deploy.js",
     "preview": "vite preview",
-    "test:coverage": "yarn test:unit --coverage",
+    "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
     "test:watch": "vitest"
   },
