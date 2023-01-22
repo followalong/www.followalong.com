@@ -42,7 +42,8 @@ const mountApp = (options) => {
         fetch: options.fetch || responses(['']),
         state: store,
         confirm: options.confirm || vi.fn().mockResolvedValue(),
-        automaticFetch: options.automaticFetch || false
+        automaticFetch: options.automaticFetch || false,
+        scrollTo: vi.fn()
       }
     })
 

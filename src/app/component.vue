@@ -82,9 +82,9 @@ export default {
         })
       }
     },
-    window: {
-      type: Object,
-      default () { return window }
+    scrollTo: {
+      type: Function,
+      default () { return window.scrollTo }
     },
     noSleep: {
       type: Function,
@@ -101,7 +101,7 @@ export default {
       fetch: this.fetch,
       state: this.state,
       queries,
-      window
+      scrollTo: this.scrollTo
     })
 
     return {
