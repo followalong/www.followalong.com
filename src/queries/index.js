@@ -217,7 +217,8 @@ class Queries {
 
   linkForEntry (entry) {
     return getAttr(entry, 'link.href') ||
-      getAttr(entry, 'url.href')
+      getAttr(entry, 'url.href') ||
+      getAttr(entry, 'link.@_href')
   }
 
   titleForFeed (feed) {
