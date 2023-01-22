@@ -51,6 +51,7 @@ import Commands from '../commands/index.js'
 import MultiEventStore from '../state/multi-event-store.js'
 import runners from '../state/runners.js'
 import Queries from '../queries/index.js'
+import NoSleep from 'nosleep.js'
 
 const POLL_INTERVAL = 15000
 let POLL_TIMEOUT
@@ -84,6 +85,10 @@ export default {
     window: {
       type: Object,
       default () { return window }
+    },
+    noSleep: {
+      type: Function,
+      default () { return new NoSleep() }
     }
   },
   data () {
