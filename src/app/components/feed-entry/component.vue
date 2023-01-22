@@ -1,7 +1,7 @@
 <template>
   <PageCard :has-padding="false">
     <template #title>
-      <div class="flex space-x-3 flex-shrink-0">
+      <div>
         <router-link
           v-if="app.queries.imageForFeed(entryFeed)"
           :to="`/${app.queries.urlForFeed(entryFeed)}`"
