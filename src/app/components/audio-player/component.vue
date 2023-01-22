@@ -14,10 +14,6 @@
 </template>
 
 <script>
-import NoSleep from 'nosleep.js'
-
-const noSleep = new NoSleep()
-
 export default {
   props: ['app', 'identity', 'entry'],
   computed: {
@@ -27,13 +23,11 @@ export default {
   },
   watch: {
     src () {
-      this.$refs.audio.currentTime = 0
-      this.$refs.audio.play()
-      noSleep.enable()
+      this.app.commands.disableSleep(this.$refs.audio)
     }
   },
   unmounted () {
-    noSleep.disable()
+    this.app.commands.enableSleep(this.$refs.audio)
   }
 }
 </script>

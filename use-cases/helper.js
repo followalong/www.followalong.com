@@ -42,7 +42,8 @@ const mountApp = (options) => {
         fetch: options.fetch || responses(['']),
         state: store,
         confirm: options.confirm || vi.fn().mockResolvedValue(),
-        automaticFetch: options.automaticFetch || false
+        automaticFetch: options.automaticFetch || false,
+        scrollTo: vi.fn()
       }
     })
 
@@ -53,7 +54,7 @@ const mountApp = (options) => {
         $el = await app.find(el)
       } catch (e) { }
 
-      if (!$el) {
+      if (!Object.keys($el).length) {
         throw new Error(`Could not find element: ${el} in ${app.text()}`)
       }
 
@@ -68,7 +69,7 @@ const mountApp = (options) => {
         $el = await app.find(el)
       } catch (e) { }
 
-      if (!$el) {
+      if (!Object.keys($el).length) {
         throw new Error(`Could not find element: ${el} in ${app.text()}`)
       }
 

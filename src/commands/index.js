@@ -195,7 +195,11 @@ class Commands {
   }
 
   fetchFeed (identity, feed) {
-    return this.fetchUrl(this.queries.urlForFeed(feed))
+    const url = this.queries.urlForFeed(feed)
+    const adapter = this.queries.adapterForAddonForIdentity(identity, 'rss')
+
+    return adapter.rss(url)
+      .then(this.queries.jsonFromXml)
       .then((data) => {
         this.upsertFeedForIdentity(identity, feed, data)
 
@@ -284,7 +288,7 @@ class Commands {
   }
 
   scrollToTop () {
-    this.window.scrollTo({
+    this.scrollTo({
       top: 0,
       left: 0,
       behavior: 'smooth'
@@ -301,6 +305,24 @@ class Commands {
 
   unpauseFeedForIdentity (identity, feed) {
     this.track(identity, 'feeds', feed.id, 'unpause')
+  }
+
+  saveAddonDataForIdentity (identity, addonType, data) {
+    this.track(identity, 'identities', identity.id, 'setProxy', { addonType, data })
+  }
+
+  disableSleep ($audio) {
+    if (this.noSleep) {
+      $audio.currentTime = 0
+      $audio.play()
+      this.noSleep.enable()
+    }
+  }
+
+  enableSleep ($audio) {
+    if (this.noSleep) {
+      this.noSleep.disable()
+    }
   }
 }
 

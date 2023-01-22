@@ -1,12 +1,11 @@
-import AddonAdapter from '../addon.js'
+import Adapter from './adapter.js'
 
-class FollowAlongFreeAddonAdapter extends AddonAdapter {
+class FollowAlongFree extends Adapter {
   constructor (adapterOptions, addonData) {
     super(adapterOptions, addonData)
 
     this.adapter = 'followalong-free'
     this.name = this.data.name || 'FollowAlong Free'
-    this.supports = ['rss', 'search']
 
     this.AWS_CONFIG = {
       endpoint: 'lambda.us-east-1.amazonaws.com',
@@ -58,4 +57,6 @@ class FollowAlongFreeAddonAdapter extends AddonAdapter {
   }
 }
 
-export default FollowAlongFreeAddonAdapter
+FollowAlongFree.FIELDS = []
+
+export default FollowAlongFree
