@@ -302,6 +302,10 @@ class Queries {
       return getAttr(entry, 'media:player')
     }
 
+    if (getAttr(entry, 'enclusure.url')) {
+      return getAttr(entry, 'enclusure.url')
+    }
+
     const media = getAttr(entry, 'media:content') || getAttr(entry, 'enclosure')
 
     if (media && (getAttr(media, '@_type', true) || '').indexOf('video') !== -1) {
