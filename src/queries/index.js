@@ -306,48 +306,69 @@ class Queries {
       return getAttr(entry, 'media:player')
     }
 
-    const url = getAttr(entry, 'link') ||
-        getAttr(entry, 'media:content.video.@_url') ||
-        getAttr(entry, 'media:content.video.url') ||
-        getAttr(entry, 'media:content.@_url') ||
-        getAttr(entry, 'media:content.url') ||
-        getAttr(entry, 'enclosure.video.@_url') ||
-        getAttr(entry, 'enclosure.video.url') ||
-        getAttr(entry, 'enclosure.@_url') ||
-        getAttr(entry, 'enclosure.url')
+    const attrs = [
+      'link',
+      'media:content.video.@_url',
+      'media:content.video.url',
+      'media:content.@_url',
+      'media:content.url',
+      'enclosure.video.@_url',
+      'enclosure.video.url',
+      'enclosure.@_url',
+      'enclosure.url'
+    ]
 
-    if (VIDEO_TYPES.test(url) || `${url}`.indexOf('embed') !== -1) {
-      return url
+    for (var i = 0; i < attrs.length; i++) {
+      const val = getAttr(entry, attrs[i])
+
+      if (VIDEO_TYPES.test(val) || `${attrs[i]}`.indexOf('embed') !== -1) {
+        return val
+      }
     }
   }
 
   audioForEntry (entry) {
-    const url = getAttr(entry, 'media:content.audio.@_url') ||
-        getAttr(entry, 'media:content.audio.url') ||
-        getAttr(entry, 'media:content.@_url') ||
-        getAttr(entry, 'media:content.url') ||
-        getAttr(entry, 'enclosure.audio.@_url') ||
-        getAttr(entry, 'enclosure.audio.url') ||
-        getAttr(entry, 'enclosure.@_url') ||
-        getAttr(entry, 'enclosure.url') ||
-        getAttr(entry, 'link')
+    const attrs = [
+      'link',
+      'media:content.audio.@_url',
+      'media:content.audio.url',
+      'media:content.@_url',
+      'media:content.url',
+      'enclosure.audio.@_url',
+      'enclosure.audio.url',
+      'enclosure.@_url',
+      'enclosure.url'
+    ]
 
-    if (AUDIO_TYPES.test(url)) {
-      return url
+    for (var i = 0; i < attrs.length; i++) {
+      const val = getAttr(entry, attrs[i])
+
+      if (AUDIO_TYPES.test(val)) {
+        return val
+      }
     }
   }
 
   imageForEntry (entry) {
-    const url = getAttr(entry, 'media:content.image.@_url') ||
-        getAttr(entry, 'media:content.image.url') ||
-        getAttr(entry, 'enclosure.image.@_url') ||
-        getAttr(entry, 'enclosure.image.url') ||
-        getAttr(entry, 'enclosure.@_url') ||
-        getAttr(entry, 'enclosure.url') ||
-        getAttr(entry, 'itunes.image')
+    const attrs = [
+      'link',
+      'media:group.media:thumbnail.@_url',
+      'media:group.media:thumbnail.url',
+      'media:content.image.@_url',
+      'media:content.image.url',
+      'enclosure.image.@_url',
+      'enclosure.image.url',
+      'enclosure.@_url',
+      'enclosure.url',
+      'itunes.image'
+    ]
 
-    if (IMAGE_TYPES.test(url)) {
-      return url
+    for (var i = 0; i < attrs.length; i++) {
+      const val = getAttr(entry, attrs[i])
+
+      if (IMAGE_TYPES.test(val)) {
+        return val
+      }
     }
   }
 
