@@ -110,18 +110,14 @@ export default {
       queries,
       commands,
       now: new Date(),
-      isLoading: true
-    }
-  },
-  computed: {
-    identity () {
-      return this.queries.allIdentities()[0]
+      isLoading: true,
+      identity: null
     }
   },
   watch: {
     identity (val) {
       if (val && this.automaticFetch) {
-        setTimeout(() => this.pollFeeds(), 100)
+        setTimeout(() => this.pollFeeds(), 10)
       }
     }
   },
@@ -132,6 +128,7 @@ export default {
       }
 
       this.isLoading = false
+      this.setIdentity(this.queries.allIdentities()[0])
     })
   },
   methods: {
@@ -146,6 +143,9 @@ export default {
       if (q.toLowerCase().indexOf('http') !== -1) {
         this.$router.push(`/${q}`)
       }
+    },
+    setIdentity (identity) {
+      this.identity = identity
     }
   }
 }

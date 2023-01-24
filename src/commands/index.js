@@ -270,7 +270,7 @@ class Commands {
         this.addIdentity({})
       }
 
-      resolve()
+      resolve(this.queries.allIdentities()[0])
     })
   }
 

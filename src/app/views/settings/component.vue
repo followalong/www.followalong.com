@@ -52,6 +52,7 @@ export default {
     forgetIdentity () {
       this.app.confirm('Are you sure you want to remove this identity?')
         .then(() => this.app.commands.forgetIdentity(this.identity))
+        .then((newIdentity) => this.app.setIdentity(newIdentity))
         .then(() => this.$router.push('/'))
         .catch(() => {})
     }

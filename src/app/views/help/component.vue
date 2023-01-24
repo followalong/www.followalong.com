@@ -35,15 +35,6 @@ export default {
     PageTitle
   },
 
-  props: ['app', 'identity'],
-
-  methods: {
-    forgetIdentity () {
-      this.app.confirm('Are you sure you want to remove this identity?')
-        .then(() => this.app.commands.forgetIdentity(this.identity))
-        .then(() => this.$router.push('/'))
-        .catch(() => {})
-    }
-  }
+  props: ['app', 'identity']
 }
 </script>
