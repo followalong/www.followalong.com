@@ -96,7 +96,7 @@
       <div
         v-if="app.queries.contentForEntry(entry)"
         class="prose max-w-none overflow-auto px-4 py-5 sm:px-6"
-        v-html="app.queries.contentForEntry(entry)"
+        v-html="app.queries.linkify(app.queries.contentForEntry(entry))"
       />
     </template>
   </PageCard>

@@ -1,4 +1,5 @@
 import { XMLParser } from 'fast-xml-parser'
+import linkifyHtml from 'linkify-html'
 import { ADDONS, ADAPTERS } from './addons.js'
 import SORT_BY_ORDER from './sorters/sort-by-order.js'
 import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
@@ -430,6 +431,10 @@ class Queries {
     const adapter = new Adapter({ fetch: this.fetch }, data.data)
 
     return adapter
+  }
+
+  linkify (text) {
+    return linkifyHtml(text, { target: '_blank' })
   }
 }
 
