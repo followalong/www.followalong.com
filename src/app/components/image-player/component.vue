@@ -1,14 +1,9 @@
 <template>
-  <a
+  <img
     v-if="src"
-    :href="src"
-    target="_blank"
-    class="-mt-1"
+    :src="src"
+    class="-mt-1 w-full"
   >
-    <img
-      :src="src"
-    >
-  </a>
 </template>
 
 <script>

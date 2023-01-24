@@ -7,6 +7,10 @@ import SORT_BY_TIME_AND_READ from './sorters/sort-by-time-and-read.js'
 import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
 import sanitizeContent from './presenters/sanitize-content.js'
 
+const VIDEO_TYPES = /\.(mp4)/
+const AUDIO_TYPES = /\.(mp3|wav)/
+const IMAGE_TYPES = /\.(png|jpeg|jpg|gif)/
+
 const parser = new XMLParser({
   ignoreAttributes: false,
   isArray: (name, jpath, isLeafNode, isAttribute) => {
@@ -302,30 +306,48 @@ class Queries {
       return getAttr(entry, 'media:player')
     }
 
-    if (getAttr(entry, 'enclusure.url')) {
-      return getAttr(entry, 'enclusure.url')
-    }
+    const url = getAttr(entry, 'link') ||
+        getAttr(entry, 'media:content.video.@_url') ||
+        getAttr(entry, 'media:content.video.url') ||
+        getAttr(entry, 'media:content.@_url') ||
+        getAttr(entry, 'media:content.url') ||
+        getAttr(entry, 'enclosure.video.@_url') ||
+        getAttr(entry, 'enclosure.video.url') ||
+        getAttr(entry, 'enclosure.@_url') ||
+        getAttr(entry, 'enclosure.url')
 
-    const media = getAttr(entry, 'media:content') || getAttr(entry, 'enclosure')
-
-    if (media && (getAttr(media, '@_type', true) || '').indexOf('video') !== -1) {
-      return getAttr(media, '@_url', true)
+    if (VIDEO_TYPES.test(url) || `${url}`.indexOf('embed') !== -1) {
+      return url
     }
   }
 
   audioForEntry (entry) {
-    const media = getAttr(entry, 'media:content') || getAttr(entry, 'enclosure')
+    const url = getAttr(entry, 'media:content.audio.@_url') ||
+        getAttr(entry, 'media:content.audio.url') ||
+        getAttr(entry, 'media:content.@_url') ||
+        getAttr(entry, 'media:content.url') ||
+        getAttr(entry, 'enclosure.audio.@_url') ||
+        getAttr(entry, 'enclosure.audio.url') ||
+        getAttr(entry, 'enclosure.@_url') ||
+        getAttr(entry, 'enclosure.url') ||
+        getAttr(entry, 'link')
 
-    if (media && (getAttr(media, '@_type', true) || '').indexOf('audio') !== -1) {
-      return getAttr(media, '@_url', true)
+    if (AUDIO_TYPES.test(url)) {
+      return url
     }
   }
 
   imageForEntry (entry) {
-    const media = getAttr(entry, 'media:content') || getAttr(entry, 'enclosure')
+    const url = getAttr(entry, 'media:content.image.@_url') ||
+        getAttr(entry, 'media:content.image.url') ||
+        getAttr(entry, 'enclosure.image.@_url') ||
+        getAttr(entry, 'enclosure.image.url') ||
+        getAttr(entry, 'enclosure.@_url') ||
+        getAttr(entry, 'enclosure.url') ||
+        getAttr(entry, 'itunes.image')
 
-    if (media && (getAttr(media, '@_type', true) || '').indexOf('image') !== -1) {
-      return getAttr(media, '@_url', true)
+    if (IMAGE_TYPES.test(url)) {
+      return url
     }
   }
 

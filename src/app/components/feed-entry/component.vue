@@ -75,17 +75,20 @@
       </a>
     </template>
     <template #content>
-      <ImagePlayer
-        :app="app"
-        :identity="identity"
-        :entry="entry"
-      />
       <VideoPlayer
+        v-if="app.queries.videoForEntry(entry)"
         :app="app"
         :identity="identity"
         :entry="entry"
       />
       <AudioPlayer
+        v-else-if="app.queries.audioForEntry(entry)"
+        :app="app"
+        :identity="identity"
+        :entry="entry"
+      />
+      <ImagePlayer
+        v-else-if="app.queries.imageForEntry(entry)"
         :app="app"
         :identity="identity"
         :entry="entry"
