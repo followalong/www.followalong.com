@@ -7,7 +7,7 @@
         <!-- Logo section -->
         <div class="flex items-center px-2 md:px-0 md:w-64">
           <router-link
-            to="/"
+            :to="`/signals/${app.queries.permalinkForSignal(app.queries.defaultSignalForIdentity(identity))}`"
             class="db flex-shrink-0"
           >
             <img
