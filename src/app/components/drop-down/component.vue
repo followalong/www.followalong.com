@@ -8,7 +8,7 @@
           class="-my-2 flex items-center rounded-full bg-white p-2 text-gray-400 hover:text-gray-600"
           :aria-expanded="isOpen"
           aria-haspopup="true"
-          aria-label="Show feed menu"
+          aria-label="Show menu"
           @click="toggleOpen"
         >
           <span class="sr-only">Open options</span>

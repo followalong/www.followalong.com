@@ -8,7 +8,7 @@ describe('Pause a feed', () => {
       path: '/https://changelog.followalong.com/feed.xml'
     })
 
-    await app.click('[aria-label="Show feed menu"]')
+    await app.click('[aria-label="Show menu"]')
     await app.click('[aria-label="Pause feed"]')
   })
 

@@ -10,6 +10,28 @@
       <template #description>
         {{ app.queries.descriptionForSignal(signal) }}
       </template>
+
+      <template #meta>
+        <DropDown
+          v-if="unreadEntries.length"
+          :app="app"
+          :identity="identity"
+        >
+          <template #items>
+            <a
+              v-if="unreadEntries.length"
+              href="javascript:;"
+              class="text-gray-700 flex justify-between px-4 py-2 text-sm"
+              role="menuitem"
+              tabindex="-1"
+              aria-label="Catch up on signal"
+              @click="catchUpOnSignal"
+            >
+              <span>Catch me up</span>
+            </a>
+          </template>
+        </DropDown>
+      </template>
     </PageTitle>
 
     <div v-if="shownEntries.length">
@@ -37,6 +59,7 @@
 </template>
 
 <script>
+import DropDown from '../../components/drop-down/component.vue'
 import FeedEntry from '../../components/feed-entry/component.vue'
 import PageCard from '../../components/page-card/component.vue'
 import NewBar from '../../components/new-bar/component.vue'
@@ -48,6 +71,7 @@ const LIMIT = 4
 
 export default {
   components: {
+    DropDown,
     FeedEntry,
     NewBar,
     PageCard,
@@ -74,6 +98,10 @@ export default {
 
     shownEntries () {
       return this.app.queries.filterNonNewEntries(this.entries).slice(0, this.limit)
+    },
+
+    unreadEntries () {
+      return this.entries.filter((e) => !this.app.queries.isEntryRead(e))
     }
   },
 
@@ -128,6 +156,12 @@ export default {
           }, 100)
         }
       }
+    },
+
+    catchUpOnSignal () {
+      this.unreadEntries.reverse().forEach((entry) => {
+        this.app.commands.markEntryAsReadForIdentity(this.identity, entry)
+      })
     }
   }
 }
