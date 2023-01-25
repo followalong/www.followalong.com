@@ -21,9 +21,6 @@
               <slot name="content" />
             </div>
           </div>
-          <div class="bg-gray-50 p-5 sm:flex sm:flex-row-reverse">
-            <slot name="actions" />
-          </div>
         </div>
       </div>
     </div>
