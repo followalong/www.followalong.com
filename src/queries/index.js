@@ -322,7 +322,7 @@ class Queries {
     for (var i = 0; i < attrs.length; i++) {
       const val = getAttr(entry, attrs[i])
 
-      if (VIDEO_TYPES.test(val) || `${attrs[i]}`.indexOf('embed') !== -1) {
+      if (VIDEO_TYPES.test(val) || `${val}`.indexOf('embed') !== -1) {
         return val
       }
     }
