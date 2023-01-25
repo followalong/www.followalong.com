@@ -1,7 +1,7 @@
 <template>
   <div class="border-b border-gray-200 p-4 md:mb-8 md:px-0">
-    <div class="sm:flex sm:justify-between">
-      <div class="sm:w-0 sm:flex-1">
+    <div class="flex justify-between">
+      <div class="w-0 flex-1">
         <h1
           aria-label="Page title"
           class="text-lg font-medium text-gray-900 group flex items-center"
