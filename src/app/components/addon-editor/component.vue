@@ -7,6 +7,12 @@
     </template>
     <template #content>
       <div class="prose">
+        <p>
+          {{ addon.description }}
+        </p>
+        <p class="font-bold">
+          Using: {{ currentAdapterPreview }}
+        </p>
         <button
           :aria-label="`Configure ${addon.type}`"
           class="block float-right rounded-md border border-transparent bg-indigo-100 px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm ml-1"
@@ -14,9 +20,6 @@
         >
           Configure
         </button>
-        <p>
-          {{ addon.description }}
-        </p>
       </div>
       <Modal
         v-if="modalOpen"
@@ -118,6 +121,9 @@ export default {
   computed: {
     selectedAdapter () {
       return this.app.queries.findAdapter(this.newAdapterData.type)
+    },
+    currentAdapterPreview () {
+      return this.app.queries.adapterForAddonForIdentity(this.identity, this.addon.type).preview()
     }
   },
   watch: {
