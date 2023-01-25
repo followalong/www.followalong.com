@@ -128,7 +128,7 @@ export default {
     },
 
     unreadEntries () {
-      return this.entries.filter((e) => !this.app.queries.isEntryRead(e))
+      return this.existingEntries.filter((e) => !this.app.queries.isEntryRead(e))
     },
 
     title () {
