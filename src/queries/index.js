@@ -250,7 +250,7 @@ class Queries {
 
   contentForEntry (entry) {
     const content = getAttr(entry, 'content:encoded') ||
-      getAttr(entry, 'content') ||
+      getAttr(entry, 'content.#text') ||
       getAttr(entry, 'description') ||
       getAttr(entry, 'media:group.media:description')
 
