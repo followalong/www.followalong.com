@@ -357,6 +357,8 @@ class Queries {
       'media:group.media:thumbnail.url',
       'media:content.image.@_url',
       'media:content.image.url',
+      'media:content.@_url',
+      'media:content.url',
       'enclosure.image.@_url',
       'enclosure.image.url',
       'enclosure.@_url',
