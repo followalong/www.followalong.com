@@ -26,7 +26,10 @@ const objHasNewData = (existingObj, newData) => {
         return true
       }
     } else {
-      if (getAttr(newData, key, true) !== getAttr(existingObj, key, true)) {
+      if (
+        getAttr(newData, key, true) !== getAttr(existingObj, key, true) &&
+        key.indexOf('statistics') === -1
+      ) {
         return true
       }
     }
