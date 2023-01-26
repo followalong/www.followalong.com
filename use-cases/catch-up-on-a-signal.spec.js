@@ -15,8 +15,5 @@ describe('Catch up on a signal', () => {
     expect(app.findAll('[aria-label^="Mark as unread"]').length).toEqual(1)
   })
 
-  event('entries.read', {
-    collection: 'entries',
-    action: 'read'
-  }, () => { return { app } })
+  event('entries.read', {}, () => { return { app } })
 })

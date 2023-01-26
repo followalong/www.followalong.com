@@ -438,6 +438,10 @@ class Queries {
   linkify (text) {
     return linkifyHtml(text, { target: '_blank' })
   }
+
+  findAllEvents (identity) {
+    return this.state.findAllEvents(identity.id)
+  }
 }
 
 export default Queries

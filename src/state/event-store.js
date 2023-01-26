@@ -76,6 +76,14 @@ class EventStore {
   }
 
   reset () {
+    for (const key in this._runners) {
+      const collectionName = key.split('.')[0]
+
+      this[collectionName].splice(0)
+    }
+
+    this._events.splice(0)
+
     return this._db.clear()
   }
 

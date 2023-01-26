@@ -27,8 +27,6 @@ describe('Mark entry as read', () => {
   })
 
   event('entries.read', {
-    collection: 'entries',
-    action: 'read',
     objectId: entryId
   }, () => { return { app } })
 })

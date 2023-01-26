@@ -29,8 +29,6 @@ describe('Catch up on a feed', () => {
   })
 
   event('entries.read', {
-    collection: 'entries',
-    action: 'read',
     objectId: entryId
   }, () => { return { app } })
 })

@@ -14,7 +14,7 @@ const mountApp = (options) => {
 
     const store = new MultiEventStore(Math.random(), 'v2.1', runners)
 
-    await store.reset()
+    await store.clear()
 
     if (options.state) {
       for (const id in options.state) {

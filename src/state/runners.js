@@ -79,6 +79,31 @@ export default {
     existing.addons = existing.addons || {}
     existing.addons[event.data.addonType] = event.data.data
   },
+  'identities.rollup': (store, event) => {
+    [event.data.identity].forEach((identity) => {
+      const identityEvent = new EventStoreEvent('identities', identity.id, 'create', identity, identity.createdAt, event.version)
+
+      EventStore.RUNNERS.CREATE(store, identityEvent)
+    })
+
+    event.data.feeds.forEach((feed) => {
+      const feedEvent = new EventStoreEvent('feeds', feed.id, 'create', feed, feed.createdAt, event.version)
+
+      EventStore.RUNNERS.CREATE(store, feedEvent)
+    })
+
+    event.data.entries.forEach((entry) => {
+      const entryEvent = new EventStoreEvent('entries', entry.id, 'create', entry, entry.createdAt, event.version)
+
+      EventStore.RUNNERS.CREATE(store, entryEvent)
+    })
+
+    event.data.signals.forEach((signal) => {
+      const signalEvent = new EventStoreEvent('signals', signal.id, 'create', signal, signal.createdAt, event.version)
+
+      EventStore.RUNNERS.CREATE(store, signalEvent)
+    })
+  },
   'signals.create': EventStore.RUNNERS.CREATE,
   'signals.update': EventStore.RUNNERS.UPDATE,
   'signals.delete': EventStore.RUNNERS.DELETE

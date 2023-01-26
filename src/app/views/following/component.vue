@@ -25,6 +25,7 @@
             <router-link
               :to="`/${app.queries.urlForFeed(feed)}`"
               class="block px-5 sm:px-6"
+              :aria-label="`Visit ${app.queries.titleForFeed(feed)} feed`"
             >
               <div class="flex space-x-3 flex-shrink-0 items-center py-4">
                 <p

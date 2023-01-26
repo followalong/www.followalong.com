@@ -182,7 +182,7 @@ class Commands {
   }
 
   track (identity, collectionName, objectId, action, data) {
-    this.state.track(identity.id, collectionName, objectId, action, data)
+    return this.state.track(identity.id, collectionName, objectId, action, data)
   }
 
   restoreFromLocal () {
@@ -323,6 +323,26 @@ class Commands {
     if (this.noSleep) {
       this.noSleep.disable()
     }
+  }
+
+  resetIdentity (identity) {
+    return this.state.reset(identity.id)
+  }
+
+  createProjectionForIdentity (identity) {
+    return new Promise((resolve, reject) => {
+      const data = {
+        identity,
+        feeds: this.queries.feedsForIdentity(identity),
+        entries: this.queries.entriesForIdentity(identity),
+        signals: this.queries.signalsForIdentity(identity)
+      }
+
+      this.resetIdentity(identity)
+        .then(this.track(identity, 'identities', identity.id, 'rollup', data))
+        .then(resolve)
+        .catch(reject)
+    })
   }
 }
 

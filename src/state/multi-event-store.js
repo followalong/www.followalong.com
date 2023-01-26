@@ -82,6 +82,13 @@ class MultipleEventStore extends EventStore {
     const dbs = this._findDBs(dbId ? [dbId] : undefined)
     const promises = dbs.map((db) => db.reset.apply(db, args))
 
+    return Promise.all(promises)
+  }
+
+  clear (dbId, ...args) {
+    const dbs = this._findDBs(dbId ? [dbId] : undefined)
+    const promises = dbs.map((db) => db.reset.apply(db, args))
+
     promises.push(this._config.clear())
 
     return Promise.all(promises)
@@ -133,6 +140,17 @@ class MultipleEventStore extends EventStore {
 
         return Promise.all(promises)
       })
+  }
+
+  removeEvent (dbId, event) {
+    const dbs = this._findDBs(dbId ? [dbId] : undefined)
+    const promises = []
+
+    for (var i = 0; i < dbs.length; i++) {
+      promises.push(dbs[i].removeEvent(event))
+    }
+
+    return Promise.all(promises)
   }
 
   _initDB (dbId) {

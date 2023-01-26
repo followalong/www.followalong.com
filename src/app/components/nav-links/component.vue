@@ -5,7 +5,7 @@
     </h3>
     <router-link
       v-for="signal in app.queries.signalsForIdentity(identity)"
-      :key="`sidebar-signal-${signal.id}`"
+      :key="`sidebar-signal-${signal.data.id}`"
       :to="`/signals/${app.queries.permalinkForSignal(signal)}`"
       class="relative text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-2 py-2 sm:text-sm font-medium rounded-md"
       :aria-label="`Visit ${app.queries.titleForSignal(signal)}`"
