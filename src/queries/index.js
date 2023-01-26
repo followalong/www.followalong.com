@@ -28,7 +28,7 @@ const objHasNewData = (existingObj, newData) => {
     } else {
       if (
         getAttr(newData, key, true) !== getAttr(existingObj, key, true) &&
-        key.indexOf('statistics') === -1
+        key.indexOf('media:community') === -1
       ) {
         return true
       }
