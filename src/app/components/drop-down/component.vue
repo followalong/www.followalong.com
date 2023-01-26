@@ -1,4 +1,9 @@
 <template>
+  <div
+    v-if="isOpen"
+    class="bg-transparent fixed top-0 right-0 bottom-0 left-0"
+    @click="toggleOpen"
+  />
   <div class="flex items-center justify-between sm:ml-6 sm:flex-shrink-0 sm:justify-start">
     <div class="relative ml-3 inline-block text-left">
       <div>
@@ -32,6 +37,7 @@
         aria-orientation="vertical"
         aria-labelledby="menu-0-button"
         tabindex="-1"
+        @click="toggleOpen"
       >
         <div
           class="py-1"

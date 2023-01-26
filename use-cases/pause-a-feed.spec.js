@@ -13,6 +13,8 @@ describe('Pause a feed', () => {
   })
 
   story('pauses the feed', async () => {
+    await app.click('[aria-label="Show menu"]')
+
     expect(app.findAll('[aria-label="Unpause feed"]').length).toEqual(1)
   })
 
