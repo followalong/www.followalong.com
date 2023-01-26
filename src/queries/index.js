@@ -22,14 +22,14 @@ const parser = new XMLParser({
 const objHasNewData = (existingObj, newData) => {
   for (const key in newData) {
     if (typeof newData[key] === 'object') {
-      if (objHasNewData(existingObj[key], newData[key])) {
+      if (
+        objHasNewData(existingObj[key], newData[key]) &&
+        key.indexOf('media:community') === -1
+      ) {
         return true
       }
     } else {
-      if (
-        getAttr(newData, key, true) !== getAttr(existingObj, key, true) &&
-        key.indexOf('media:community') === -1
-      ) {
+      if (getAttr(newData, key, true) !== getAttr(existingObj, key, true)) {
         return true
       }
     }
