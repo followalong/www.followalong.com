@@ -196,7 +196,7 @@ class ArticleGroup {
       sentencesByPotency: sentencesByPotency.slice(0, 1),
       sentencesByWeight: sentencesByWeight.slice(0, 3),
       relatedArticles: sentencesWithKeyword
-        .reduce((arr, sentence) => arr.push(sentence.article.content), [])
+        .reduce((arr, sentence) => arr.concat(sentence.article.content), [])
         .filter(FILTER_UNIQUE)
     }
   }
