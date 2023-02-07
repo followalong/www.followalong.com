@@ -10,15 +10,9 @@ class EventStore {
     this._runners = runners
     this._version = version
 
-    for (const key in runners) {
-      if (/^v[0-9.]+$/.test(key)) {
-        continue
-      }
-
-      const collectionName = key.split('.')[0]
-
+    this.eachCollectionName((collectionName) => {
       this[collectionName] = this[collectionName] || []
-    }
+    })
   }
 
   track (collection, objectId, action, data = {}, time = Date.now(), version = this._version) {
@@ -26,6 +20,18 @@ class EventStore {
 
     this._runEvent(event)
     this._db.setItem(event.key, event.toLocal())
+  }
+
+  eachCollectionName (func) {
+    for (const key in this._runners) {
+      if (/^v[0-9.]+$/.test(key)) {
+        continue
+      }
+
+      const collectionName = key.split('.')[0]
+
+      func(collectionName)
+    }
   }
 
   importRaw (data) {
@@ -80,15 +86,9 @@ class EventStore {
   }
 
   reset () {
-    for (const key in this._runners) {
-      if (/^v[0-9.]+$/.test(key)) {
-        continue
-      }
-
-      const collectionName = key.split('.')[0]
-
+    this.eachCollectionName((collectionName) => {
       this[collectionName].splice(0)
-    }
+    })
 
     this._events.splice(0)
 
