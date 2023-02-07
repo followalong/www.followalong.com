@@ -98,7 +98,7 @@ export default {
   },
   watch: {
     modalOpen () {
-      this.newAdapterConfig = Object.assign({}, this.addon)
+      this.newAdapterConfig = Object.assign({}, { id: this.addon.id, type: this.addon.type, data: Object.assign({}, this.addon.data) })
     }
   },
   methods: {
