@@ -2,7 +2,18 @@
   <div>
     <PageTitle title="Add-ons">
       <template #description>
-        <p>Supercharge your experience</p>
+        <p>Customize your add-ons</p>
+      </template>
+      <template #meta>
+        <div class="flex">
+          <router-link
+            to="/marketplace"
+            class="rounded-md border border-transparent bg-indigo-100 px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm ml-1"
+            aria-label="Go to marketplace"
+          >
+            Find more add-ons
+          </router-link>
+        </div>
       </template>
     </PageTitle>
 

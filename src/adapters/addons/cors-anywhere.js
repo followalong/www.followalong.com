@@ -4,10 +4,12 @@ const DEFAULT_URL = 'https://cors-anywhere.followalong.com/'
 
 class CORSAnywhere extends Adapter {
   constructor (adapterOptions, addonData) {
+    addonData.url = addonData.url || DEFAULT_URL
+
     super(adapterOptions, addonData)
 
-    this.title = 'RSS Proxy (CORSAnywhere)'
-    this.description = 'Access feeds on... the rest of the internet'
+    this.title = 'CORSAnywhere RSS Proxy'
+    this.description = 'Many feeds are not only accessible cross-origin, so a proxy server can be used to fetch the feeds. <a href="https://github.com/Rob--W/cors-anywhere">CORS Anywhere</a> is an open-source proxy which adds CORS headers to the proxied request. To configure, simply supply the URL of your deployed instance.'
     this.preview = this.data.url
     this.fields = {
       url: {
@@ -17,8 +19,23 @@ class CORSAnywhere extends Adapter {
         placeholder: DEFAULT_URL
       }
     }
-    this.adapter = 'cors-anywhere'
-    this.data.url = this.data.url || DEFAULT_URL
+  }
+
+  configure () {
+    // add feed or signal
+  }
+
+  uninstall () {
+    // remove feed or signal
+  }
+
+  validate (data) {
+    try {
+      new URL(data.url)
+      return true
+    } catch (e) {}
+
+    return false
   }
 
   rss (url) {

@@ -1,26 +1,33 @@
 <template>
   <PageCard>
     <template #title>
-      <p class="font-medium text-gray-900">
-        {{ addon.title }}
-      </p>
+      <div>
+        <p class="font-medium text-gray-900">
+          {{ addon.title }}
+        </p>
+        <p
+          class="mt-1 text-sm text-gray-500"
+        >
+          {{ addon.preview }}
+        </p>
+      </div>
     </template>
-    <template #content>
-      <div class="prose">
-        <p>
-          {{ addon.description }}
-        </p>
-        <p class="font-bold">
-          Using: {{ addon.preview }}
-        </p>
+    <template #meta>
+      <div>
         <button
           :aria-label="`Configure ${addon.id}`"
-          class="block float-right rounded-md border border-transparent bg-indigo-100 px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm ml-1"
+          class="block float-right rounded-md border border-transparent bg-indigo-100 -m-2 px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm ml-1"
           @click="modalOpen = true"
         >
           Configure
         </button>
       </div>
+    </template>
+    <template #content>
+      <div
+        class="prose"
+        v-html="app.queries.sanitizeCopy(addon.description)"
+      />
       <Modal
         v-if="modalOpen"
         :app="app"

@@ -260,6 +260,10 @@ class Queries {
     return sanitizeContent(content || '')
   }
 
+  sanitizeCopy (content) {
+    return sanitizeContent(content)
+  }
+
   imageForFeed (feed) {
     return getAttr(feed, 'image.url') ||
       getAttr(feed, 'webfeeds:icon')
