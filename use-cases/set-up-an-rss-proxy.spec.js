@@ -14,7 +14,6 @@ describe('Set up an RSS proxy', () => {
 
     await app.click('[aria-label="Add-ons"]')
     await app.click('[aria-label="Configure rss"]')
-    await app.find('[aria-label="Configure rss adapter"]').setValue('CORSAnywhere')
     await app.find('[aria-label="Configure rss url"]').setValue(proxyUrl)
     await app.submit('[aria-label="Save rss"]')
   })
@@ -25,13 +24,11 @@ describe('Set up an RSS proxy', () => {
     expect(fetch).toHaveBeenCalledWith('https://foo.bar/https://changelog.followalong.com/feed.xml')
   })
 
-  event('identities.setProxy', {
+  event('addons.configure', {
     data: {
-      addonType: 'rss',
+      type: 'CORSAnywhere',
       data: {
-        data: {
-          url: proxyUrl
-        }
+        url: proxyUrl
       }
     }
   }, () => { return { app } })

@@ -20,6 +20,10 @@ class Commands {
         url: 'https://www.followalong.net/img/favicon.ico'
       }
     })
+    this.saveAddonDataForIdentity(identity, {
+      id: 'rss',
+      type: 'CORSAnywhere'
+    })
     this.addSignalToIdentity(identity, {
       title: 'Home',
       description: 'Sorting all entries by most recent',
@@ -189,10 +193,10 @@ class Commands {
     return this.state.restore()
   }
 
-  fetchUrl (identity, type, url) {
-    const adapter = this.queries.adapterForAddonForIdentity(identity, type)
+  fetchUrl (identity, actionableId, url) {
+    const adapter = this.queries.adapterForAddonForIdentity(identity, actionableId)
 
-    return adapter[type](url)
+    return adapter[actionableId](url)
       .then(this.queries.jsonFromXml)
   }
 
@@ -307,8 +311,8 @@ class Commands {
     this.track(identity, 'feeds', feed.id, 'unpause')
   }
 
-  saveAddonDataForIdentity (identity, addonType, data) {
-    this.track(identity, 'identities', identity.id, 'setProxy', { addonType, data })
+  saveAddonDataForIdentity (identity, addon) {
+    this.track(identity, 'addons', addon.id, 'configure', { type: addon.type, data: addon.data })
   }
 
   disableSleep ($audio) {
@@ -335,11 +339,12 @@ class Commands {
         identity,
         feeds: this.queries.feedsForIdentity(identity),
         entries: this.queries.entriesForIdentity(identity),
-        signals: this.queries.signalsForIdentity(identity)
+        signals: this.queries.signalsForIdentity(identity),
+        addons: this.queries.addonsForIdentity(identity)
       }
 
       this.resetIdentity(identity)
-        .then(this.track(identity, 'identities', identity.id, 'rollup', data))
+        .then(() => this.track(identity, 'identities', identity.id, 'rollup', data))
         .then(resolve)
         .catch(reject)
     })

@@ -7,9 +7,11 @@
     </PageTitle>
 
     <AddonEditor
+      v-for="addon in app.queries.addonAdaptersForIdentity(identity)"
+      :key="addon.id"
       :app="app"
       :identity="identity"
-      :addon="rssAddon"
+      :addon="addon"
     />
   </div>
 </template>
@@ -24,12 +26,6 @@ export default {
     PageTitle
   },
 
-  props: ['app', 'identity'],
-
-  data () {
-    return {
-      rssAddon: this.app.queries.findAddon('rss')
-    }
-  }
+  props: ['app', 'identity']
 }
 </script>

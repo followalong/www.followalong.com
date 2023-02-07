@@ -22,7 +22,7 @@
           <div class="mt-5">
             <button
               type="button"
-              class="rounded-md border border-transparent bg-red-100 px-4 py-2 font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:text-sm"
+              class="rounded-md border border-transparent bg-orange-100 px-4 py-2 font-medium text-orange-700 hover:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 sm:text-sm"
               aria-label="Roll up identity"
               @click="rollUpIdentity"
             >

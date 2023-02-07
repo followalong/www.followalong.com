@@ -64,7 +64,7 @@ export default {
   props: {
     state: {
       type: Object,
-      default: () => new MultiEventStore('follow-along', 'v2.1', runners)
+      default: () => new MultiEventStore('follow-along', 'v2.2', runners)
     },
     fetch: {
       type: Function,

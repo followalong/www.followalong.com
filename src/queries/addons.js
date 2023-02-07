@@ -8,11 +8,4 @@ const ADAPTERS = [
   CORSAnywhere
 ]
 
-const ADDONS = [{
-  type: 'rss',
-  title: 'RSS Proxy',
-  description: 'Access feeds on... the rest of the internet',
-  adapters: ADAPTERS.filter((Adapter) => typeof (new Adapter().rss) !== 'undefined')
-}]
-
-export { ADDONS, ADAPTERS }
+export { ADAPTERS }

@@ -11,6 +11,10 @@ class EventStore {
     this._version = version
 
     for (const key in runners) {
+      if (/^v[0-9.]+$/.test(key)) {
+        continue
+      }
+
       const collectionName = key.split('.')[0]
 
       this[collectionName] = this[collectionName] || []
@@ -77,6 +81,10 @@ class EventStore {
 
   reset () {
     for (const key in this._runners) {
+      if (/^v[0-9.]+$/.test(key)) {
+        continue
+      }
+
       const collectionName = key.split('.')[0]
 
       this[collectionName].splice(0)
@@ -120,7 +128,7 @@ EventStore.RUNNERS = {
     const existing = collection.find((item) => item.id === event.objectId)
 
     if (!existing) {
-      return EventStore.RUNNERS.CREATE.call(store, event)
+      return EventStore.RUNNERS.CREATE(store, event)
     }
 
     existing.updatedAt = event.time

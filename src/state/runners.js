@@ -14,6 +14,43 @@ const EVENT_WITH_POSSIBLE_NESTED_DATA = (type) => {
   }
 }
 
+const ROLLUP = (store, event) => {
+  const identities = [event.data.identity]
+  identities.forEach((identity) => {
+    const identityEvent = new EventStoreEvent('identities', identity.id, 'create', identity, identity.createdAt, event.version)
+
+    EventStore.RUNNERS.CREATE(store, identityEvent)
+  })
+
+  const feeds = event.data.feeds || []
+  feeds.forEach((feed) => {
+    const feedEvent = new EventStoreEvent('feeds', feed.id, 'create', feed, feed.createdAt, event.version)
+
+    EventStore.RUNNERS.CREATE(store, feedEvent)
+  })
+
+  const entries = event.data.entries || []
+  entries.forEach((entry) => {
+    const entryEvent = new EventStoreEvent('entries', entry.id, 'create', entry, entry.createdAt, event.version)
+
+    EventStore.RUNNERS.CREATE(store, entryEvent)
+  })
+
+  const signals = event.data.signals || []
+  signals.forEach((signal) => {
+    const signalEvent = new EventStoreEvent('signals', signal.id, 'create', signal, signal.createdAt, event.version)
+
+    EventStore.RUNNERS.CREATE(store, signalEvent)
+  })
+
+  const addons = event.data.addons || []
+  addons.forEach((addon) => {
+    const addonEvent = new EventStoreEvent('addons', addon.id, 'configure', addon, addon.updatedAt, event.version)
+
+    EventStore.RUNNERS.UPDATE(store, addonEvent)
+  })
+}
+
 export default {
   'feeds.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because URL is outside of data; OK because URL is immutable for now
   'feeds.update': EVENT_WITH_POSSIBLE_NESTED_DATA('UPDATE'),
@@ -67,44 +104,32 @@ export default {
   },
   'identities.create': EventStore.RUNNERS.CREATE,
   'identities.delete': EventStore.RUNNERS.DELETE,
-  'identities.setProxy': (store, event) => {
-    const collection = store[event.collection]
-    const existing = collection.find((item) => item.id === event.objectId)
-
-    if (!existing) {
-      console.warn(`Object not found for event: ${JSON.stringify(event)}`)
-      return
-    }
-
-    existing.addons = existing.addons || {}
-    existing.addons[event.data.addonType] = event.data.data
-  },
-  'identities.rollup': (store, event) => {
-    [event.data.identity].forEach((identity) => {
-      const identityEvent = new EventStoreEvent('identities', identity.id, 'create', identity, identity.createdAt, event.version)
-
-      EventStore.RUNNERS.CREATE(store, identityEvent)
-    })
-
-    event.data.feeds.forEach((feed) => {
-      const feedEvent = new EventStoreEvent('feeds', feed.id, 'create', feed, feed.createdAt, event.version)
-
-      EventStore.RUNNERS.CREATE(store, feedEvent)
-    })
-
-    event.data.entries.forEach((entry) => {
-      const entryEvent = new EventStoreEvent('entries', entry.id, 'create', entry, entry.createdAt, event.version)
-
-      EventStore.RUNNERS.CREATE(store, entryEvent)
-    })
-
-    event.data.signals.forEach((signal) => {
-      const signalEvent = new EventStoreEvent('signals', signal.id, 'create', signal, signal.createdAt, event.version)
-
-      EventStore.RUNNERS.CREATE(store, signalEvent)
-    })
-  },
+  'identities.rollup': ROLLUP,
   'signals.create': EventStore.RUNNERS.CREATE,
   'signals.update': EventStore.RUNNERS.UPDATE,
-  'signals.delete': EventStore.RUNNERS.DELETE
+  'signals.delete': EventStore.RUNNERS.DELETE,
+  'addons.configure': EVENT_WITH_POSSIBLE_NESTED_DATA('UPDATE'),
+  'addons.delete': EventStore.RUNNERS.DELETE,
+  'v2.1': {
+    'identities.setProxy': (store, event) => {
+      const addonEvent = new EventStoreEvent('addons', event.data.addonType, 'configure', event.data.data, event.time, 'v2.2')
+
+      EventStore.RUNNERS.UPDATE(store, addonEvent)
+    },
+    'identities.rollup': (store, event) => {
+      const addons = []
+
+      for (const key in event.data.identity.addons) {
+        event.data.identity.addons[key].id = key
+        addons.push(event.data.identity.addons[key])
+      }
+
+      delete event.data.identity.addons
+
+      event.data.addons = addons
+
+      const rollupEvent = new EventStoreEvent(event.collection, event.objectId, event.action, event.data, event.time, 'v2.2')
+      ROLLUP(store, rollupEvent)
+    }
+  }
 }

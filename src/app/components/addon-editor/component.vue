@@ -11,10 +11,10 @@
           {{ addon.description }}
         </p>
         <p class="font-bold">
-          Using: {{ currentAdapterPreview }}
+          Using: {{ addon.preview }}
         </p>
         <button
-          :aria-label="`Configure ${addon.type}`"
+          :aria-label="`Configure ${addon.id}`"
           class="block float-right rounded-md border border-transparent bg-indigo-100 px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm ml-1"
           @click="modalOpen = true"
         >
@@ -25,39 +25,16 @@
         v-if="modalOpen"
         :app="app"
         :identity="identity"
-        :title="`Configure ${addon.title}`"
+        :title="`Configure ${addon.id}`"
       >
         <template #content>
           <form
             class="space-y-6"
-            :aria-label="`Save ${addon.type}`"
+            :aria-label="`Save ${addon.id}`"
             @submit.prevent="save"
           >
-            <div>
-              <label
-                for="email"
-                class="block text-sm font-medium text-gray-700"
-              >Choose an adapter</label>
-              <div class="mt-1">
-                <select
-                  v-model="newAdapterData.type"
-                  required
-                  class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                  :aria-label="`Configure ${addon.type} adapter`"
-                >
-                  <option
-                    v-for="adapter in addon.adapters"
-                    :key="adapter.key"
-                    :value="adapter.name"
-                  >
-                    {{ app.queries.adapterName(adapter) }}
-                  </option>
-                </select>
-              </div>
-            </div>
-
             <div
-              v-for="(field, key) in selectedAdapter.FIELDS"
+              v-for="(field, key) in addon.fields"
               :key="`field-${key}`"
             >
               <label
@@ -68,8 +45,8 @@
               <div class="mt-1">
                 <input
                   :id="`input-${key}`"
-                  v-model="newAdapterData.data[key]"
-                  :aria-label="`Configure ${addon.type} ${key}`"
+                  v-model="newAdapterConfig.data[key]"
+                  :aria-label="`Configure ${addon.id} ${key}`"
                   :name="`input-${key}`"
                   :type="field.type"
                   :autocomplete="field.autocomplete"
@@ -116,33 +93,17 @@ export default {
   data () {
     return {
       modalOpen: false,
-      currentAdapterData: {},
-      newAdapterData: {}
-    }
-  },
-  computed: {
-    selectedAdapter () {
-      return this.app.queries.findAdapter(this.newAdapterData.type)
-    },
-    currentAdapterPreview () {
-      return this.app.queries.adapterForAddonForIdentity(this.identity, this.addon.type).preview()
+      newAdapterConfig: {}
     }
   },
   watch: {
     modalOpen () {
-      const currentAdapterData = this.app.queries.adapterDataForIdentityAndAddon(this.identity, this.addon.type)
-
-      this.currentAdapterData = currentAdapterData
-      this.newAdapterData = Object.assign({}, currentAdapterData)
-    },
-    selectedAdapter () {
-      const Adapter = this.selectedAdapter
-      this.newAdapterData.data = new Adapter().data
+      this.newAdapterConfig = Object.assign({}, this.addon)
     }
   },
   methods: {
     save () {
-      this.app.commands.saveAddonDataForIdentity(this.identity, this.addon.type, this.newAdapterData)
+      this.app.commands.saveAddonDataForIdentity(this.identity, this.newAdapterConfig)
       this.modalOpen = false
     }
   }

@@ -6,9 +6,18 @@ class CORSAnywhere extends Adapter {
   constructor (adapterOptions, addonData) {
     super(adapterOptions, addonData)
 
+    this.title = 'RSS Proxy (CORSAnywhere)'
+    this.description = 'Access feeds on... the rest of the internet'
+    this.preview = this.data.url
+    this.fields = {
+      url: {
+        type: 'text',
+        label: 'URL',
+        required: true,
+        placeholder: DEFAULT_URL
+      }
+    }
     this.adapter = 'cors-anywhere'
-    this.name = this.data.name || 'CORS Anywhere'
-    this.description = this.data.description || 'Use the "CORS Anywhere" demo server! Please don\'t abuse this addon, as you can <a href="https://github.com/Lewiscowles1986/cors-anywhere" target="_blank" class="link" onclick="event.stopImmediatePropagation();">quickly deploy your own version</a> to Heroku (or elsewhere).'
     this.data.url = this.data.url || DEFAULT_URL
   }
 
@@ -20,19 +29,6 @@ class CORSAnywhere extends Adapter {
         .then(resolve)
         .catch(reject)
     })
-  }
-
-  preview () {
-    return `${this.data.name || this.name} (${this.data.url})`
-  }
-}
-
-CORSAnywhere.FIELDS = {
-  url: {
-    type: 'text',
-    label: 'URL',
-    required: true,
-    placeholder: DEFAULT_URL
   }
 }
 
