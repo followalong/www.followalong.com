@@ -1,5 +1,8 @@
 <template>
-  <PageCard :has-padding="false">
+  <PageCard
+    :has-padding="false"
+    :center-vertically="false"
+  >
     <template #title>
       <div class="flex space-x-3">
         <router-link
