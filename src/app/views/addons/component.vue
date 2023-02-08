@@ -20,7 +20,7 @@
     <PageCard v-if="!addons.length">
       <template #title>
         <p class="font-medium text-gray-900">
-          No add-ons installed
+          Nothing to see here!
         </p>
       </template>
       <template
@@ -28,7 +28,7 @@
       >
         <div class="prose">
           <p>
-            You haven't installed any add-ons yet.<br><br>
+            You haven't installed any add-ons yet.
             Don't fret &mdash; add-ons are easy to install over in the
             <router-link
               to="/marketplace"
