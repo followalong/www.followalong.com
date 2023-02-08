@@ -102,6 +102,10 @@ export default {
 
     unreadEntries () {
       return this.shownEntries.filter((e) => !this.app.queries.isEntryRead(e))
+    },
+
+    catchUpEntries () {
+      return this.entries.filter((e) => !this.app.queries.isEntryRead(e))
     }
   },
 
@@ -159,7 +163,7 @@ export default {
     },
 
     catchUpOnSignal () {
-      this.unreadEntries.reverse().forEach((entry) => {
+      this.catchUpEntries.reverse().forEach((entry) => {
         this.app.commands.markEntryAsReadForIdentity(this.identity, entry)
       })
       this.app.commands.showNewEntries()
