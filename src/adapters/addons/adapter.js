@@ -1,8 +1,8 @@
 class Adapter {
   constructor (adapterOptions, addonData) {
     this.id = addonData.id
-    this.type = addonData.type
     this.data = addonData.data || {}
+    this.type = this.constructor.name
     this.fields = []
 
     for (const key in adapterOptions) {

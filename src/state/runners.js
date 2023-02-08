@@ -108,7 +108,7 @@ export default {
   'signals.create': EventStore.RUNNERS.CREATE,
   'signals.update': EventStore.RUNNERS.UPDATE,
   'signals.delete': EventStore.RUNNERS.DELETE,
-  'addons.configure': EVENT_WITH_POSSIBLE_NESTED_DATA('UPDATE'),
+  'addons.configure': EventStore.RUNNERS.UPDATE,
   'addons.delete': EventStore.RUNNERS.DELETE,
   'v2.1': {
     'identities.setProxy': (store, event) => {

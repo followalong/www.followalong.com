@@ -1,6 +1,6 @@
 import { XMLParser } from 'fast-xml-parser'
 import linkifyHtml from 'linkify-html'
-import { ADAPTERS } from './addons.js'
+import { ADAPTERS, None } from './addons.js'
 import SORT_BY_ORDER from './sorters/sort-by-order.js'
 import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
 import SORT_BY_TIME from './sorters/sort-by-time.js'
@@ -396,6 +396,11 @@ class Queries {
       .map((addon) => this.adapterForAddonForIdentity(identity, addon.id))
   }
 
+  availableAddonAdaptersForIdentity (identity) {
+    return ADAPTERS
+      .map((Adapter) => new Adapter({}, {}))
+  }
+
   permalinkForSignal (signal) {
     return getAttr(signal, 'permalink')
   }
@@ -426,10 +431,6 @@ class Queries {
       .find((addon) => addon.id === id)
   }
 
-  findAdapter (type) {
-    return ADAPTERS.find((adapter) => adapter.name === type)
-  }
-
   adapterPreviewName (Adapter) {
     return new Adapter().preview()
   }
@@ -439,11 +440,17 @@ class Queries {
   }
 
   adapterForAddonForIdentity (identity, id) {
-    const addon = this.findAddonForIdentity(identity, id) || { type: 'None' }
-    const Adapter = this.findAdapter(addon.type || 'CORSAnywhere')
+    const addon = this.findAddonForIdentity(identity, id) || {}
+    const Adapter = ADAPTERS.find((Adapter) => Adapter.name === addon.type) || None
     const adapter = new Adapter({ fetch: this.fetch }, addon)
 
     return adapter
+  }
+
+  addonAdapterForActionForIdentity (identity, action) {
+    const adapters = this.addonAdaptersForIdentity(identity).concat([new None(this, {})])
+
+    return adapters.find((a) => typeof a[action] === 'function')
   }
 
   linkify (text) {

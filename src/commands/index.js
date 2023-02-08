@@ -20,7 +20,7 @@ class Commands {
         url: 'https://www.followalong.net/img/favicon.ico'
       }
     })
-    this.saveAddonDataForIdentity(identity, {
+    this.saveAddonForIdentity(identity, {
       id: 'rss',
       type: 'CORSAnywhere'
     })
@@ -193,10 +193,10 @@ class Commands {
     return this.state.restore()
   }
 
-  fetchUrl (identity, actionableId, url) {
-    const adapter = this.queries.adapterForAddonForIdentity(identity, actionableId)
+  fetchUrl (identity, action, url) {
+    const adapter = this.queries.addonAdapterForActionForIdentity(identity, action)
 
-    return adapter[actionableId](url)
+    return adapter[action](url)
       .then(this.queries.jsonFromXml)
   }
 
@@ -311,8 +311,12 @@ class Commands {
     this.track(identity, 'feeds', feed.id, 'unpause')
   }
 
-  saveAddonDataForIdentity (identity, addon) {
+  saveAddonForIdentity (identity, addon) {
     this.track(identity, 'addons', addon.id, 'configure', { type: addon.type, data: addon.data })
+  }
+
+  removeAddonFromIdentity (identity, addon) {
+    this.track(identity, 'addons', addon.id, 'delete')
   }
 
   disableSleep ($audio) {
