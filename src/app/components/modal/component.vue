@@ -9,8 +9,8 @@
 
     <div class="fixed inset-0 z-10 overflow-y-auto">
       <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-80 sm:max-w-80">
-          <div class="bg-white p-5">
+        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8">
+          <div class="bg-white p-5 w-screen max-w-2xl">
             <div class="p-1 sm:p-3">
               <h3
                 id="modal-title"
