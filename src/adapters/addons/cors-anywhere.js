@@ -4,7 +4,8 @@ const DEFAULT_URL = 'https://cors-anywhere.followalong.com/'
 
 class CORSAnywhere extends Adapter {
   constructor (adapterOptions, addonData) {
-    addonData.url = addonData.url || DEFAULT_URL
+    addonData.data = addonData.data || {}
+    addonData.data.url = addonData.data.url || DEFAULT_URL
 
     super(adapterOptions, addonData)
 

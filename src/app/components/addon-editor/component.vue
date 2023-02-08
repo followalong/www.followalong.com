@@ -21,7 +21,7 @@
     <template #meta>
       <div>
         <button
-          :aria-label="`Configure ${addon.id}`"
+          :aria-label="`Configure ${addonKey}`"
           class="block float-right rounded-md border border-transparent bg-indigo-100 -m-2 px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm ml-1"
           @click="modalOpen = true"
         >
@@ -43,7 +43,7 @@
         <template #content>
           <form
             class="space-y-6"
-            :aria-label="`Save ${addon.id}`"
+            :aria-label="`Save ${addonKey}`"
             @submit.prevent="save"
           >
             <div
@@ -63,7 +63,7 @@
                 <input
                   :id="`input-${key}`"
                   v-model="newAdapterConfig.data[key]"
-                  :aria-label="`Configure ${addon.id} ${key}`"
+                  :aria-label="`Configure ${addonKey} ${key}`"
                   :name="`input-${key}`"
                   :type="field.type"
                   :autocomplete="field.autocomplete"
@@ -123,6 +123,11 @@ export default {
     return {
       modalOpen: false,
       newAdapterConfig: {}
+    }
+  },
+  computed: {
+    addonKey () {
+      return this.addon.id || this.addon.type
     }
   },
   watch: {
