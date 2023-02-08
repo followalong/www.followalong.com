@@ -1,62 +1,30 @@
 import Adapter from './adapter.js'
 
+const URL = 'https://cors-anywhere.followalong.com/'
+
 class FollowAlongFree extends Adapter {
   constructor (adapterOptions, addonData) {
     super(adapterOptions, addonData)
 
-    this.adapter = 'followalong-free'
-    this.name = this.data.name || 'FollowAlong Free'
-
-    this.AWS_CONFIG = {
-      endpoint: 'lambda.us-east-1.amazonaws.com',
-      region: 'us-east-1',
-      accessKeyId: atob('QUtJQVZCVlI1Sk02U002TDVUTEU='),
-      secretAccessKey: atob('SFFOQ2RWdVQ3VXc5UUJvU0habTFSd01hdFB5Qm5oTm5iMDdwZXJsVA')
-    }
+    this.title = 'FollowAlong Proxy (Free)'
+    this.description = 'Many feeds are not only accessible cross-origin, so a proxy server can be used to fetch the feeds. This add-on is our deployed instance of <a href="https://github.com/Rob--W/cors-anywhere">CORS Anywhere</a>.'
+    this.preview = URL
+    this.fields = {}
   }
 
-  _request (data) {
-    return new Promise((resolve, reject) => {
-      this.awsLambda({
-        endpoint: this.awsEndpoint(this.AWS_CONFIG.endpoint),
-        accessKeyId: this.AWS_CONFIG.accessKeyId,
-        secretAccessKey: this.AWS_CONFIG.secretAccessKey,
-        region: this.AWS_CONFIG.region,
-        apiVersion: 'latest'
-      }).invoke({
-        FunctionName: 'followalong-passthrough',
-        InvocationType: 'RequestResponse',
-        LogType: 'None',
-        Payload: JSON.stringify(data)
-      }, function (err, data) {
-        if (err) {
-          return reject(err)
-        }
-
-        try {
-          resolve(JSON.parse(data.Payload))
-        } catch (e) {
-          reject(e)
-        }
-      })
-    })
+  validate (data) {
+    return true
   }
 
   rss (url) {
-    return this._request({
-      action: 'rss',
-      url: btoa(url)
-    })
-  }
+    return new Promise((resolve, reject) => {
+      if (!url) return reject(new Error('No URL supplied.'))
 
-  search (q) {
-    return this._request({
-      action: 'search',
-      q
+      this.fetch(URL + url)
+        .then(resolve)
+        .catch(reject)
     })
   }
 }
-
-FollowAlongFree.FIELDS = []
 
 export default FollowAlongFree

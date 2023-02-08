@@ -5,8 +5,9 @@
   >
     <div class="bg-white shadow md:rounded-lg">
       <div class="px-4 py-5 sm:px-6">
-        <div class="flex justify-between">
+        <div class="flex items-center justify-between">
           <slot name="title" />
+          <slot name="meta" />
         </div>
       </div>
       <div

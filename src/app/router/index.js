@@ -6,6 +6,7 @@ import Help from '../views/help/component.vue'
 import Settings from '../views/settings/component.vue'
 import Signal from '../views/signal/component.vue'
 import Addons from '../views/addons/component.vue'
+import Marketplace from '../views/marketplace/component.vue'
 
 const routes = [
   {
@@ -16,6 +17,11 @@ const routes = [
   {
     path: '/help',
     component: Help,
+    props: true
+  },
+  {
+    path: '/marketplace',
+    component: Marketplace,
     props: true
   },
   {

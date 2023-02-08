@@ -3,9 +3,9 @@ import FollowAlongFree from '../adapters/addons/followalong-free.js'
 import None from '../adapters/addons/none.js'
 
 const ADAPTERS = [
-  None,
+  // None,
   FollowAlongFree,
   CORSAnywhere
 ]
 
-export { ADAPTERS }
+export { ADAPTERS, None }
