@@ -37,7 +37,7 @@
     <div v-if="shownEntries.length">
       <FeedEntry
         v-for="entry in shownEntries"
-        :key="app.queries.keyForEntry(entry)"
+        :key="`signal-${signal.id}-entry-${entry.id}`"
         :app="app"
         :identity="identity"
         :entry="entry"

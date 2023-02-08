@@ -60,7 +60,7 @@
 
     <FeedEntry
       v-for="entry in entries"
-      :key="`entry-${app.queries.keyForEntry(entry)}`"
+      :key="`feed-${feed.id}-entry-${entry.id}`"
       :app="app"
       :identity="identity"
       :entry="entry"

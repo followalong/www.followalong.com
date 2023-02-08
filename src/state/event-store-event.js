@@ -29,7 +29,7 @@ class EventStoreEvent {
   }
 }
 
-const KEY_MATCHER = /(?<time>\d+)\/(?<collection>\w+)\/(?<objectId>[\w-]+)\/(?<action>[\w-_]+)\/(?<version>[\w-._]+)/
+const KEY_MATCHER = /(?<time>\d+)\/(?<collection>\w+)\/(?<objectId>[\w-:]+)\/(?<action>[\w-_]+)\/(?<version>[\w-._]+)/
 EventStoreEvent.parseEvent = (key) => key.match(KEY_MATCHER).groups
 EventStoreEvent.from = (key, value) => {
   const opts = EventStoreEvent.parseEvent(key)
