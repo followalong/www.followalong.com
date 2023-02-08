@@ -11,7 +11,7 @@ class CORSAnywhere extends Adapter {
 
     this.title = 'CORSAnywhere Proxy'
     this.description = 'Many feeds are not only accessible cross-origin, so a proxy server can be used to fetch the feeds. <a href="https://github.com/Rob--W/cors-anywhere">CORS Anywhere</a> is an open-source proxy which adds CORS headers to the proxied request. To configure, simply supply the URL of your deployed instance.'
-    this.preview = this.data.url
+    this.preview = `Fetches RSS requests via ${this.data.url}`
     this.fields = {
       url: {
         type: 'text',
