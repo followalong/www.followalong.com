@@ -7,7 +7,7 @@ const EVENT_WITH_POSSIBLE_NESTED_DATA = (type) => {
       return EventStore.RUNNERS[type](store, event)
     }
 
-    const data = event.data && event.data.data ? event.data.data : event.data
+    const data = event.data.data ? event.data.data : event.data
     const newEvent = new EventStoreEvent(event.collection, event.objectId, event.action, data, event.time, event.version)
 
     return EventStore.RUNNERS[type](store, newEvent)

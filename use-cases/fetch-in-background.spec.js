@@ -20,7 +20,6 @@ describe('Fetch in background', () => {
     const originalEventsLength = app.vm.state.events.length
 
     app.vm.commands.fetchOutdatedFeeds(app.vm.identity)
-    app.vm.commands.fetchOutdatedFeeds(app.vm.identity)
     await app.wait()
 
     expect(app.vm.state.events.length).toEqual(originalEventsLength + 2) // one for entry, one for feed
