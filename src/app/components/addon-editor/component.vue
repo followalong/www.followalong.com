@@ -14,7 +14,7 @@
         <p
           class="mt-1 text-sm text-gray-500"
         >
-          {{ addon.preview }}
+          {{ addon.id ? addon.preview : '' }}
         </p>
       </div>
     </template>
