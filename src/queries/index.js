@@ -391,16 +391,6 @@ class Queries {
     return this.state.findAll(identity.id, 'addons')
   }
 
-  addonAdaptersForIdentity (identity) {
-    return this.state.findAll(identity.id, 'addons')
-      .map((addon) => this.adapterForAddonForIdentity(identity, addon.id))
-  }
-
-  availableAddonAdaptersForIdentity (identity) {
-    return ADAPTERS
-      .map((Adapter) => new Adapter({}, {}))
-  }
-
   permalinkForSignal (signal) {
     return getAttr(signal, 'permalink')
   }
@@ -439,12 +429,16 @@ class Queries {
     return new Adapter().name
   }
 
-  adapterForAddonForIdentity (identity, id) {
-    const addon = this.findAddonForIdentity(identity, id) || {}
+  adapterForAddonForIdentity (identity, addon) {
     const Adapter = ADAPTERS.find((Adapter) => Adapter.name === addon.type) || None
     const adapter = new Adapter({ fetch: this.fetch }, addon)
 
     return adapter
+  }
+
+  addonAdaptersForIdentity (identity) {
+    return this.state.findAll(identity.id, 'addons')
+      .map((addon) => this.adapterForAddonForIdentity(identity, addon))
   }
 
   addonAdapterForActionForIdentity (identity, action) {
@@ -453,11 +447,20 @@ class Queries {
     return adapters.find((a) => typeof a[action] === 'function')
   }
 
+  availableAddonAdaptersForIdentity (identity) {
+    return ADAPTERS
+      .map((Adapter) => new Adapter({}, {}))
+  }
+
   labelsForAddon (addon) {
     const labels = []
 
     if (typeof addon.rss === 'function') {
       labels.push('RSS')
+    }
+
+    if (typeof addon.signals === 'function') {
+      labels.push('Signal')
     }
 
     return labels
