@@ -21,8 +21,7 @@ class Commands {
       }
     })
     this.saveAddonForIdentity(identity, {
-      id: 'rss',
-      type: 'CORSAnywhere'
+      type: 'FollowAlongFree'
     })
     this.addSignalToIdentity(identity, {
       title: 'Home',
