@@ -312,7 +312,7 @@ class Commands {
   }
 
   saveAddonForIdentity (identity, addon) {
-    this.track(identity, 'addons', addon.id, 'configure', { type: addon.type, data: addon.data })
+    this.track(identity, 'addons', addon.id, 'configure', { type: addon.type, data: addon.data || {} })
   }
 
   removeAddonFromIdentity (identity, addon) {
