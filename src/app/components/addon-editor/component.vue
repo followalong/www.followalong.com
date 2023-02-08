@@ -74,12 +74,12 @@
               </div>
             </div>
 
-            <div class="flex justify-between">
+            <div class="sm:flex justify-between">
               <div>
                 <a
                   v-if="addon.id"
                   href="javascript:;"
-                  class="inline-flex rounded-md border border-transparent bg-red-100 px-4 py-2 font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  class="mb-4 sm:mb-0 inline-flex w-full justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                   @click="uninstall"
                 >
                   Uninstall
