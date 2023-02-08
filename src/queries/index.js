@@ -453,6 +453,16 @@ class Queries {
     return adapters.find((a) => typeof a[action] === 'function')
   }
 
+  labelsForAddon (addon) {
+    const labels = []
+
+    if (typeof addon.rss === 'function') {
+      labels.push('RSS')
+    }
+
+    return labels
+  }
+
   linkify (text) {
     return linkifyHtml(text, { target: '_blank' })
   }

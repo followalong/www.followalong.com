@@ -1,8 +1,8 @@
 <template>
   <div>
-    <PageTitle title="Add-ons">
+    <PageTitle title="Installed Add-ons">
       <template #description>
-        <p>Customize your add-ons</p>
+        <p>Customize your installed add-ons</p>
       </template>
       <template #meta>
         <div class="flex">

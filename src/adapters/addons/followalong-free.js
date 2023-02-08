@@ -6,7 +6,7 @@ class FollowAlongFree extends Adapter {
   constructor (adapterOptions, addonData) {
     super(adapterOptions, addonData)
 
-    this.title = 'FollowAlong RSS Proxy (Free)'
+    this.title = 'FollowAlong Proxy (Free)'
     this.description = 'Many feeds are not only accessible cross-origin, so a proxy server can be used to fetch the feeds. This add-on is our deployed instance of <a href="https://github.com/Rob--W/cors-anywhere">CORS Anywhere</a>.'
     this.preview = URL
     this.fields = {}

@@ -4,6 +4,12 @@
       <div>
         <p class="font-medium text-gray-900">
           {{ addon.title }}
+          <span
+            v-for="label in app.queries.labelsForAddon(addon)"
+            :key="`${addon.id}-label-${label}`"
+            class="inline-flex items-center ml-2 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+            v-html="label"
+          />
         </p>
         <p
           class="mt-1 text-sm text-gray-500"
