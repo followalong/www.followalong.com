@@ -289,7 +289,7 @@ class Queries {
 
   feedChanged (feed, newData) {
     const feedClone = Object.assign({}, feed)
-    const newDataClone = Object.assign({}, newData)
+    const newDataClone = Object.assign({}, { data: newData })
 
     delete feedClone.entry
     delete newDataClone.entry
