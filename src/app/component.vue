@@ -53,7 +53,7 @@ import runners from '../state/runners.js'
 import Queries from '../queries/index.js'
 import NoSleep from 'nosleep.js'
 
-const POLL_INTERVAL = 15000
+const POLL_INTERVAL = 30000
 let POLL_TIMEOUT
 
 export default {
