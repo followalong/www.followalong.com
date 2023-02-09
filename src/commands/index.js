@@ -342,7 +342,7 @@ class Commands {
         identity,
         feeds: this.queries.feedsForIdentity(identity),
         entries: this.queries.entriesForIdentity(identity),
-        signals: this.queries.signalsForIdentity(identity),
+        signals: this.queries.signalsForIdentityForProjection(identity),
         addons: this.queries.addonsForIdentity(identity)
       }
 

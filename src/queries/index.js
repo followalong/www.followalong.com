@@ -401,12 +401,16 @@ class Queries {
   }
 
   signalsForIdentity (identity) {
-    const signals = this.state.findAll(identity.id, 'signals')
+    const signals = this.signalsForIdentityForProjection(identity)
     const addonAdaptersWithSignals = this.addonAdaptersForActionForIdentity(identity, 'signals')
 
     return addonAdaptersWithSignals
       .reduce((arr, addon) => arr.concat(addon.signals()), signals)
       .sort(SORT_BY_ORDER)
+  }
+
+  signalsForIdentityForProjection (identity) {
+    return this.state.findAll(identity.id, 'signals')
   }
 
   signalHasCards (signal) {
