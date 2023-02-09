@@ -204,9 +204,12 @@ class Commands {
 
     return this.fetchUrl(identity, 'rss', url)
       .then((data) => {
-        this.upsertFeedForIdentity(identity, feed, data)
-
         const entries = data.entry || data.item || []
+
+        delete data.entry
+        delete data.item
+
+        this.upsertFeedForIdentity(identity, feed, data)
 
         entries.forEach((e) => this.upsertEntryForIdentity(identity, feed, e))
       })
