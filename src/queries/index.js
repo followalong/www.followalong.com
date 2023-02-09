@@ -297,11 +297,11 @@ class Queries {
     delete feedClone.item
     delete newDataClone.item
 
-    return objHasNewData(feedClone.data, { data: newDataClone })
+    return objHasNewData(feedClone.data || {}, { data: newDataClone })
   }
 
   entryChanged (entry, newData) {
-    return objHasNewData(entry.data, { data: newData })
+    return objHasNewData(entry.data || {}, { data: newData })
   }
 
   isEntryRead (entry) {
