@@ -13,7 +13,7 @@
       <span v-html="app.queries.iconForSignal(signal)" />
       {{ app.queries.titleForSignal(signal) }}
       <span
-        v-if="app.queries.unreadEntriesForSignalLength(identity, signal)"
+        v-if="!app.queries.signalHasCards(signal) && app.queries.unreadEntriesForSignalLength(identity, signal)"
         class="absolute inset-y-0 right-0 flex items-center pr-4 opacity-50"
       >
         {{ app.queries.unreadEntriesForSignalLength(identity, signal) }}

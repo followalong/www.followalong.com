@@ -34,7 +34,43 @@
       </template>
     </PageTitle>
 
-    <div v-if="shownEntries.length">
+    <div
+      v-if="signalCards.length"
+    >
+      <PageCard
+        v-for="card in signalCards"
+        :key="`signal-${signal.id}-card-${card.title}`"
+      >
+        <template #title>
+          <div>
+            <span
+              class="font-medium text-gray-900"
+            >
+              {{ card.title }}
+            </span>
+            <div>
+              <span
+                v-if="card.description"
+                class="mt-1 text-sm text-gray-500"
+              >
+                {{ card.description }}
+              </span>
+            </div>
+          </div>
+        </template>
+        <template
+          v-if="card.content"
+          #content
+        >
+          <div
+            class="prose"
+            v-html="card.content"
+          />
+        </template>
+      </PageCard>
+    </div>
+
+    <div v-else-if="!app.queries.signalHasCards(signal) && shownEntries.length">
       <FeedEntry
         v-for="entry in shownEntries"
         :key="`signal-${signal.id}-entry-${entry.id}`"
@@ -44,12 +80,12 @@
       />
     </div>
 
-    <div v-else>
+    <div v-else-if="!signalCards.length">
       <PageCard>
         <template #title>
           <div class="prose">
             <p>
-              It looks like you've seen all there is to see here!
+              You're all caught up!
             </p>
           </div>
         </template>
@@ -106,11 +142,16 @@ export default {
 
     catchUpEntries () {
       return this.entries.filter((e) => !this.app.queries.isEntryRead(e))
+    },
+
+    signalCards () {
+      return this.app.queries.cardsForIdentityForSignal(this.identity, this.signal)
     }
   },
 
   watch: {
     signal () {
+      this.limit = LIMIT
       this.app.commands.showNewEntries()
     }
   },

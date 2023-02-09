@@ -19,6 +19,11 @@ const parser = new XMLParser({
   }
 })
 
+const stripHTML = (html) => {
+  const doc = new DOMParser().parseFromString(html, 'text/html')
+  return doc.body.textContent || ''
+}
+
 const objHasNewData = (existingObj, newData) => {
   for (const key in newData) {
     if (typeof newData[key] === 'object') {
@@ -109,6 +114,19 @@ class Queries {
     }
 
     return entries
+  }
+
+  cardsForIdentityForSignal (identity, signal) {
+    if (!this.signalHasCards(signal)) {
+      return []
+    }
+
+    const entries = this.entriesForSignal(identity, signal)
+      .filter((entry) => !this.isEntryRead(entry))
+      .map((entry) => this.contentForEntry(entry))
+      .map((content) => stripHTML(content))
+
+    return signal.cards(entries)
   }
 
   unreadEntriesForSignalLength (identity, signal) {
@@ -383,8 +401,16 @@ class Queries {
   }
 
   signalsForIdentity (identity) {
-    return this.state.findAll(identity.id, 'signals')
+    const signals = this.state.findAll(identity.id, 'signals')
+    const addonAdaptersWithSignals = this.addonAdaptersForActionForIdentity(identity, 'signals')
+
+    return addonAdaptersWithSignals
+      .reduce((arr, addon) => arr.concat(addon.signals()), signals)
       .sort(SORT_BY_ORDER)
+  }
+
+  signalHasCards (signal) {
+    return typeof signal.cards === 'function'
   }
 
   addonsForIdentity (identity) {
@@ -441,10 +467,14 @@ class Queries {
       .map((addon) => this.adapterForAddonForIdentity(identity, addon))
   }
 
-  addonAdapterForActionForIdentity (identity, action) {
+  addonAdaptersForActionForIdentity (identity, action) {
     const adapters = this.addonAdaptersForIdentity(identity).concat([new None(this, {})])
 
-    return adapters.find((a) => typeof a[action] === 'function')
+    return adapters.filter((a) => typeof a[action] === 'function')
+  }
+
+  addonAdapterForActionForIdentity (identity, action) {
+    return this.addonAdaptersForActionForIdentity(identity, action)[0]
   }
 
   availableAddonAdaptersForIdentity (identity) {
@@ -452,14 +482,18 @@ class Queries {
       .map((Adapter) => new Adapter({}, {}))
   }
 
+  isFunctionSupportedByAddon (addon, funcName) {
+    return typeof addon[funcName] === 'function'
+  }
+
   labelsForAddon (addon) {
     const labels = []
 
-    if (typeof addon.rss === 'function') {
+    if (this.isFunctionSupportedByAddon(addon, 'rss')) {
       labels.push('RSS')
     }
 
-    if (typeof addon.signals === 'function') {
+    if (this.isFunctionSupportedByAddon(addon, 'signals')) {
       labels.push('Signal')
     }
 
