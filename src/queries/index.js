@@ -288,6 +288,14 @@ class Queries {
   }
 
   feedChanged (feed, newData) {
+    newData = Object.assign({}, newData)
+
+    for (const key in newData) {
+      if (key.toLowerCase().indexOf('date') !== -1) {
+        delete newData[key]
+      }
+    }
+
     return objHasNewData(feed.data, newData)
   }
 
