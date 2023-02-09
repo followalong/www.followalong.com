@@ -81,7 +81,11 @@ class EventStore {
   restore () {
     return this._db
       .iterate((value, key) => {
-        this._runEvent(EventStoreEvent.from(key, value))
+        const event = EventStoreEvent.from(key, value)
+
+        if (event !== null) {
+          this._runEvent(event)
+        }
       })
   }
 

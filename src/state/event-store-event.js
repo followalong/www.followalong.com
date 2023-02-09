@@ -47,6 +47,8 @@ EventStoreEvent.from = (key, value) => {
     )
   } catch (e) {
     console.warn('Could not parse event', key, value, e)
+
+    return null
   }
 }
 
