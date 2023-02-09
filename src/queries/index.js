@@ -289,7 +289,7 @@ class Queries {
 
   feedChanged (feed, newData) {
     const feedClone = Object.assign({}, feed)
-    const newDataClone = Object.assign({}, { data: newData })
+    const newDataClone = Object.assign({}, newData)
 
     delete feedClone.entry
     delete newDataClone.entry
@@ -297,11 +297,11 @@ class Queries {
     delete feedClone.item
     delete newDataClone.item
 
-    return objHasNewData(feedClone, { data: newDataClone })
+    return objHasNewData(feedClone.data, { data: newDataClone })
   }
 
   entryChanged (entry, newData) {
-    return objHasNewData(entry, { data: newData })
+    return objHasNewData(entry.data, { data: newData })
   }
 
   isEntryRead (entry) {
