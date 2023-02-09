@@ -288,7 +288,7 @@ class Queries {
   }
 
   feedChanged (feed, newData) {
-    return objHasNewData(feed.data, newDataClone)
+    return objHasNewData(feed.data, newData)
   }
 
   entryChanged (entry, newData) {
