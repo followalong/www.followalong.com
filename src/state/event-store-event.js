@@ -32,20 +32,22 @@ class EventStoreEvent {
 const KEY_MATCHER = /(?<time>\d+)\/(?<collection>\w+)\/(?<objectId>[\w-:]+)\/(?<action>[\w-_]+)\/(?<version>[\w-._]+)/
 EventStoreEvent.parseEvent = (key) => key.match(KEY_MATCHER).groups
 EventStoreEvent.from = (key, value) => {
-  const opts = EventStoreEvent.parseEvent(key)
-
   try {
-    value = JSON.parse(value)
-  } catch (e) {}
+    const opts = EventStoreEvent.parseEvent(key)
 
-  return new EventStoreEvent(
-    opts.collection,
-    opts.objectId,
-    opts.action,
-    value,
-    parseInt(opts.time),
-    opts.version
-  )
+    value = JSON.parse(value)
+
+    return new EventStoreEvent(
+      opts.collection,
+      opts.objectId,
+      opts.action,
+      value,
+      parseInt(opts.time),
+      opts.version
+    )
+  } catch (e) {
+    console.warn('Could not parse event', key, value, e)
+  }
 }
 
 export default EventStoreEvent
