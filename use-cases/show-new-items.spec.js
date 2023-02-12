@@ -10,7 +10,8 @@ describe('Show new items', () => {
           config: {},
           data: `
             1/identities/abc123/create/v2.1
-            2/feeds/543/create/v2.1 {"url":"https://foo.bar/rss.xml","data":{"title":"Feed title"}}
+            2/signals/134/create/v2.1 {"data":{"title":"Home","permalink":"home","order":"0"}}
+            3/feeds/543/create/v2.1 {"url":"https://foo.bar/rss.xml","data":{"title":"Feed title"}}
             ${Date.now() + 3001}/entries/234/create/v2.1 {"feedId":"543","data":{"guid":"987","title":"Entry title"}}
           `
         }

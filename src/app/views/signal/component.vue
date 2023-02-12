@@ -35,7 +35,7 @@
     </PageTitle>
 
     <div
-      v-if="signalCards.length"
+      v-if="app.queries.signalHasCards(signal)"
     >
       <PageCard
         v-for="card in signalCards"
@@ -70,7 +70,7 @@
       </PageCard>
     </div>
 
-    <div v-else-if="!app.queries.signalHasCards(signal) && shownEntries.length">
+    <div v-else-if="shownEntries.length">
       <FeedEntry
         v-for="entry in shownEntries"
         :key="`signal-${signal.id}-entry-${entry.id}`"

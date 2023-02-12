@@ -12,8 +12,9 @@ describe('Mark entry as read', () => {
           config: {},
           data: `
             0/identities/abc123/create/v2.1
-            1/feeds/543/create/v2.1 {"url":"https://foo.bar/rss.xml","data":{"title":"Feed title"}}
-            2/entries/${entryId}/create/v2.1 {"feedId":"543","data":{"guid":"987","title":"Entry title"}}
+            1/signals/134/create/v2.1 {"data":{"title":"Home","permalink":"home","order":"0"}}
+            2/feeds/543/create/v2.1 {"url":"https://foo.bar/rss.xml","data":{"title":"Feed title"}}
+            3/entries/${entryId}/create/v2.1 {"feedId":"543","data":{"guid":"987","title":"Entry title"}}
           `
         }
       }

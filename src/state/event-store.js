@@ -44,7 +44,7 @@ class EventStore {
       const splat = line.split(' ')
       const event = EventStoreEvent.from(splat.shift(), splat.join(' '))
 
-      if (this._events.find((e) => e.key === event.key)) {
+      if (!event || this._events.find((e) => e.key === event.key)) {
         return
       }
 

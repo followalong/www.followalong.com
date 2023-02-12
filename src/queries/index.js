@@ -413,7 +413,7 @@ class Queries {
   }
 
   signalHasCards (signal) {
-    return typeof signal.cards === 'function'
+    return signal && typeof signal.cards === 'function'
   }
 
   addonsForIdentity (identity) {
