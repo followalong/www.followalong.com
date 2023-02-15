@@ -510,6 +510,17 @@ class Queries {
   findAllEvents (identity) {
     return this.state.findAllEvents(identity.id)
   }
+
+  metasForEntryForIdentity (identity, entry) {
+    const addonAdapters = this.addonAdaptersForActionForIdentity(identity, 'entryMeta')
+
+    return addonAdapters
+      .map((meta) => meta.entryMeta(entry, { contentForEntry: this.contentForEntry }))
+      .filter((meta) => meta)
+      .map((meta) => {
+        return { content: this.sanitizeCopy(meta.content) }
+      })
+  }
 }
 
 export default Queries

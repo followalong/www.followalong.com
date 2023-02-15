@@ -23,9 +23,8 @@
             :to="`/${app.queries.urlForFeed(entryFeed)}`"
             class="font-medium text-gray-900"
             aria-label="Entry title"
-          >
-            {{ app.queries.titleForEntry(entry) }}
-          </router-link>
+            v-html="app.queries.titleForEntry(entry)"
+          />
           <div
             v-if="entryFeed"
             class="mt-1 text-sm text-gray-500"
@@ -96,10 +95,11 @@
         :identity="identity"
         :entry="entry"
       />
-      <div
+      <ContentPlayer
         v-if="app.queries.contentForEntry(entry)"
-        class="prose max-w-none max-h-48 overflow-auto px-4 py-5 sm:px-6"
-        v-html="app.queries.linkify(app.queries.contentForEntry(entry))"
+        :app="app"
+        :identity="identity"
+        :entry="entry"
       />
     </template>
   </PageCard>
@@ -110,11 +110,13 @@ import PageCard from '../../components/page-card/component.vue'
 import AudioPlayer from '../../components/audio-player/component.vue'
 import ImagePlayer from '../../components/image-player/component.vue'
 import VideoPlayer from '../../components/video-player/component.vue'
+import ContentPlayer from '../../components/content-player/component.vue'
 
 export default {
   components: {
     PageCard,
     AudioPlayer,
+    ContentPlayer,
     ImagePlayer,
     VideoPlayer
   },
