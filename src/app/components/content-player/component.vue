@@ -1,12 +1,6 @@
 <template>
   <div v-if="content">
-    <div v-if="isPlaying">
-      <div
-        class="prose max-w-none max-h-48 overflow-auto px-4 py-5 sm:px-6"
-        v-html="app.queries.linkify(content)"
-      />
-    </div>
-    <div v-else>
+    <div v-if="entryMetas.length">
       <div
         v-for="meta in entryMetas"
         :key="meta.content"
@@ -14,11 +8,15 @@
         v-html="app.queries.linkify(meta.content)"
       />
     </div>
+    <div
+      class="prose max-w-none max-h-48 overflow-auto px-4 py-5 sm:px-6"
+      v-html="app.queries.linkify(content)"
+    />
   </div>
 </template>
 
 <script>
-const MAX_NO_SUMMARY_LENGTH = 255
+const MAX_SUMMARY_LENGTH = 255
 
 export default {
   props: ['app', 'identity', 'entry'],
@@ -36,10 +34,10 @@ export default {
   mounted () {
     if (this.entryMetas.length) {
       this.isPlaying = false
-    } else if (this.content.length > MAX_NO_SUMMARY_LENGTH) {
-      this.isPlaying = false
-    } else {
+    } else if (this.content.length <= MAX_SUMMARY_LENGTH) {
       this.isPlaying = true
+    } else {
+      this.isPlaying = false
     }
   }
 }
