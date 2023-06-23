@@ -12,12 +12,12 @@
           >
             <img
               class="h-8 w-auto md:hidden"
-              src="../../../assets/imgs/logo-mobile.svg"
+              :src="logoMobile"
               alt="Follow Along"
             >
             <img
               class="h-8 w-auto hidden md:block"
-              src="../../../assets/imgs/logo-white.svg"
+              :src="logoWhite"
               alt="Follow Along"
             >
           </router-link>
@@ -120,6 +120,8 @@
 
 <script>
 import NavLinks from '../nav-links/component.vue'
+import logoMobile from '../../../assets/imgs/logo-mobile.svg'
+import logoWhite from '../../../assets/imgs/logo-white.svg'
 
 export default {
   components: {
@@ -129,7 +131,9 @@ export default {
   data () {
     return {
       q: '',
-      showMenu: false
+      showMenu: false,
+      logoMobile,
+      logoWhite
     }
   },
   methods: {
