@@ -12,7 +12,8 @@ describe('Fetch in background', () => {
           config: {},
           data: `
             0/identities/abc123/create/v2.1
-            1/feeds/feed-1/create/v2.1 {"id":"123","url":"http://foo.bar/rss.xml"}
+            1/signals/signal-1/create/v2.1 {"data":{"title":"Home","permalink":"home","order":"0"}}
+            2/feeds/feed-1/create/v2.1 {"id":"123","url":"http://foo.bar/rss.xml"}
           `
         }
       }
