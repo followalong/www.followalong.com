@@ -7,7 +7,7 @@
     "build": "vite build",
     "test:unit": "test $CI || yarn test:watch; test $CI && vitest run",
     "lint": "eslint",
-    "deploy": "node scripts/deploy.js",
+    "deploy": "echo '🚀 Deploys automatically via `gh-pages` push (Previously: `node scripts/deploy.js`)'",
     "preview": "vite preview",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
