@@ -7,22 +7,28 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
-      },
-      manifest: {
-        name: 'Follow Along',
-        themeColor: '#005B7C',
-        msTileColor: '#FBF7F0',
-        appleMobileWebAppCapable: 'yes',
-        iconPaths: {
-          favicon: 'img/icons/favicon.ico',
-          favicon32: 'img/icons/favicon-32x32.png',
-          favicon16: 'img/icons/favicon-16x16.png',
-          appleTouchIcon: 'img/icons/apple-touch-icon.png',
-          maskIcon: 'img/icons/safari-pinned-tab.svg',
-          msTileImage: 'img/icons/msapplication-icon-144x144.png'
+      icons: [
+        {
+          src: './public/img/icons/apple-touch-icon.png',
+          sizes: '180x180',
+          type: 'image/png'
+        },
+        {
+          src: './public/img/icons/favicon.ico',
+          sizes: '48x48',
+          type: 'image/vnd.microsoft.icon'
+        },
+        {
+          src: './src/assets/imgs/logo-white.svg',
+          type: 'image/svg+xml'
+        },
+        {
+          src: './src/assets/imgs/logo-mobile.svg',
+          type: 'image/svg+xml'
         }
+      ],
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,jpeg,jpg,png,svg}']
       }
     })
   ],
