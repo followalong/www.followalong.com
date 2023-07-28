@@ -1,5 +1,7 @@
 <template>
-  <div v-if="content">
+  <div
+    v-if="content"
+  >
     <div v-if="entryMetas.length">
       <div
         v-for="meta in entryMetas"
@@ -9,9 +11,23 @@
       />
     </div>
     <div
-      class="prose max-w-none max-h-48 overflow-auto px-4 py-5 sm:px-6"
-      v-html="app.queries.linkify(content)"
+      :class="`prose max-w-none ${isPlaying ? '' : 'max-h-48'} overflow-auto px-4 py-5 sm:px-6`"
+      :aria-label="`Content for ${entry.id}`"
+      v-html="html"
     />
+    <div
+      v-if="hasExpansion"
+      class="z-10 text-center border-t border-gray-200"
+    >
+      <button
+        class="w-full border-gray-100 text-indigo-600 p-3 text-base font-medium underline"
+        :aria-label="`Toggle entry content ${entry.id}`"
+        @click="isPlaying = !isPlaying"
+      >
+        <span v-if="isPlaying">Collapse</span>
+        <span v-else>Read more</span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -29,16 +45,21 @@ export default {
   computed: {
     entryMetas () {
       return this.app.queries.metasForEntryForIdentity(this.identity, this.entry)
+    },
+    html () {
+      return this.app.queries.linkify(this.content)
+    },
+    hasExpansion () {
+      return this.html.length > MAX_SUMMARY_LENGTH
     }
   },
   mounted () {
     if (this.entryMetas.length) {
       this.isPlaying = false
-    } else if (this.content.length <= MAX_SUMMARY_LENGTH) {
-      this.isPlaying = true
-    } else {
-      this.isPlaying = false
+      return
     }
+
+    this.isPlaying = !this.hasExpansion
   }
 }
 </script>
