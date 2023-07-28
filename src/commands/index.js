@@ -217,9 +217,7 @@ class Commands {
   }
 
   upsertFeedForIdentity (identity, feed, data) {
-    if (this.queries.feedChanged(feed, data)) {
-      this.track(identity, 'feeds', feed.id, 'update', { data })
-    }
+    this.track(identity, 'feeds', feed.id, 'update', this.queries.feedChanged(feed, data) ? { data } : {})
   }
 
   upsertEntryForIdentity (identity, feed, data) {
@@ -231,7 +229,7 @@ class Commands {
 
       const entry = this.queries.entryForFeedForIdentity(identity, feed, key)
 
-      if (this.queries.lastUpdatedForFeed(feed) / 1000 > this.queries.dateForEntry({ data }).getTime()) {
+      if (this.queries.lastUpdatedForFeed(feed) > this.queries.dateForEntry({ data }).getTime()) {
         this.markEntryAsReadForIdentity(identity, entry)
       }
 

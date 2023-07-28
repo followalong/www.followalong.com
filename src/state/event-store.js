@@ -124,7 +124,7 @@ EventStore.RUNNERS = {
   CREATE (store, event) {
     const collection = store[event.collection]
 
-    collection.push(Object.assign({}, event.data, { id: event.objectId, createdAt: event.time, _collection: event.collection }))
+    collection.push(Object.assign({}, event.data, { id: event.objectId, createdAt: event.time, updatedAt: (event.data || {}).updatedAt || 0, _collection: event.collection }))
   },
 
   UPDATE (store, event) {

@@ -328,6 +328,7 @@ class Queries {
 
   filterNewEntries (entries) {
     return entries
+      .filter((e) => !this.isEntryRead(e))
       .filter((e) => e.createdAt > this.lastBackgroundFetch)
   }
 
