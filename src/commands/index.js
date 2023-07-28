@@ -1,4 +1,5 @@
 const CHANGELOG_URL = 'https://changelog.followalong.com/feed.xml'
+const MAX_OLD_ITEMS_PER_FEED = 15
 
 class Commands {
   constructor (options) {
@@ -344,7 +345,7 @@ class Commands {
       const data = {
         identity,
         feeds: this.queries.feedsForIdentity(identity),
-        entries: this.queries.entriesForIdentity(identity),
+        entries: this.queries.entriesForIdentity(identity, MAX_OLD_ITEMS_PER_FEED),
         signals: this.queries.signalsForIdentityForProjection(identity),
         addons: this.queries.addonsForIdentity(identity)
       }

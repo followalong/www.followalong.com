@@ -3,7 +3,6 @@ import linkifyHtml from 'linkify-html'
 import { ADAPTERS, None } from './addons.js'
 import SORT_BY_ORDER from './sorters/sort-by-order.js'
 import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
-import SORT_BY_TIME from './sorters/sort-by-time.js'
 import SORT_BY_TIME_AND_READ from './sorters/sort-by-time-and-read.js'
 import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
 import sanitizeContent from './presenters/sanitize-content.js'
@@ -81,9 +80,25 @@ class Queries {
     return this.state.findAll(null, 'identities')
   }
 
-  entriesForIdentity (identity) {
-    return this.state.findAll(identity.id, 'entries')
-      .sort(SORT_BY_TIME(this))
+  entriesForIdentity (identity, maxOldItems = null) {
+    let entries = this.state.findAll(identity.id, 'entries')
+      .sort(SORT_BY_TIME_AND_READ(this))
+
+    if (maxOldItems) {
+      let oldItems = 0
+
+      entries = entries.filter((entry) => {
+        if (this.isEntryRead(entry)) {
+          oldItems++
+
+          return oldItems <= maxOldItems
+        }
+
+        return true
+      })
+    }
+
+    return entries
   }
 
   entriesForSignal (identity, signal) {

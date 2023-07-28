@@ -40,7 +40,7 @@ describe('Roll up an identity', () => {
   event('identities.rollup', {
     data: {
       identity: {}
-      // entries: [],
+      // entries: [], should be pruned
       // signals: []
     }
   }, () => { return { app } })
