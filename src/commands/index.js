@@ -231,7 +231,7 @@ class Commands {
 
       const entry = this.queries.entryForFeedForIdentity(identity, feed, key)
 
-      if (this.queries.lastUpdatedForFeed(feed) > this.queries.dateForEntry({ data })) {
+      if (this.queries.lastUpdatedForFeed(feed) / 1000 > this.queries.dateForEntry({ data }).getTime()) {
         this.markEntryAsReadForIdentity(identity, entry)
       }
 
