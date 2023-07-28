@@ -536,6 +536,12 @@ class Queries {
         return { content: this.sanitizeCopy(meta.content) }
       })
   }
+
+  feedReadMoreRecentlyThan (identity, feed, date) {
+    return !!this.entriesForIdentity(identity)
+      .filter((entry) => !this.isEntryRead(entry))
+      .find((entry) => entry.readAt > date.getTime())
+  }
 }
 
 export default Queries

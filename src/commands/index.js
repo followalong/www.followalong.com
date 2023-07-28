@@ -228,6 +228,13 @@ class Commands {
 
     if (!found) {
       this.track(identity, 'entries', null, 'create', { feedId: feed.id, data })
+
+      const entry = this.queries.entryForFeedForIdentity(identity, feed, key)
+
+      if (this.queries.feedReadMoreRecentlyThan(identity, feed, this.queries.dateForEntry(entry))) {
+        this.markEntryAsReadForIdentity(identity, entry)
+      }
+
       return
     }
 
