@@ -543,7 +543,7 @@ class Queries {
     const latestReadEntry = this.entriesForIdentity(identity)
       .filter(SORT_BY_LATEST_READ(this.queries))[0]
 
-    return latestReadEntry ? latestReadEntry.readAt : 0
+    return latestReadEntry ? latestReadEntry.createdAt : 0
   }
 }
 
