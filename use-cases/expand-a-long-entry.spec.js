@@ -1,4 +1,4 @@
-import { mountApp, describe, story } from './helper.js'
+import { mountApp, describe, story, event } from './helper.js'
 
 describe('Mark entry as read', () => {
   const entryId = '6363'
@@ -27,6 +27,16 @@ describe('Mark entry as read', () => {
 
   story('shows more content', () => {
     expect(app.find(`[aria-label="Content for ${entryId}"]`).element.className).not.toContain('max-h-48')
-    expect(app.find(`[aria-label="Toggle entry content ${entryId}"]`).text()).toEqual('Collapse')
+    expect(app.find(`[aria-label="Toggle entry content ${entryId}"]`).text()).toEqual('Mark as read')
+  })
+
+  describe('Collapsing an item', () => {
+    beforeEach(async () => {
+      await app.click(`[aria-label="Toggle entry content ${entryId}"]`)
+    })
+
+    event('entries.read', {
+      objectId: entryId
+    }, () => { return { app } })
   })
 })

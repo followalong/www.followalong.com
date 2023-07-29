@@ -22,10 +22,10 @@
       <button
         class="w-full border-gray-100 text-indigo-600 p-3 text-base font-medium underline"
         :aria-label="`Toggle entry content ${entry.id}`"
-        @click="isPlaying = !isPlaying"
+        @click="toggleIsPlaying"
       >
-        <span v-if="isPlaying">Collapse</span>
-        <span v-else>Read more</span>
+        <span v-if="isPlaying">Mark as read</span>
+        <span v-else>Expand</span>
       </button>
     </div>
   </div>
@@ -60,6 +60,16 @@ export default {
     }
 
     this.isPlaying = !this.hasExpansion
+  },
+
+  methods: {
+    toggleIsPlaying () {
+      this.isPlaying = !this.isPlaying
+
+      if (!this.isPlaying) {
+        this.app.commands.markEntryAsReadForIdentity(this.identity, this.entry)
+      }
+    }
   }
 }
 </script>
