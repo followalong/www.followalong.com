@@ -212,7 +212,7 @@ class Commands {
 
         this.upsertFeedForIdentity(identity, feed, data)
 
-        entries.forEach((e) => this.upsertEntryForIdentity(identity, feed, e))
+        entries.forEach((e) => this.upsertEntryForIdentity(identity, feed, e, this.queries.lastReadDateForFeed(feed)))
       })
   }
 
@@ -220,7 +220,7 @@ class Commands {
     this.track(identity, 'feeds', feed.id, 'update', this.queries.feedChanged(feed, data) ? { data } : {})
   }
 
-  upsertEntryForIdentity (identity, feed, data) {
+  upsertEntryForIdentity (identity, feed, data, lastReadDateForFeed = 0) {
     const key = this.queries.keyForEntry({ data })
     const found = this.queries.entryForFeedForIdentity(identity, feed, key)
 
@@ -229,7 +229,7 @@ class Commands {
 
       const entry = this.queries.entryForFeedForIdentity(identity, feed, key)
 
-      if (this.queries.lastUpdatedForFeed(feed) > this.queries.dateForEntry({ data }).getTime()) {
+      if (lastReadDateForFeed > this.queries.dateForEntry({ data }).getTime()) {
         this.markEntryAsReadForIdentity(identity, entry)
       }
 
