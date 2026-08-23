@@ -15,10 +15,10 @@ class S3Adapter extends Adapter {
   }
 
   save (data, encrypt) {
-    return this._buildS3().then((s3) => {
+    return Promise.all([this._buildS3(), encrypt(data)]).then(([s3, body]) => {
       return new Promise((resolve, reject) => {
         s3.putObject({
-          Body: encrypt(data),
+          Body: body,
           Bucket: this.data.bucket,
           Key: this._key()
         }, (err) => err ? reject(err) : resolve())
@@ -37,7 +37,7 @@ class S3Adapter extends Adapter {
             return reject(new Error(err || 'No data returned'))
           }
 
-          resolve(decrypt(`${data.Body}`))
+          resolve(Promise.resolve(decrypt(`${data.Body}`)))
         })
       })
     })

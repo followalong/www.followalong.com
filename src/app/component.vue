@@ -1,6 +1,40 @@
 <template>
   <div
-    v-if="!isLoading"
+    v-if="locked"
+    class="min-h-screen flex flex-col bg-page"
+  >
+    <AppBar title="Locked" />
+
+    <main class="flex-1 w-full max-w-app p-4 md:px-6 md:py-5">
+      <section
+        aria-label="Locked identity"
+        class="rounded-xl border border-danger-border bg-danger-bg p-4 md:p-5 max-w-river"
+      >
+        <h2 class="text-[14px] font-bold text-danger">
+          That password did not open this device's data
+        </h2>
+        <p class="text-body text-ink-secondary mt-1.5">
+          Everything is still here — {{ lockedEvents }} events are stored on
+          this device — but they cannot be read without the right password.
+          Nothing has been deleted, and no new identity has been created.
+        </p>
+        <p class="text-body text-ink-secondary mt-2">
+          Reload and enter the password you set for this identity.
+        </p>
+        <button
+          type="button"
+          aria-label="Try the password again"
+          class="mt-3 rounded-lg bg-primary px-4 py-2.5 text-body font-semibold text-white"
+          @click="reload()"
+        >
+          Try again
+        </button>
+      </section>
+    </main>
+  </div>
+
+  <div
+    v-else-if="!isLoading"
     class="min-h-screen flex flex-col bg-page"
   >
     <AppBar
@@ -217,6 +251,7 @@ export default {
       identity: null,
       pageTitle: '',
       searching: false,
+      locked: false,
       playing: null,
       playHistory: [],
       playingEntries: {},
@@ -255,6 +290,9 @@ export default {
 
       return 'Follow Along'
     },
+    lockedEvents () {
+      return this.queries.unreadableEvents()
+    },
     playingSrc () {
       return this.playing ? this.queries.videoForEntry(this.playing) : ''
     },
@@ -283,6 +321,15 @@ export default {
     return this.commands.restoreFromLocal()
       .then(() => this.commands.restoreFromRemote())
       .then(() => {
+        // Never seed over locked data: an identity that did not decrypt is
+        // still here, and a fresh one would look like everything was lost.
+        if (!this.queries.allIdentities().length && this.queries.hasLockedData()) {
+          this.locked = true
+          this.isLoading = false
+
+          return
+        }
+
         if (!this.queries.allIdentities().length) {
           this.commands.addIdentity({})
         }
@@ -323,6 +370,10 @@ export default {
       const { currentTime, duration } = event.target
 
       this.playProgress = duration ? (currentTime / duration) * 100 : 0
+    },
+
+    reload () {
+      window.location.reload()
     },
 
     onSearch (q) {

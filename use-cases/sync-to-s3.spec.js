@@ -83,6 +83,10 @@ describe('Sync to S3', () => {
       putObject.mockClear()
 
       await app.click('[aria-label="Mark as read 6363"]')
+
+      // Encrypting is asynchronous now, so wait for the upload itself rather
+      // than for the debounce that schedules it.
+      await app.vm.commands.syncIdentity(app.vm.identity)
     })
 
     story('never puts the plaintext log in the bucket', () => {
@@ -92,10 +96,10 @@ describe('Sync to S3', () => {
       expect(body).not.toContain('Feed title')
     })
 
-    test('round-trips back to the same log', () => {
+    test('round-trips back to the same log', async () => {
       const body = putObject.mock.calls[0][0].Body
 
-      expect(decrypt('hunter2')(body)).toContain('/entries/6363/markRead/')
+      expect(await decrypt('hunter2')(body)).toContain('/entries/6363/markRead/')
     })
   })
 

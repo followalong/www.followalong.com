@@ -108,7 +108,15 @@ class Commands {
   }
 
   restoreFromLocal () {
-    return this.state.restore()
+    // The key has to be resolved before the log is read, so an identity set
+    // to "ask" is asked here rather than after the fact.
+    return this.state.restore((dbId) => this.cipherFor(dbId))
+  }
+
+  cipherFor (dbId) {
+    return this.keychain.getKey(dbId)
+      .catch(() => '')
+      .then((key) => ({ encrypt: encrypt(key), decrypt: decrypt(key) }))
   }
 
   restoreFromRemote () {
@@ -286,6 +294,14 @@ class Commands {
     // and removing first meant a cancelled password prompt left the identity
     // with no keychain entry at all.
     return this.keychain.add(strategy, identity.id)
+      .then(() => this.cipherFor(identity.id))
+      .then((cipher) => {
+        this.state.setCipher(identity.id, cipher)
+
+        // Everything already on disk was written under the old cipher, so it
+        // has to be rewritten or the next restore cannot read it.
+        return this.state.rewriteAll(identity.id)
+      })
       .then(() => this.syncIdentity(identity))
   }
 

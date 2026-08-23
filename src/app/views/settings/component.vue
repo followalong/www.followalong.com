@@ -1,6 +1,20 @@
 <template>
   <div class="p-4 md:p-6 flex flex-col gap-4 md:gap-[18px] max-w-[560px]">
     <section
+      v-if="unreadable"
+      class="rounded-xl border border-danger-border bg-danger-bg p-4 md:p-5"
+    >
+      <h2 class="text-[14px] font-bold text-danger">
+        {{ plural(unreadable, 'event') }} could not be opened
+      </h2>
+      <p class="text-meta text-ink-secondary mt-1">
+        They are still on this device, but the password given this session does
+        not decrypt them. They may belong to another identity. Nothing has been
+        deleted — reload and enter the right password to reach them.
+      </p>
+    </section>
+
+    <section
       :class="`rounded-xl border p-4 md:p-5 ${
         sync.status === 'failed'
           ? 'bg-danger-bg border-danger-border'
@@ -340,6 +354,10 @@ export default {
   computed: {
     sync () {
       return this.app.queries.syncStatusForIdentity(this.identity)
+    },
+
+    unreadable () {
+      return this.app.queries.unreadableEvents()
     },
 
     contents () {

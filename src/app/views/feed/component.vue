@@ -6,7 +6,7 @@
       :entries="existingEntries"
     />
 
-    <header class="px-4 pt-4 md:px-6 border-b border-hairline-strong">
+    <header class="px-4 pt-4 md:px-6 border-b border-hairline-strong max-w-river md:mx-auto">
       <div class="flex items-center gap-3">
         <img
           v-if="app.queries.imageForFeed(feed)"
@@ -82,15 +82,17 @@
       />
     </header>
 
-    <FeedEntry
-      v-for="entry in entries"
-      :key="`feed-${feed.id}-entry-${entry.id}`"
-      :app="app"
-      :identity="identity"
-      :entry="entry"
-      :feed="feed"
-      @play="$emit('play', $event)"
-    />
+    <div class="md:px-6 md:py-5 flex flex-col gap-0 md:gap-3.5 max-w-river md:mx-auto">
+      <FeedEntry
+        v-for="entry in entries"
+        :key="`entry-${entry.id}`"
+        :app="app"
+        :identity="identity"
+        :entry="entry"
+        :feed="feed"
+        @play="$emit('play', $event)"
+      />
+    </div>
   </div>
 </template>
 
