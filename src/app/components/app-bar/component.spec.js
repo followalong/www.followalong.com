@@ -36,6 +36,9 @@ describe('AppBar', () => {
     expect(home.find('[data-bar-logo]').exists()).toBe(true)
     expect(home.find('h1').exists()).toBe(true)
     expect(home.classes()).toContain('flex-1')
+    // Holds the row's height whether or not the logo is in it, so a sub-page
+    // does not sit higher than a top-level one.
+    expect(home.classes()).toContain('min-h-slot')
   })
 
   test('shows the logo mark on a top-level page', () => {
