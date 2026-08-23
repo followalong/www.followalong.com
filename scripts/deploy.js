@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 
 const execa = require('execa')
-const fs = require('fs')
 const deployBranch = 'gh-pages'
 const masterBranch = 'main'
 const target = 'dist'
@@ -17,6 +16,9 @@ const build = async () => {
 
   await execa('yarn', ['build'])
   await execa('cp', [`${target}/index.html`, `${target}/404.html`])
+  // Pages still builds this repo with Jekyll. Without this it tries to process
+  // the bundle output and the build fails, which takes the live site down.
+  await execa('touch', [`${target}/.nojekyll`])
   await execa('git', ['--work-tree', target, 'add', '--all'])
   await execa('git', ['--work-tree', target, 'commit', '-m', deployBranch, '--no-verify'])
 }
