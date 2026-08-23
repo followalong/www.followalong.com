@@ -61,6 +61,26 @@ export default {
     // Reading content sits on a measure rather than the sheet's full width.
     narrow: { type: Boolean, default: false }
   },
-  emits: ['close']
+  emits: ['close'],
+  watch: {
+    open: {
+      immediate: true,
+      handler (value) {
+        this.lockPage(value)
+      }
+    }
+  },
+  unmounted () {
+    this.lockPage(false)
+  },
+  methods: {
+    // Without this the page behind scrolls under the sheet, which detaches
+    // the sticky bar and loses your place in the river.
+    lockPage (locked) {
+      if (typeof document === 'undefined') return
+
+      document.body.style.overflow = locked ? 'hidden' : ''
+    }
+  }
 }
 </script>

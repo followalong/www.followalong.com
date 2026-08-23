@@ -74,8 +74,8 @@
         @click="openRename"
       />
       <ListRow
-        title="Encryption"
-        :meta="STRATEGY_LABELS[strategy]"
+        title="Backup password"
+        :meta="passwordMeta"
         action
         aria-label="Change encryption"
         @click="encryptionOpen = true"
@@ -159,12 +159,20 @@
 
     <Sheet
       :open="encryptionOpen"
-      title="Encryption"
+      title="Backup password"
       @close="encryptionOpen = false"
     >
       <p class="text-body text-ink-secondary">
-        This protects the copy of your log that add-ons sync off this device.
-        What is stored locally is always readable by this browser.
+        Backups are encrypted with this before they leave the device. It does
+        not lock the app, and it does not encrypt what is stored here — this
+        browser can always read its own copy.
+      </p>
+      <p
+        v-if="sync.status === 'off'"
+        class="text-body text-ink-secondary mt-2"
+      >
+        Nothing is being backed up yet, so this is not in use. It applies as
+        soon as you set a backup up.
       </p>
 
       <div class="mt-3 border border-hairline-strong rounded-xl overflow-hidden">
@@ -300,15 +308,15 @@ const SYNC_TITLES = {
 }
 
 const STRATEGY_LABELS = {
-  none: 'Not encrypted',
-  ask: 'Ask for a password',
-  store: 'Remember a password'
+  none: 'No password',
+  ask: 'Ask me each time',
+  store: 'Saved on this device'
 }
 
 const STRATEGY_HINTS = {
-  none: 'synced in the clear',
-  ask: 'asked for each session',
-  store: 'kept on this device'
+  none: 'backups go up readable',
+  ask: 'asked once per session',
+  store: 'no prompt, key kept here'
 }
 
 export default {
@@ -344,6 +352,14 @@ export default {
 
     contents () {
       return this.app.queries.backupContentsForIdentity(this.identity)
+    },
+
+    // A password with nothing to protect yet should say so, rather than
+    // sitting under "Not backed up" implying otherwise.
+    passwordMeta () {
+      const label = STRATEGY_LABELS[this.strategy]
+
+      return this.sync.status === 'off' ? `${label} · not in use yet` : label
     },
 
     syncedAgo () {

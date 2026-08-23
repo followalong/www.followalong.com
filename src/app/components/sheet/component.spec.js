@@ -49,4 +49,14 @@ describe('Sheet', () => {
     expect(wrapper.text()).toContain('Body')
     expect(wrapper.text()).toContain('Save')
   })
+
+  test('holds the page still while it is open', () => {
+    const wrapper = sheet()
+
+    expect(document.body.style.overflow).toEqual('hidden')
+
+    wrapper.unmount()
+
+    expect(document.body.style.overflow).toEqual('')
+  })
 })

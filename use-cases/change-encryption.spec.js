@@ -23,8 +23,9 @@ describe('Change how an identity is encrypted', () => {
     await app.click('[aria-label="You"]')
   })
 
-  story('starts unencrypted', () => {
-    expect(app.text()).toContain('Not encrypted')
+  story('starts with no password, and says it is not in use yet', () => {
+    expect(app.text()).toContain('No password')
+    expect(app.text()).toContain('not in use yet')
   })
 
   describe('Choosing to be asked for a password', () => {
