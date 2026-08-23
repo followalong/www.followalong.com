@@ -2,6 +2,7 @@ import { XMLParser } from 'fast-xml-parser'
 import linkifyHtml from 'linkify-html'
 import { ADAPTERS, None } from './addons.js'
 import SORT_BY_ORDER from './sorters/sort-by-order.js'
+import SORT_BY_TIME from './sorters/sort-by-time.js'
 import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
 import SORT_BY_TIME_AND_READ from './sorters/sort-by-time-and-read.js'
 import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
@@ -322,6 +323,14 @@ class Queries {
 
   isFeedPaused (feed) {
     return feed.pausedAt
+  }
+
+  unreadEntries (entries) {
+    return entries.filter((entry) => !this.isEntryRead(entry))
+  }
+
+  sortEntriesByTime (entries) {
+    return entries.slice(0).sort(SORT_BY_TIME(this))
   }
 
   lastBackgroundFetchForIdentity (identity) {

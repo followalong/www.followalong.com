@@ -85,11 +85,11 @@ export default {
     },
     scrollTo: {
       type: Function,
-      default () { return window.scrollTo }
+      default: (...args) => window.scrollTo(...args)
     },
     noSleep: {
-      type: Function,
-      default () { return new NoSleep() }
+      type: Object,
+      default: () => new NoSleep()
     }
   },
   data () {
@@ -102,7 +102,8 @@ export default {
       fetch: this.fetch,
       state: this.state,
       queries,
-      scrollTo: this.scrollTo
+      scrollTo: this.scrollTo,
+      noSleep: this.noSleep
     })
 
     return {

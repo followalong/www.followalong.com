@@ -70,7 +70,6 @@
 </template>
 
 <script>
-import SORT_BY_TIME from '../../../queries/sorters/sort-by-time.js'
 import FeedEntry from '../../components/feed-entry/component.vue'
 import NewBar from '../../components/new-bar/component.vue'
 import PageTitle from '../../components/page-title/component.vue'
@@ -110,7 +109,7 @@ export default {
         return []
       }
 
-      return (this.remoteFeed.entries || []).sort(SORT_BY_TIME(this.app.queries))
+      return this.app.queries.sortEntriesByTime(this.remoteFeed.entries || [])
     },
 
     existingEntries () {
@@ -129,7 +128,7 @@ export default {
     },
 
     unreadEntries () {
-      return this.existingEntries.filter((e) => !this.app.queries.isEntryRead(e))
+      return this.app.queries.unreadEntries(this.existingEntries)
     },
 
     title () {

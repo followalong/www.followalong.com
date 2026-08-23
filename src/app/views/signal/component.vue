@@ -137,11 +137,11 @@ export default {
     },
 
     unreadEntries () {
-      return this.shownEntries.filter((e) => !this.app.queries.isEntryRead(e))
+      return this.app.queries.unreadEntries(this.shownEntries)
     },
 
     catchUpEntries () {
-      return this.entries.filter((e) => !this.app.queries.isEntryRead(e))
+      return this.app.queries.unreadEntries(this.entries)
     },
 
     signalCards () {
