@@ -1,5 +1,5 @@
 <template>
-  <div class="md:p-6">
+  <div class="md:px-6 md:py-5 max-w-river md:mx-auto">
     <div class="bg-white border-y md:border border-hairline-strong md:rounded-xl overflow-hidden">
       <ListRow
         v-for="feed in feeds"

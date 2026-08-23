@@ -13,13 +13,19 @@
       >
         ←
       </router-link>
-      <img
+      <router-link
         v-else
         data-bar-logo
-        :src="logoIcon"
-        class="h-[34px] w-[34px]"
-        alt="Follow Along"
+        to="/"
+        aria-label="Follow Along home"
+        class="block h-[34px] w-[34px]"
       >
+        <img
+          :src="logoIcon"
+          class="h-[34px] w-[34px]"
+          alt="Follow Along"
+        >
+      </router-link>
     </div>
 
     <h1
@@ -41,7 +47,7 @@
 </template>
 
 <script>
-import logoIcon from '../../../assets/imgs/logo-icon.svg'
+import logoIcon from '../../../assets/imgs/logo-house.svg'
 
 export default {
   props: {

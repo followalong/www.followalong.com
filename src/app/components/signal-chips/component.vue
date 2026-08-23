@@ -10,6 +10,8 @@
     >
       {{ app.queries.titleForSignal(signal) }}
     </FilterChip>
+
+    <slot name="end" />
   </div>
 </template>
 

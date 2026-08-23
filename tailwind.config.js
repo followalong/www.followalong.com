@@ -5,18 +5,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Bars and rails. The slate the wordmark is drawn in.
+        // Bars and rails. The light blue the .net site puts behind its top bar.
         chrome: {
-          DEFAULT: '#323e51',
-          deep: '#262f3e',
-          icon: '#d3dae5',
-          muted: '#a3b0c2',
-          dim: '#6b7a91'
+          DEFAULT: '#1b8cd8',
+          deep: '#0f6ba8',
+          icon: '#ffffff',
+          muted: '#d3ecfb',
+          dim: '#8ec6ec'
         },
-        // The brand blue the signal mark is drawn in.
+        // Darker sibling of the bar blue: actions and links sit on white, where
+        // #1b8cd8 would only reach 3.4:1 against it.
         primary: {
-          DEFAULT: '#0a8adb',
-          hover: '#0870b4'
+          DEFAULT: '#0f6ba8',
+          hover: '#0b5484'
         },
         // Active nav, unread, progress.
         accent: {

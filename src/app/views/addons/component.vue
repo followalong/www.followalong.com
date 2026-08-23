@@ -1,5 +1,5 @@
 <template>
-  <div class="md:p-6">
+  <div class="md:px-6 md:py-5 max-w-river md:mx-auto">
     <div
       v-if="!addons.length"
       class="p-4 md:p-0 flex flex-col items-start gap-3"

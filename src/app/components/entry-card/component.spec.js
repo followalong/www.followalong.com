@@ -31,11 +31,15 @@ describe('EntryCard', () => {
   })
 
   test('shows a summary and a Read full action for text', () => {
-    const wrapper = card({ summary: 'It is not just Twitter.' })
+    const wrapper = card({ summary: 'It is not just Twitter.', summaryLabel: 'SUMMARY' })
 
     expect(wrapper.text()).toContain('It is not just Twitter.')
     expect(wrapper.text()).toContain('SUMMARY')
     expect(wrapper.get('[data-read-full]').text()).toEqual('Read full')
+  })
+
+  test('earns the SUMMARY badge only when an add-on wrote it', () => {
+    expect(card({ summary: 'A preview of the entry.' }).text()).not.toContain('SUMMARY')
   })
 
   test('leads with a 16:9 frame for video', () => {

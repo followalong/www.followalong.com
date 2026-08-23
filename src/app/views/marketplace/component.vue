@@ -12,7 +12,7 @@
       </FilterChip>
     </div>
 
-    <div class="md:p-6 md:grid md:grid-cols-2 md:gap-3.5 md:items-start">
+    <div class="md:px-6 md:py-5 md:grid md:grid-cols-2 md:gap-3.5 md:items-start max-w-app">
       <AddonEditor
         v-for="addon in shown"
         :key="addon.id || addon.type"

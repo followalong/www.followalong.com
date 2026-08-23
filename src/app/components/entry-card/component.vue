@@ -1,5 +1,5 @@
 <template>
-  <article class="bg-white border-y md:border border-hairline rounded-none md:rounded-card overflow-hidden mb-0 md:mb-4">
+  <article class="bg-white border-y md:border border-hairline rounded-none md:rounded-card overflow-hidden">
     <slot name="lead">
       <button
         v-if="media === 'video'"
@@ -42,7 +42,10 @@
         class="mt-2.5 text-body md:text-[14px] text-ink-body"
       >
         {{ summary }}
-        <span class="text-[11px] font-semibold text-accent-ink">SUMMARY</span>
+        <span
+          v-if="summaryLabel"
+          class="text-[11px] font-semibold text-accent-ink whitespace-nowrap"
+        >{{ summaryLabel }}</span>
       </p>
 
       <slot name="player">
@@ -106,7 +109,9 @@ export default {
     // Whether there is a full text worth opening the reader for.
     readable: { type: Boolean, default: false },
     // Thumbnail behind the video lead's play button.
-    poster: { type: String, default: '' }
+    poster: { type: String, default: '' },
+    // Badge after the summary; only earned when an add-on wrote it.
+    summaryLabel: { type: String, default: '' }
   },
   emits: ['done', 'play', 'read']
 }

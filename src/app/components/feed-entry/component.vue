@@ -4,6 +4,7 @@
       :title="app.queries.titleForEntry(entry)"
       :media="media"
       :summary="summary"
+      :summary-label="summaryLabel"
       :done="isRead"
       :subject="`${entry.id}`"
       :readable="!!content"
@@ -36,6 +37,7 @@
         <span :title="app.queries.dateForEntry(entry)">
           {{ app.queries.niceDateForEntry(entry) }}
         </span>
+        <span v-if="kind"> · {{ kind }}</span>
       </template>
 
       <template
@@ -69,6 +71,25 @@ import EntryCard from '../entry-card/component.vue'
 import EntryReader from '../entry-reader/component.vue'
 import AudioPlayer from '../audio-player/component.vue'
 import ImagePlayer from '../image-player/component.vue'
+
+const MAX_SUMMARY = 200
+
+const twoSentences = (html) => {
+  if (!html) return ''
+
+  const text = `${html}`
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  const sentences = text.match(/[^.!?]+[.!?]+/g)
+  const taken = sentences ? sentences.slice(0, 2).join(' ').trim() : text
+
+  if (taken.length <= MAX_SUMMARY) return taken
+
+  return `${taken.slice(0, MAX_SUMMARY).replace(/\s+\S*$/, '')}…`
+}
 
 export default {
   components: {
@@ -106,10 +127,24 @@ export default {
     },
 
     // What the Entry Summarizer add-on produced, if it is installed.
-    summary () {
+    addonSummary () {
       return this.app.queries.metasForEntryForIdentity(this.identity, this.entry)
         .map((meta) => meta.content)
         .join(' ')
+    },
+
+    // The add-on hands back markup, and often the whole entry. The card wants
+    // two sentences of plain text, so take them here rather than render a wall.
+    summary () {
+      return twoSentences(this.addonSummary || this.content)
+    },
+
+    summaryLabel () {
+      return this.addonSummary ? 'SUMMARY' : ''
+    },
+
+    kind () {
+      return { video: 'Watch', audio: 'Listen', text: 'Read' }[this.media] || ''
     },
 
     readerMeta () {

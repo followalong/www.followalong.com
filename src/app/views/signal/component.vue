@@ -10,24 +10,22 @@
       :app="app"
       :identity="identity"
       :current="$route.params.signal"
-    />
-
-    <div
-      v-if="unreadEntries.length"
-      class="px-4 py-3 md:px-6"
     >
-      <Button
-        variant="secondary"
-        aria-label="Catch up on signal"
-        @click="catchUpOnSignal"
-      >
-        Catch me up
-      </Button>
-    </div>
+      <template #end>
+        <FilterChip
+          v-if="unreadEntries.length"
+          aria-label="Catch up on signal"
+          class="flex-none ml-auto"
+          @select="catchUpOnSignal"
+        >
+          Catch me up
+        </FilterChip>
+      </template>
+    </SignalChips>
 
     <div
       v-if="app.queries.signalHasCards(signal)"
-      class="md:p-6 flex flex-col gap-0 md:gap-4"
+      class="md:px-6 md:py-5 flex flex-col gap-0 md:gap-3.5 max-w-river md:mx-auto"
     >
       <article
         v-for="card in signalCards"
@@ -53,7 +51,7 @@
 
     <div
       v-else-if="shownEntries.length"
-      class="md:p-6 flex flex-col gap-0 md:gap-4 max-w-river"
+      class="md:px-6 md:py-5 flex flex-col gap-0 md:gap-3.5 max-w-river md:mx-auto"
     >
       <FeedEntry
         v-for="entry in shownEntries"
@@ -78,7 +76,7 @@
 import FeedEntry from '../../components/feed-entry/component.vue'
 import NewBar from '../../components/new-bar/component.vue'
 import SignalChips from '../../components/signal-chips/component.vue'
-import Button from '../../components/button/component.vue'
+import FilterChip from '../../components/filter-chip/component.vue'
 import PullToRefresh from 'pulltorefreshjs'
 
 const DISTANCE_FROM_BOTTOM = 500
@@ -86,8 +84,8 @@ const LIMIT = 4
 
 export default {
   components: {
-    Button,
     FeedEntry,
+    FilterChip,
     NewBar,
     SignalChips
   },
