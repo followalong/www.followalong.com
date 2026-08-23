@@ -78,6 +78,14 @@
       />
     </div>
 
+    <EmptyState v-else-if="$route.params.signal === 'saved'">
+      Nothing saved yet. Use the bookmark on an entry to keep it here.
+    </EmptyState>
+
+    <EmptyState v-else-if="missingSignal">
+      There is nothing here.
+    </EmptyState>
+
     <EmptyState v-else-if="!signalCards.length">
       You're all caught up!
     </EmptyState>
@@ -122,7 +130,15 @@ export default {
       return this.app.queries.entriesForSignal(this.identity, this.signal)
     },
 
+    // A permalink that resolves to nothing used to fall through to the
+    // unfiltered river, so /signals/saved showed everything.
+    missingSignal () {
+      return !!this.$route.params.signal && !this.signal
+    },
+
     shownEntries () {
+      if (this.missingSignal) return []
+
       return this.app.queries.filterNonNewEntries(this.identity, this.entries).slice(0, this.limit)
     },
 
