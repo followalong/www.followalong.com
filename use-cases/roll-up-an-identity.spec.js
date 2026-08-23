@@ -19,13 +19,15 @@ describe('Roll up an identity', () => {
   })
 
   test('preserves the entries', async () => {
-    await app.click('[aria-label="Visit Read"]')
+    await app.vm.$router.push('/signals/read')
+    await app.wait()
 
     expect(app.find('[aria-label="Entry title"]').text()).toEqual('Twitter is done. Long live RSS.')
   })
 
   test('preserves the signals', async () => {
-    await app.click('[aria-label="Visit Read"]')
+    await app.vm.$router.push('/signals/read')
+    await app.wait()
 
     expect(app.find('[aria-label="Page title"]').text()).toEqual('Read')
   })

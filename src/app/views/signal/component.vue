@@ -6,22 +6,19 @@
       :entries="entries"
     />
 
-    <SignalChips
-      :app="app"
-      :identity="identity"
-      :current="$route.params.signal"
+    <div
+      v-if="unreadEntries.length"
+      class="flex justify-end px-4 pt-4 md:px-6 max-w-river md:mx-auto"
     >
-      <template #end>
-        <FilterChip
-          v-if="unreadEntries.length"
-          aria-label="Catch up on signal"
-          class="flex-none ml-auto"
-          @select="catchUpOnSignal"
-        >
-          Catch me up
-        </FilterChip>
-      </template>
-    </SignalChips>
+      <Button
+        variant="secondary"
+        aria-label="Catch up on signal"
+        class="!py-1.5 !px-3 !text-chip"
+        @click="catchUpOnSignal"
+      >
+        Catch me up
+      </Button>
+    </div>
 
     <section
       v-if="showIntro"
@@ -104,8 +101,7 @@
 <script>
 import FeedEntry from '../../components/feed-entry/component.vue'
 import NewBar from '../../components/new-bar/component.vue'
-import SignalChips from '../../components/signal-chips/component.vue'
-import FilterChip from '../../components/filter-chip/component.vue'
+import Button from '../../components/button/component.vue'
 import Card from '../../components/card/component.vue'
 import EmptyState from '../../components/empty-state/component.vue'
 import PullToRefresh from 'pulltorefreshjs'
@@ -115,12 +111,11 @@ const LIMIT = 4
 
 export default {
   components: {
+    Button,
     Card,
     EmptyState,
     FeedEntry,
-    FilterChip,
-    NewBar,
-    SignalChips
+    NewBar
   },
 
   props: ['app', 'identity'],

@@ -6,7 +6,8 @@ describe('Catch up on a signal', () => {
   beforeEach(async () => {
     app = await mountApp()
 
-    await app.click('[aria-label="Visit Read"]')
+    await app.vm.$router.push('/signals/read')
+    await app.wait()
     await app.click('[aria-label="Catch up on signal"]')
   })
 

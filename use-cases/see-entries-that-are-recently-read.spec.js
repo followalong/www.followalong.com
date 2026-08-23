@@ -9,7 +9,8 @@ describe('See entries that are recently read', () => {
     entry = app.vm.queries.entriesForIdentity(app.vm.identity)[0]
 
     await app.click(`[aria-label="Mark as read ${entry.id}"]`)
-    await app.click('[aria-label="Visit Done"]')
+    await app.vm.$router.push('/signals/done')
+    await app.wait()
   })
 
   story('shows the read items', () => {

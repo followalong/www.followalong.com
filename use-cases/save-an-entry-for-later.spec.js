@@ -30,7 +30,8 @@ describe('Save an entry for later', () => {
   })
 
   test('collects it under the Saved signal', async () => {
-    await app.click('[aria-label="Visit Saved"]')
+    await app.vm.$router.push('/signals/saved')
+    await app.wait()
 
     const titles = app.findAll('[aria-label="Entry title"]').map((el) => el.text())
 
@@ -42,7 +43,8 @@ describe('Save an entry for later', () => {
 
     expect(app.findAll(`[aria-label="Save ${entryId}"]`).length).toEqual(1)
 
-    await app.click('[aria-label="Visit Saved"]')
+    await app.vm.$router.push('/signals/saved')
+    await app.wait()
 
     expect(app.findAll('[aria-label="Entry title"]').length).toEqual(0)
   })
