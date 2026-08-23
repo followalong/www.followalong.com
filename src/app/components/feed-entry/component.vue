@@ -6,10 +6,13 @@
       :summary="summary"
       :summary-label="summaryLabel"
       :done="isRead"
+      savable
+      :saved="isSaved"
       :subject="`${entry.id}`"
       :readable="!!content"
       :poster="app.queries.imageForEntry(entry) || ''"
       @done="toggleRead"
+      @save="toggleSave"
       @read="reading = true"
       @play="$emit('play', entry)"
     >
@@ -153,6 +156,10 @@ export default {
       return `${feed}${this.app.queries.niceDateForEntry(this.entry)}`
     },
 
+    isSaved () {
+      return this.app.queries.isEntrySaved(this.entry)
+    },
+
     isRead () {
       return !!this.app.queries.isEntryRead(this.entry)
     }
@@ -162,6 +169,15 @@ export default {
       this.reading = false
 
       if (!this.isRead) this.toggleRead()
+    },
+
+    toggleSave () {
+      if (this.isSaved) {
+        this.app.commands.unsaveEntryForIdentity(this.identity, this.entry)
+        return
+      }
+
+      this.app.commands.saveEntryForIdentity(this.identity, this.entry)
     },
 
     toggleRead () {

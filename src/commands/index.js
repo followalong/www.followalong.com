@@ -1,5 +1,5 @@
 import { encrypt, decrypt } from '../queries/crypt.js'
-import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT_SIGNALS } from './seed.js'
+import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT_SIGNALS, SAVED_SIGNAL } from './seed.js'
 
 const MAX_OLD_ITEMS_PER_FEED = 15
 const SYNC_DEBOUNCE = 1500
@@ -189,6 +189,23 @@ class Commands {
 
   markEntryAsUnreadForIdentity (identity, entry) {
     this.track(identity, 'entries', entry.id, 'markUnread')
+  }
+
+  saveEntryForIdentity (identity, entry) {
+    this.ensureSavedSignalForIdentity(identity)
+    this.track(identity, 'entries', entry.id, 'save')
+  }
+
+  unsaveEntryForIdentity (identity, entry) {
+    this.track(identity, 'entries', entry.id, 'unsave')
+  }
+
+  // Identities created before saving existed have no Saved signal, so give
+  // them one the first time they save something rather than migrating on boot.
+  ensureSavedSignalForIdentity (identity) {
+    if (this.queries.signalForIdentity(identity, SAVED_SIGNAL.permalink)) return
+
+    this.addSignalToIdentity(identity, SAVED_SIGNAL)
   }
 
   showNewEntries (identity) {

@@ -47,6 +47,30 @@ const DEFAULT_ADDONS = [
   { type: 'FollowAlongFree' }
 ]
 
+const SAVED_SIGNAL = {
+  title: 'Saved',
+  description: 'Entries you set aside',
+  permalink: 'saved',
+  order: 5,
+  icon: `
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      class="h-5 w-5 flex-shrink-0"
+    >
+      <path d="M5 3.5A1.5 1.5 0 016.5 2h7A1.5 1.5 0 0115 3.5v13.2a.5.5 0 01-.77.42L10 14.4l-4.23 2.72a.5.5 0 01-.77-.42V3.5z" />
+    </svg>
+  `,
+  filter: `
+    (queries) => {
+      return (entry) => {
+        return !!entry.savedAt
+      }
+    }
+  `.trim()
+}
+
 const DEFAULT_SIGNALS = [
   {
     title: 'Home',
@@ -159,10 +183,13 @@ const DEFAULT_SIGNALS = [
   }
 ]
 
+DEFAULT_SIGNALS.push(SAVED_SIGNAL)
+
 export {
   CHANGELOG_URL,
   CHANGELOG_FEED,
   CHANGELOG_ENTRY,
   DEFAULT_ADDONS,
-  DEFAULT_SIGNALS
+  DEFAULT_SIGNALS,
+  SAVED_SIGNAL
 }

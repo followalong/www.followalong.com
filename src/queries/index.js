@@ -321,6 +321,10 @@ class Queries {
     return objHasNewData(entry.data, newData)
   }
 
+  isEntrySaved (entry) {
+    return !!(entry && entry.savedAt)
+  }
+
   isEntryRead (entry) {
     return !!entry.readAt
   }

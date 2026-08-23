@@ -71,6 +71,8 @@ export default {
   'entries.update': EventStore.RUNNERS.UPDATE,
   'entries.delete': EventStore.RUNNERS.DELETE,
   'entries.markRead': TIMESTAMP('readAt'),
+  'entries.save': TIMESTAMP('savedAt'),
+  'entries.unsave': UNTIMESTAMP('savedAt'),
   'entries.markUnread': UNTIMESTAMP('readAt'),
   // Action names used before v2.3. Events already on disk still carry them.
   'entries.read': TIMESTAMP('readAt'),

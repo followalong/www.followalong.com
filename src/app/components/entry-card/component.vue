@@ -38,11 +38,19 @@
             </slot>
           </p>
         </div>
-        <DoneCircle
-          :done="done"
-          :subject="subject"
-          @toggle="$emit('done')"
-        />
+        <div class="flex items-start gap-1 flex-none">
+          <SaveStar
+            v-if="savable"
+            :saved="saved"
+            :subject="subject"
+            @toggle="$emit('save')"
+          />
+          <DoneCircle
+            :done="done"
+            :subject="subject"
+            @toggle="$emit('done')"
+          />
+        </div>
       </div>
 
       <component
@@ -91,9 +99,10 @@
 
 <script>
 import DoneCircle from '../done-circle/component.vue'
+import SaveStar from '../save-star/component.vue'
 
 export default {
-  components: { DoneCircle },
+  components: { DoneCircle, SaveStar },
   props: {
     title: { type: String, required: true },
     meta: { type: String, default: '' },
@@ -104,6 +113,8 @@ export default {
       validator: (value) => ['text', 'video', 'audio', 'image'].includes(value)
     },
     done: { type: Boolean, default: false },
+    saved: { type: Boolean, default: false },
+    savable: { type: Boolean, default: false },
     progress: { type: Number, default: 0 },
     elapsed: { type: String, default: '' },
     // Names the entry, so the card's controls stay distinct on a long river.
@@ -115,6 +126,6 @@ export default {
     // Badge after the summary; only earned when an add-on wrote it.
     summaryLabel: { type: String, default: '' }
   },
-  emits: ['done', 'play', 'read']
+  emits: ['done', 'save', 'play', 'read']
 }
 </script>
