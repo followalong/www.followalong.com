@@ -6,7 +6,7 @@
       :entries="existingEntries"
     />
 
-    <header class="px-4 pt-4 border-b border-hairline-strong">
+    <header class="flex flex-col gap-4 px-4 py-4 border-b border-hairline-strong">
       <div class="flex items-center gap-3">
         <img
           v-if="app.queries.imageForFeed(feed)"
@@ -14,36 +14,29 @@
           class="h-11 w-11 rounded-avatar flex-none"
           alt=""
         >
-        <div class="min-w-0">
-          <h2 class="text-lg font-bold text-ink truncate">
-            {{ title }}
-          </h2>
-          <div class="flex items-center gap-2 min-w-0">
-            <a
-              :href="app.queries.linkForFeed(feed)"
-              target="_blank"
-              class="text-meta text-primary truncate"
-            >
-              {{ app.queries.linkForFeed(feed) }} &rarr;
-              <span v-if="!remoteFeed">Loading...</span>
-            </a>
-            <button
-              type="button"
-              aria-label="Copy feed URL"
-              class="flex-none text-meta font-semibold text-ink-subtle"
-              @click="copyUrl"
-            >
-              {{ copiedUrl ? 'Copied' : 'Copy' }}
-            </button>
-          </div>
-        </div>
+        <a
+          :href="app.queries.linkForFeed(feed)"
+          target="_blank"
+          class="min-w-0 flex-1 text-meta text-primary truncate"
+        >
+          {{ app.queries.linkForFeed(feed) }} &rarr;
+          <span v-if="!remoteFeed">Loading...</span>
+        </a>
+        <button
+          type="button"
+          aria-label="Copy feed URL"
+          class="flex-none h-slot rounded-pill border border-hairline-outline px-3 text-chip font-semibold text-ink-body"
+          @click="copyUrl"
+        >
+          {{ copiedUrl ? 'Copied' : 'Copy' }}
+        </button>
       </div>
 
-      <div class="flex items-center gap-2 mt-3">
+      <div class="flex items-center gap-2">
         <button
           type="button"
           :aria-label="`${existingFeed ? 'Unf' : 'F'}ollow ${app.queries.titleForFeed(feed)}`"
-          :class="`rounded-pill px-3 py-1.5 text-chip font-semibold ${
+          :class="`h-slot rounded-pill px-4 text-chip font-semibold ${
             existingFeed
               ? 'bg-following-bg text-following'
               : 'bg-primary text-white'
@@ -57,7 +50,7 @@
           v-if="existingFeed && unreadEntries.length"
           type="button"
           aria-label="Catch up on feed"
-          class="rounded-pill border border-hairline-outline px-3 py-1.5 text-chip font-semibold text-ink-body"
+          class="h-slot rounded-pill border border-hairline-outline px-4 text-chip font-semibold text-ink-body"
           @click="catchUpOnFeed"
         >
           Catch me up
@@ -67,7 +60,7 @@
           v-if="existingFeed"
           type="button"
           :aria-label="`${app.queries.isFeedPaused(existingFeed) ? 'Unp' : 'P'}ause feed`"
-          class="rounded-pill border border-hairline-outline px-3 py-1.5 text-chip font-semibold text-ink-body"
+          class="h-slot rounded-pill border border-hairline-outline px-4 text-chip font-semibold text-ink-body"
           @click="togglePause"
         >
           {{ app.queries.isFeedPaused(existingFeed) ? 'Unp' : 'P' }}ause
@@ -78,7 +71,6 @@
         v-model="filter"
         scope="scoped"
         :hint="`${entries.length} items`"
-        class="my-3"
       />
     </header>
 
