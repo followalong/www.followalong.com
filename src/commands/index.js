@@ -136,7 +136,7 @@ class Commands {
   }
 
   addFeedToIdentity (identity, url, data, entries = []) {
-    this.track(identity, 'feeds', null, 'create', { url, data })
+    const event = this.track(identity, 'feeds', null, 'create', { url, data })
 
     if (url === CHANGELOG_URL) {
       entries.unshift({
@@ -171,7 +171,7 @@ class Commands {
       })
     }
 
-    const feed = this.queries.latestFeedForIdentity(identity)
+    const feed = this.queries.feedForIdentity(identity, event.objectId)
     entries.forEach((entry) => {
       this.upsertEntryForIdentity(identity, feed, entry)
     })
@@ -225,9 +225,8 @@ class Commands {
     const found = this.queries.entryForFeedForIdentity(identity, feed, key)
 
     if (!found) {
-      this.track(identity, 'entries', null, 'create', { feedId: feed.id, data })
-
-      const entry = this.queries.entryForFeedForIdentity(identity, feed, key)
+      const event = this.track(identity, 'entries', null, 'create', { feedId: feed.id, data })
+      const entry = this.queries.entryForIdentity(identity, event.objectId)
 
       if (lastReadDateForFeed > this.queries.dateForEntry({ data }).getTime()) {
         this.markEntryAsReadForIdentity(identity, entry)

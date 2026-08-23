@@ -199,6 +199,10 @@ class Queries {
     throw new Error(`Cannot find a key for ${JSON.stringify(entry)}`)
   }
 
+  entryForIdentity (identity, entryId) {
+    return this.state.findById(identity.id, 'entries', entryId)
+  }
+
   entryForFeedForIdentity (identity, feed, key) {
     return this.entriesForFeed(identity, feed)
       .find((e) => this.keyForEntry(e) === key)
@@ -235,12 +239,6 @@ class Queries {
   feedForIdentityByUrl (identity, feedUrl) {
     return this.state.findAll(identity.id, 'feeds')
       .find((f) => this.urlForFeed(f) === feedUrl)
-  }
-
-  latestFeedForIdentity (identity) {
-    const feeds = this.state.findAll(identity.id, 'feeds')
-
-    return feeds[feeds.length - 1]
   }
 
   titleForEntry (entry) {

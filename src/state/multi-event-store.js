@@ -66,9 +66,8 @@ class MultipleEventStore extends EventStore {
 
   track (dbId, ...args) {
     const dbs = this._findDBs(dbId ? [dbId] : undefined)
-    const promises = dbs.map((db) => db.track.apply(db, args))
 
-    return Promise.all(promises)
+    return dbs.map((db) => db.track.apply(db, args))[0]
   }
 
   importRaw (dbId, ...args) {

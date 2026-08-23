@@ -20,6 +20,8 @@ class EventStore {
 
     this._runEvent(event)
     this._db.setItem(event.key, event.toLocal())
+
+    return event
   }
 
   eachCollectionName (func) {
