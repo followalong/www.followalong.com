@@ -98,7 +98,7 @@
       />
       <ListRow
         title="Copy this identity"
-        meta="to paste on another device"
+        meta="feeds, saved items and settings"
         action
         aria-label="Copy identity"
         @click="copyIdentity"

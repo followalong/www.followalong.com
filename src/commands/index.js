@@ -212,9 +212,6 @@ class Commands {
       })
   }
 
-  // Takes a "Download Identity" file from the old followalong.net app, which
-  // holds every feed and the saved items. Reuses whatever is already here, so
-  // importing the same file twice is a no-op.
   markEntryAsReadForIdentity (identity, entry) {
     this.track(identity, 'entries', entry.id, 'markRead')
   }
@@ -319,8 +316,23 @@ class Commands {
     return this.saveAs(this.exportIdentity(identity), `follow-along.${identity.id}.log`)
   }
 
+  // What it takes to be you somewhere else: the identity, its feeds, signals
+  // and add-ons, and the entries you set aside. Not the entry corpus — that
+  // refetches itself from the feeds, and copying thousands of them makes the
+  // clipboard useless for the thing it is for.
+  portableIdentity (identity) {
+    const saved = this.queries.entriesForIdentity(identity)
+      .filter((entry) => this.queries.isEntrySaved(entry))
+      .map((entry) => entry.id)
+
+    return this.queries.findAllEvents(identity)
+      .filter((event) => event.collection !== 'entries' || saved.indexOf(event.objectId) !== -1)
+      .map((event) => `${event.key} ${event.toLocal() || ''}`.trim())
+      .join('\n')
+  }
+
   copyIdentityToClipboard (identity) {
-    return this.copyToClipboard(this.exportIdentity(identity))
+    return this.copyToClipboard(this.portableIdentity(identity))
   }
 
   importIdentity (raw) {

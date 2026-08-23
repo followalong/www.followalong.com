@@ -1,21 +1,23 @@
 <template>
   <div class="p-4 md:px-6 md:py-5 flex flex-col gap-4 max-w-river md:mx-auto">
-    <section
-      v-for="part in PARTS"
-      :key="part.title"
-      class="bg-white border border-hairline-strong rounded-xl p-4 md:p-5"
-    >
-      <h2 class="text-card md:text-card-lg font-bold text-ink">
-        {{ part.title }}
-      </h2>
-      <p
-        v-for="(paragraph, index) in part.body"
-        :key="index"
-        class="text-body md:text-sm text-ink-secondary mt-2 leading-relaxed max-w-read"
+    <article class="bg-white border border-hairline-strong rounded-xl p-4 md:p-5">
+      <section
+        v-for="(part, index) in PARTS"
+        :key="part.title"
+        :class="index ? 'mt-6 pt-6 border-t border-hairline-soft' : ''"
       >
-        {{ paragraph }}
-      </p>
-    </section>
+        <h2 class="text-card md:text-card-lg font-bold text-ink">
+          {{ part.title }}
+        </h2>
+        <p
+          v-for="(paragraph, i) in part.body"
+          :key="i"
+          class="text-body md:text-sm text-ink-secondary mt-2 leading-relaxed max-w-read"
+        >
+          {{ paragraph }}
+        </p>
+      </section>
+    </article>
 
     <p class="text-meta text-ink-muted">
       Follow Along is open source.

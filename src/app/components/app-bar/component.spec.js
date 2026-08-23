@@ -36,9 +36,7 @@ describe('AppBar', () => {
     expect(home.find('[data-bar-logo]').exists()).toBe(true)
     expect(home.find('h1').exists()).toBe(true)
     expect(home.classes()).toContain('flex-1')
-    // Holds the row's height whether or not the logo is in it, so a sub-page
-    // does not sit higher than a top-level one.
-    expect(home.classes()).toContain('min-h-slot')
+    expect(home.classes()).toContain('min-w-0')
   })
 
   test('shows the logo mark on a top-level page', () => {
@@ -57,5 +55,12 @@ describe('AppBar', () => {
     const wrapper = bar({ slots: { action: '<button>Add</button>' } })
 
     expect(wrapper.text()).toContain('Add')
+  })
+
+  test('is one height on every page, logo or back circle', () => {
+    const row = (props) => bar({ props }).get('header').element.firstElementChild
+
+    expect(row().className).toContain('h-bar')
+    expect(row({ back: '/following' }).className).toContain('h-bar')
   })
 })

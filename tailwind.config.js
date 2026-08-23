@@ -110,6 +110,10 @@ module.exports = {
         touch: '44px',
         // The AppBar's fixed left and right slots, so the title never shifts.
         slot: '34px',
+        // The bar itself: the 34px slot plus its padding, stated outright so
+        // a page without a logo cannot come out shorter.
+        bar: '58px',
+        'bar-md': '54px',
         icon: '18px',
         play: '26px',
         // Clears the mobile tab bar.

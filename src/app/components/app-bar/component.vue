@@ -1,6 +1,6 @@
 <template>
   <header class="bg-chrome sticky top-0 z-40">
-    <div class="max-w-app px-4 md:px-6 flex items-stretch gap-3 md:gap-4">
+    <div class="max-w-app h-bar md:h-bar-md px-4 md:px-6 flex items-stretch gap-3 md:gap-4">
       <router-link
         v-if="back"
         data-bar-back
@@ -18,7 +18,7 @@
         data-bar-home
         to="/"
         aria-label="Follow Along home"
-        class="flex-1 min-w-0 min-h-slot flex items-center gap-3 py-3 md:py-2.5 -ml-2 pl-2 rounded-nav"
+        class="flex-1 min-w-0 flex items-center gap-3 -ml-2 pl-2 rounded-nav"
       >
         <img
           v-if="!back"
