@@ -101,6 +101,7 @@ import Queries from '../queries/index.js'
 import NoSleep from 'nosleep.js'
 import KeychainAdapter from '../adapters/keychain.js'
 import buildFetch from '../adapters/fetch.js'
+import loadAwsSdk from '../adapters/aws-sdk.js'
 
 const POLL_INTERVAL = 5 * 60 * 1000
 let POLL_TIMEOUT
@@ -169,7 +170,7 @@ export default {
     // only identities syncing to a bucket ever need it.
     awsS3: {
       type: Function,
-      default: (config) => import('aws-sdk').then((mod) => new (mod.default || mod).S3(config))
+      default: (config) => loadAwsSdk().then((AWS) => new AWS.S3(config))
     }
   },
   data () {

@@ -39,6 +39,13 @@ const addFallback = () => {
   fs.writeFileSync(path.join(target, '.nojekyll'), '')
 }
 
+const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true })
+  .reduce((files, entry) => {
+    const full = path.join(dir, entry.name)
+
+    return files.concat(entry.isDirectory() ? walk(full) : [full])
+  }, [])
+
 const verify = () => {
   console.log('🔍 Checking the build…')
 
@@ -74,6 +81,17 @@ const verify = () => {
 
   if (!fs.existsSync(path.join(target, '.nojekyll'))) {
     problems.push('.nojekyll is missing — Pages would fail the build and take the site down')
+  }
+
+  // The bundler dropped the S3 client out of the aws-sdk chunk once, and
+  // nothing said so until a backup ran in a real browser. The client's API
+  // version is the cheapest proof it is still in here.
+  const bundled = walk(target)
+    .filter((file) => file.endsWith('.js'))
+    .some((file) => fs.readFileSync(file, 'utf8').includes('2006-03-01'))
+
+  if (!bundled) {
+    problems.push('no S3 client in the build — every backup would fail at runtime')
   }
 
   return problems
