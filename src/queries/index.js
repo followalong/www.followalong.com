@@ -481,14 +481,6 @@ class Queries {
       .find((addon) => addon.id === id)
   }
 
-  adapterPreviewName (Adapter) {
-    return new Adapter().preview()
-  }
-
-  adapterName (Adapter) {
-    return new Adapter().name
-  }
-
   adapterForAddonForIdentity (identity, addon) {
     const Adapter = ADAPTERS.find((Adapter) => Adapter.name === addon.type) || None
     const adapter = new Adapter({ fetch: this.fetch, awsS3: this.awsS3 }, addon)

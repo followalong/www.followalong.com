@@ -174,15 +174,6 @@ const event = (description, payload, optionsFunc) => {
   })
 }
 
-const storage = (namespace, key, payload, optionsFunc) => {
-  return it(`Storage: ${namespace}.${key}`, async () => {
-    const db = optionsFunc()
-    const storedValue = await db.getItem(key)
-
-    expect(storedValue).toMatchObject(payload)
-  })
-}
-
 export {
   mountApp,
   describe,
@@ -190,6 +181,5 @@ export {
   responses,
   story,
   event,
-  storage,
   vi
 }
