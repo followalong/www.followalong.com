@@ -58,6 +58,26 @@
       <a
         v-if="feedFromIdentity"
         href="javascript:;"
+        :class="`block float-right ml-2 ${app.queries.isEntrySaved(entry) ? 'text-amber-500' : 'text-gray-300'}`"
+        :aria-label="`${app.queries.isEntrySaved(entry) ? 'Unsave' : 'Save'} ${entry.id}`"
+        @click="toggleSaved(entry)"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          class="w-6 h-6"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"
+            clip-rule="evenodd"
+          />
+        </svg>
+      </a>
+      <a
+        v-if="feedFromIdentity"
+        href="javascript:;"
         :class="`block float-right ${app.queries.isEntryRead(entry) ? 'text-green-500' : 'text-gray-300'}`"
         :aria-label="`Mark as ${app.queries.isEntryRead(entry) ? 'un' : ''}read ${entry.id}`"
         @click="toggleRead(entry)"
@@ -131,6 +151,15 @@ export default {
     }
   },
   methods: {
+    toggleSaved (entry) {
+      if (this.app.queries.isEntrySaved(entry)) {
+        this.app.commands.unsaveEntryForIdentity(this.identity, entry)
+        return
+      }
+
+      this.app.commands.saveEntryForIdentity(this.identity, entry)
+    },
+
     toggleRead (entry) {
       if (this.app.queries.isEntryRead(entry)) {
         this.app.commands.markEntryAsUnreadForIdentity(this.identity, entry)

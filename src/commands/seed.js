@@ -156,6 +156,42 @@ const DEFAULT_SIGNALS = [
         }
       }
     `.trim()
+  },
+  {
+    title: 'Saved',
+    description: 'Entries you kept for later',
+    permalink: 'saved',
+    order: 5,
+    icon: `
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        class="h-5 w-5 flex-shrink-0 text-gray-300 mr-3"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"
+          clip-rule="evenodd"
+        />
+      </svg>
+    `,
+    filter: `
+      (queries) => {
+        return (entry) => {
+          return queries.isEntrySaved(entry)
+        }
+      }
+    `.trim(),
+    sort: `
+      (queries) => {
+        return (a, b) => {
+          if (a.savedAt < b.savedAt) return 1
+          if (a.savedAt > b.savedAt) return -1
+          return 0
+        }
+      }
+    `.trim()
   }
 ]
 

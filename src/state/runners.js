@@ -70,6 +70,8 @@ export default {
   'entries.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because feedId is outside of data; OK because feedId is immutable for now
   'entries.update': EventStore.RUNNERS.UPDATE,
   'entries.delete': EventStore.RUNNERS.DELETE,
+  'entries.save': TIMESTAMP('savedAt'),
+  'entries.unsave': UNTIMESTAMP('savedAt'),
   'entries.markRead': TIMESTAMP('readAt'),
   'entries.markUnread': UNTIMESTAMP('readAt'),
   // Action names used before v2.3. Events already on disk still carry them.

@@ -183,6 +183,14 @@ class Commands {
       })
   }
 
+  saveEntryForIdentity (identity, entry) {
+    this.track(identity, 'entries', entry.id, 'save')
+  }
+
+  unsaveEntryForIdentity (identity, entry) {
+    this.track(identity, 'entries', entry.id, 'unsave')
+  }
+
   markEntryAsReadForIdentity (identity, entry) {
     this.track(identity, 'entries', entry.id, 'markRead')
   }

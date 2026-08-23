@@ -413,6 +413,10 @@ class Queries {
     return !!entry.readAt
   }
 
+  isEntrySaved (entry) {
+    return !!entry.savedAt
+  }
+
   isFeedPaused (feed) {
     return !!feed.pausedAt
   }
