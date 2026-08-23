@@ -19,11 +19,19 @@
     <div class="px-4 py-3.5 md:px-5 md:py-4">
       <div class="flex justify-between gap-2.5">
         <div class="min-w-0">
-          <h2
-            aria-label="Entry title"
-            class="text-card md:text-card-lg font-bold text-ink"
-            v-html="title"
-          />
+          <component
+            :is="readable ? 'button' : 'div'"
+            :type="readable ? 'button' : undefined"
+            :aria-label="readable && subject ? `Toggle entry content ${subject}` : undefined"
+            class="block w-full text-left"
+            @click="readable && $emit('read')"
+          >
+            <h2
+              aria-label="Entry title"
+              class="text-card md:text-card-lg font-bold text-ink"
+              v-html="title"
+            />
+          </component>
           <p class="text-meta text-ink-muted mt-1">
             <slot name="meta">
               {{ meta }}
@@ -37,16 +45,21 @@
         />
       </div>
 
-      <p
+      <component
+        :is="readable ? 'button' : 'div'"
         v-if="summary"
-        class="mt-2.5 text-body md:text-[14px] text-ink-body"
+        data-summary
+        :type="readable ? 'button' : undefined"
+        class="block w-full text-left mt-2.5 text-body md:text-[14px] text-ink-body"
+        @click="readable && $emit('read')"
       >
         {{ summary }}
         <span
           v-if="summaryLabel"
-          class="text-[11px] font-semibold text-accent-ink whitespace-nowrap"
+          data-summary-badge
+          class="align-middle ml-1 inline-block rounded-pill bg-accent/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent-ink whitespace-nowrap"
         >{{ summaryLabel }}</span>
-      </p>
+      </component>
 
       <slot name="player">
         <div
@@ -72,17 +85,6 @@
           <span class="text-[11px] text-ink-muted">{{ elapsed }}</span>
         </div>
       </slot>
-
-      <button
-        v-if="readable || summary"
-        data-read-full
-        type="button"
-        :aria-label="subject ? `Toggle entry content ${subject}` : 'Read full'"
-        class="mt-3 text-body font-semibold text-primary"
-        @click="$emit('read')"
-      >
-        Read full
-      </button>
     </div>
   </article>
 </template>

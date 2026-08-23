@@ -1,31 +1,44 @@
 <template>
-  <label class="flex items-center gap-2 bg-white border border-hairline-strong rounded-field px-3 py-2.5">
+  <label class="flex items-center gap-2 h-9 bg-white border border-hairline-strong rounded-field px-3 focus-within:border-primary">
     <svg
-      class="h-4 w-4 flex-none text-ink-subtle"
-      viewBox="0 0 20 20"
+      class="h-3.5 w-3.5 flex-none text-ink-subtle"
+      viewBox="0 0 16 16"
       fill="none"
       stroke="currentColor"
-      stroke-width="2"
+      stroke-width="1.75"
+      stroke-linecap="round"
       aria-hidden="true"
     >
       <circle
-        cx="9"
-        cy="9"
-        r="6"
+        cx="7"
+        cy="7"
+        r="4.75"
       />
-      <path d="M14 14l4 4" />
+      <path d="M10.5 10.5 14 14" />
     </svg>
     <input
       v-bind="$attrs"
       :value="modelValue"
       :placeholder="PLACEHOLDERS[scope]"
-      type="search"
-      class="flex-1 min-w-0 bg-transparent text-body text-ink placeholder:text-ink-subtle outline-none"
+      type="text"
+      autocomplete="off"
+      autocapitalize="off"
+      spellcheck="false"
+      class="flex-1 min-w-0 bg-transparent text-[13px] leading-none text-ink placeholder:text-ink-subtle outline-none"
       @input="$emit('update:modelValue', $event.target.value)"
     >
+    <button
+      v-if="modelValue"
+      type="button"
+      aria-label="Clear search"
+      class="flex-none text-ink-subtle text-[13px] leading-none px-1 -mr-1"
+      @click="$emit('update:modelValue', '')"
+    >
+      ✕
+    </button>
     <span
-      v-if="hint"
-      class="text-[11px] text-ink-faint"
+      v-else-if="hint"
+      class="flex-none text-[11px] text-ink-faint"
     >{{ hint }}</span>
   </label>
 </template>

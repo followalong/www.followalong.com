@@ -43,6 +43,8 @@
 
     <SearchPanel
       v-if="searching"
+      :app="app"
+      :identity="identity"
       @close="searching = false"
       @search="onSearch"
     />

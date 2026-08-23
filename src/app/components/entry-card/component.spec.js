@@ -30,16 +30,40 @@ describe('EntryCard', () => {
     expect(el.classes()).toContain('md:rounded-card')
   })
 
-  test('shows a summary and a Read full action for text', () => {
+  test('shows a summary for text', () => {
     const wrapper = card({ summary: 'It is not just Twitter.', summaryLabel: 'SUMMARY' })
 
     expect(wrapper.text()).toContain('It is not just Twitter.')
     expect(wrapper.text()).toContain('SUMMARY')
-    expect(wrapper.get('[data-read-full]').text()).toEqual('Read full')
+  })
+
+  test('wears the summary badge as a pill', () => {
+    const badge = card({ summary: 'A summary.', summaryLabel: 'SUMMARY' }).get('[data-summary-badge]')
+
+    expect(badge.classes()).toContain('rounded-pill')
+    expect(badge.classes()).toContain('bg-accent/20')
   })
 
   test('earns the SUMMARY badge only when an add-on wrote it', () => {
-    expect(card({ summary: 'A preview of the entry.' }).text()).not.toContain('SUMMARY')
+    expect(card({ summary: 'A preview of the entry.' }).find('[data-summary-badge]').exists()).toBe(false)
+  })
+
+  test('opens the reader from the title and the summary, with no button', async () => {
+    const wrapper = card({ summary: 'A summary.', readable: true, subject: '6363' })
+
+    expect(wrapper.find('[data-read-full]').exists()).toBe(false)
+
+    await wrapper.get('[aria-label="Toggle entry content 6363"]').trigger('click')
+    await wrapper.get('[data-summary]').trigger('click')
+
+    expect(wrapper.emitted('read')).toHaveLength(2)
+  })
+
+  test('leaves the text inert when there is nothing to read', () => {
+    const wrapper = card({ summary: 'A summary.' })
+
+    expect(wrapper.find('[aria-label^="Toggle entry content"]').exists()).toBe(false)
+    expect(wrapper.get('[data-summary]').element.tagName).toEqual('DIV')
   })
 
   test('leads with a 16:9 frame for video', () => {

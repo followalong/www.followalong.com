@@ -11,13 +11,17 @@
         :aria-label="`Visit ${app.queries.titleForFeed(feed)} feed`"
       >
         <template #leading>
-          <span class="h-[34px] w-[34px] flex-none rounded-[9px] bg-surface-sunken overflow-hidden">
+          <span class="h-[34px] w-[34px] flex-none rounded-[9px] bg-surface-sunken overflow-hidden flex items-center justify-center">
             <img
               v-if="app.queries.imageForFeed(feed)"
               class="h-full w-full object-cover"
               :src="app.queries.imageForFeed(feed)"
               alt=""
             >
+            <span
+              v-else
+              class="text-[13px] font-bold text-ink-subtle"
+            >{{ (app.queries.titleForFeed(feed) || '?').trim().charAt(0).toUpperCase() }}</span>
           </span>
         </template>
       </ListRow>
