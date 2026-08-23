@@ -3,7 +3,7 @@
     type="button"
     :aria-pressed="`${saved}`"
     :aria-label="`${saved ? 'Unsave' : 'Save'}${subject ? ` ${subject}` : ''}`"
-    :class="`h-touch w-touch -my-2 flex-none flex items-center justify-center ${saved ? 'text-accent' : 'text-inactive'}`"
+    :class="`h-touch w-touch -my-2 flex-none flex items-center justify-center transition-colors duration-150 ${saved ? 'text-accent' : 'text-inactive'}`"
     @click="$emit('toggle')"
   >
     <svg

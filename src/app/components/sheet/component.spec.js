@@ -59,4 +59,36 @@ describe('Sheet', () => {
 
     expect(document.body.style.overflow).toEqual('')
   })
+
+  test('takes focus when it opens', async () => {
+    const wrapper = sheet()
+
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.get('[data-sheet]').element.contains(document.activeElement)).toBe(true)
+  })
+
+  test('closes on escape from anywhere, not just the scrim', async () => {
+    const wrapper = sheet()
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.emitted('close')).toHaveLength(1)
+  })
+
+  test('gives focus back to whatever opened it', async () => {
+    const opener = document.createElement('button')
+    document.body.appendChild(opener)
+    opener.focus()
+
+    const wrapper = sheet()
+    await wrapper.vm.$nextTick()
+    await wrapper.setProps({ open: false })
+    await wrapper.vm.$nextTick()
+
+    expect(document.activeElement).toBe(opener)
+
+    opener.remove()
+  })
 })

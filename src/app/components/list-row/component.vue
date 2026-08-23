@@ -5,7 +5,7 @@
     :type="action ? 'button' : undefined"
     :aria-label="ariaLabel || undefined"
     data-row
-    :class="`w-full text-left bg-white border-b border-hairline-soft last:border-b-0 px-4 py-3.5 flex items-center gap-3 min-h-touch ${muted ? 'opacity-80' : ''}`"
+    :class="`w-full text-left bg-white border-b border-hairline-soft last:border-b-0 px-4 py-3.5 transition-colors hover:bg-surface-sunken flex items-center gap-3 min-h-touch ${muted ? 'opacity-80' : ''}`"
     @click="action && $emit('click')"
   >
     <slot name="leading" />

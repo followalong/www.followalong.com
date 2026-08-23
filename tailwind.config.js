@@ -101,6 +101,10 @@ module.exports = {
       maxHeight: {
         sheet: '92vh'
       },
+      // Just enough press feedback to feel like a button.
+      scale: {
+        98: '.98'
+      },
       width: {
         pip: '310px',
         'pip-lg': '460px'

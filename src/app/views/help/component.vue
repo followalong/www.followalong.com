@@ -1,6 +1,6 @@
 <template>
-  <div class="md:px-6 md:py-5 flex flex-col gap-4 max-w-river md:mx-auto">
-    <div class="bg-white border-y md:border border-hairline-strong md:rounded-xl p-4 md:p-5">
+  <PageBody>
+    <Card>
       <h2 class="text-sm font-bold text-ink">
         Contact us via email
       </h2>
@@ -12,12 +12,16 @@
         >followalong@protonmail.com</a>
         for a quick response.
       </p>
-    </div>
-  </div>
+    </Card>
+  </PageBody>
 </template>
 
 <script>
+import PageBody from '../../components/page-body/component.vue'
+import Card from '../../components/card/component.vue'
+
 export default {
+  components: { PageBody, Card },
   props: ['app', 'identity']
 }
 </script>

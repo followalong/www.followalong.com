@@ -1,14 +1,6 @@
 <template>
-  <div class="p-4 md:p-6 flex flex-col gap-4 md:gap-4.5 max-w-panel">
-    <section
-      :class="`rounded-xl border p-4 md:p-5 ${
-        sync.status === 'failed'
-          ? 'bg-danger-bg border-danger-border'
-          : sync.status === 'off'
-            ? 'bg-white border-hairline-strong'
-            : 'bg-following-bg border-following-border'
-      }`"
-    >
+  <PageBody width="panel">
+    <Card :tone="sync.status === 'failed' ? 'danger' : sync.status === 'off' ? 'default' : 'success'">
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
           <h2
@@ -63,9 +55,9 @@
           Download a copy
         </Button>
       </div>
-    </section>
+    </Card>
 
-    <div class="bg-white border border-hairline-strong rounded-xl overflow-hidden">
+    <Card :padded="false">
       <ListRow
         title="Name"
         :meta="app.queries.nameForIdentity(identity)"
@@ -87,9 +79,9 @@
         aria-label="Switch identity"
         @click="switchOpen = true"
       />
-    </div>
+    </Card>
 
-    <div class="bg-white border border-hairline-strong rounded-xl overflow-hidden">
+    <Card :padded="false">
       <ListRow
         title="Add-ons"
         :meta="`${addonCount} installed`"
@@ -121,9 +113,9 @@
         aria-label="Roll up identity"
         @click="rollUpIdentity"
       />
-    </div>
+    </Card>
 
-    <div class="bg-white border border-hairline-strong rounded-xl overflow-hidden">
+    <Card :padded="false">
       <ListRow
         title="Help"
         meta="followalong@protonmail.com"
@@ -142,7 +134,7 @@
         :to="CHANGELOG_PATH"
         aria-label="Visit Changelog"
       />
-    </div>
+    </Card>
 
     <button
       type="button"
@@ -175,7 +167,10 @@
         soon as you set a backup up.
       </p>
 
-      <div class="mt-3 border border-hairline-strong rounded-xl overflow-hidden">
+      <Card
+        :padded="false"
+        class="mt-3"
+      >
         <ListRow
           v-for="(label, key) in STRATEGY_LABELS"
           :key="key"
@@ -185,7 +180,7 @@
           :aria-label="`Encrypt with ${key}`"
           @click="changeEncryption(key)"
         />
-      </div>
+      </Card>
     </Sheet>
 
     <Sheet
@@ -201,12 +196,12 @@
         <p class="text-body text-ink-secondary">
           Only you ever see this. It tells your identities apart on this device.
         </p>
-        <input
+        <TextField
           v-model="name"
           aria-label="Identity name"
-          class="mt-3 block w-full rounded-field border border-hairline-strong bg-white px-3 py-2.5 text-body text-ink outline-none focus:border-primary"
+          class="mt-3"
           placeholder="My Account"
-        >
+        />
       </form>
 
       <template #footer>
@@ -226,7 +221,7 @@
       title="Your identities"
       @close="switchOpen = false"
     >
-      <div class="border border-hairline-strong rounded-xl overflow-hidden">
+      <Card :padded="false">
         <ListRow
           v-for="option in identities"
           :key="option.id"
@@ -236,7 +231,7 @@
           :aria-label="`Switch to ${app.queries.nameForIdentity(option)}`"
           @click="useIdentity(option)"
         />
-      </div>
+      </Card>
 
       <template #footer>
         <Button
@@ -274,13 +269,16 @@
         {{ restoreError }}
       </p>
     </Sheet>
-  </div>
+  </PageBody>
 </template>
 
 <script>
 import ListRow from '../../components/list-row/component.vue'
 import Sheet from '../../components/sheet/component.vue'
 import Button from '../../components/button/component.vue'
+import PageBody from '../../components/page-body/component.vue'
+import Card from '../../components/card/component.vue'
+import TextField from '../../components/text-field/component.vue'
 
 const CHANGELOG_PATH = '/https://changelog.followalong.com/feed.xml'
 
@@ -308,7 +306,10 @@ export default {
   components: {
     ListRow,
     Sheet,
-    Button
+    Button,
+    PageBody,
+    Card,
+    TextField
   },
 
   props: ['app', 'identity'],

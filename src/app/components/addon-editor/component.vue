@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white border-y md:border border-hairline md:rounded-card p-4 md:p-4.5">
+  <Card>
     <div class="flex items-center gap-2">
       <h2 class="flex-1 text-sm font-bold text-ink">
         {{ addon.title }}
@@ -52,29 +52,18 @@
           v-html="app.queries.sanitizeCopy(addon.description)"
         />
 
-        <div
+        <TextField
           v-for="(field, key) in addon.fields"
           :key="`field-${key}`"
-        >
-          <label
-            :for="`input-${key}`"
-            class="block text-meta font-bold tracking-wide uppercase text-ink-subtle"
-            v-html="field.label"
-          />
-          <input
-            :id="`input-${key}`"
-            v-model="newAdapterConfig.data[key]"
-            :aria-label="`Configure ${addonKey} ${key}`"
-            :name="`input-${key}`"
-            :type="field.type"
-            :autocomplete="field.autocomplete"
-            :required="field.required"
-            :placeholder="field.placeholder"
-            :min="field.min"
-            :max="field.max"
-            class="mt-2 block w-full rounded-field border border-hairline-strong bg-white px-3 py-3 text-body text-ink placeholder:text-ink-subtle outline-none focus:border-primary"
-          >
-        </div>
+          v-model="newAdapterConfig.data[key]"
+          :label="field.label"
+          :aria-label="`Configure ${addonKey} ${key}`"
+          :name="`input-${key}`"
+          :type="field.type"
+          :autocomplete="field.autocomplete"
+          :required="field.required"
+          :placeholder="field.placeholder"
+        />
       </form>
 
       <template #footer>
@@ -97,19 +86,23 @@
         </Button>
       </template>
     </Sheet>
-  </div>
+  </Card>
 </template>
 
 <script>
 import Sheet from '../sheet/component.vue'
 import Button from '../button/component.vue'
 import StatusPill from '../status-pill/component.vue'
+import Card from '../card/component.vue'
+import TextField from '../text-field/component.vue'
 
 export default {
   components: {
     Sheet,
     Button,
-    StatusPill
+    StatusPill,
+    Card,
+    TextField
   },
   props: ['app', 'identity', 'addon', 'buttonText', 'submitText'],
   data () {

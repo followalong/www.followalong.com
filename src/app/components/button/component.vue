@@ -1,7 +1,7 @@
 <template>
   <button
     type="button"
-    :class="`rounded-lg px-4 py-2.5 text-body font-semibold border ${VARIANTS[variant]} ${block ? 'w-full' : ''}`"
+    :class="`rounded-lg px-4 py-2.5 text-body font-semibold border transition-colors duration-150 active:scale-98 ${VARIANTS[variant]} ${block ? 'w-full' : ''}`"
     @click="$emit('click', $event)"
   >
     <slot />

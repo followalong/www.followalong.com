@@ -27,7 +27,7 @@
       v-if="showIntro"
       class="md:px-6 md:pt-5 max-w-river md:mx-auto"
     >
-      <div class="bg-white border-y md:border border-hairline md:rounded-card p-4 md:p-5">
+      <Card>
         <div class="flex items-start justify-between gap-3">
           <h2 class="text-card md:text-card-lg font-bold text-ink">
             What is Follow Along?
@@ -52,17 +52,17 @@
         >
           Read more &raquo;
         </router-link>
-      </div>
+      </Card>
     </section>
 
     <div
       v-if="app.queries.signalHasCards(signal)"
       class="md:px-6 md:py-5 flex flex-col gap-0 md:gap-3.5 max-w-river md:mx-auto"
     >
-      <article
+      <Card
         v-for="card in signalCards"
         :key="`card-${card.title}`"
-        class="bg-white border-y md:border border-hairline md:rounded-card p-4 md:p-5"
+        as="article"
       >
         <h2 class="text-card md:text-card-lg font-bold text-ink">
           {{ card.title }}
@@ -78,7 +78,7 @@
           class="prose mt-3"
           v-html="card.content"
         />
-      </article>
+      </Card>
     </div>
 
     <div
@@ -95,12 +95,9 @@
       />
     </div>
 
-    <p
-      v-else-if="!signalCards.length"
-      class="p-4 md:p-6 text-body text-ink-secondary"
-    >
+    <EmptyState v-else-if="!signalCards.length">
       You're all caught up!
-    </p>
+    </EmptyState>
   </div>
 </template>
 
@@ -109,6 +106,8 @@ import FeedEntry from '../../components/feed-entry/component.vue'
 import NewBar from '../../components/new-bar/component.vue'
 import SignalChips from '../../components/signal-chips/component.vue'
 import FilterChip from '../../components/filter-chip/component.vue'
+import Card from '../../components/card/component.vue'
+import EmptyState from '../../components/empty-state/component.vue'
 import PullToRefresh from 'pulltorefreshjs'
 
 const DISTANCE_FROM_BOTTOM = 500
@@ -116,6 +115,8 @@ const LIMIT = 4
 
 export default {
   components: {
+    Card,
+    EmptyState,
     FeedEntry,
     FilterChip,
     NewBar,

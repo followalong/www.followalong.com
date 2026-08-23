@@ -1,6 +1,6 @@
 <template>
-  <div class="md:px-6 md:py-5 max-w-river md:mx-auto">
-    <div class="bg-white border-y md:border border-hairline-strong md:rounded-xl overflow-hidden">
+  <PageBody>
+    <Card :padded="false">
       <ListRow
         v-for="feed in feeds"
         :key="feed.id"
@@ -32,23 +32,26 @@
           >{{ unreadFor(feed) }} new</span>
         </template>
       </ListRow>
-    </div>
+    </Card>
 
-    <p
-      v-if="!feeds.length"
-      class="p-4 text-body text-ink-secondary"
-    >
+    <EmptyState v-if="!feeds.length">
       You are not following any feeds yet. Use search to paste an RSS URL.
-    </p>
-  </div>
+    </EmptyState>
+  </PageBody>
 </template>
 
 <script>
 import ListRow from '../../components/list-row/component.vue'
+import PageBody from '../../components/page-body/component.vue'
+import Card from '../../components/card/component.vue'
+import EmptyState from '../../components/empty-state/component.vue'
 
 export default {
   components: {
-    ListRow
+    ListRow,
+    PageBody,
+    Card,
+    EmptyState
   },
 
   props: ['app', 'identity'],

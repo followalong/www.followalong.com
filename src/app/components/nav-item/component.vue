@@ -3,7 +3,7 @@
     :to="to"
     :aria-label="label"
     :aria-current="active ? 'page' : null"
-    :class="`min-h-touch flex flex-col items-center justify-center gap-1 rounded-nav px-3.5 py-1.5 ${
+    :class="`min-h-touch flex flex-col items-center justify-center gap-1 rounded-nav px-3.5 py-1.5 transition-colors duration-150 ${
       on === 'chrome' && active ? 'bg-chrome-deep' : ''
     }`"
   >

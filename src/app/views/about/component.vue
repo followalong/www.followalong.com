@@ -1,6 +1,6 @@
 <template>
-  <div class="md:px-6 md:py-5 flex flex-col gap-4 max-w-river md:mx-auto">
-    <article class="bg-white border-y md:border border-hairline-strong md:rounded-xl p-4 md:p-5">
+  <PageBody>
+    <Card as="article">
       <section
         v-for="(part, index) in PARTS"
         :key="part.title"
@@ -17,7 +17,7 @@
           {{ paragraph }}
         </p>
       </section>
-    </article>
+    </Card>
 
     <p class="px-4 md:px-0 text-meta text-ink-muted">
       Follow Along is open source.
@@ -27,10 +27,13 @@
         class="text-primary font-semibold"
       >Read the code</a>.
     </p>
-  </div>
+  </PageBody>
 </template>
 
 <script>
+import PageBody from '../../components/page-body/component.vue'
+import Card from '../../components/card/component.vue'
+
 const PARTS = [
   {
     title: 'What is Follow Along?',
@@ -63,6 +66,7 @@ const PARTS = [
 ]
 
 export default {
+  components: { PageBody, Card },
   props: ['app', 'identity'],
   data: () => ({ PARTS })
 }

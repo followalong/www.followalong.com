@@ -13,12 +13,9 @@
       </FilterChip>
     </div>
 
-    <p
-      v-if="!shown.length"
-      class="px-4 py-5 text-body text-ink-secondary md:px-6"
-    >
+    <EmptyState v-if="!shown.length">
       No add-ons here yet.
-    </p>
+    </EmptyState>
 
     <div class="md:px-6 md:py-5 md:grid md:grid-cols-2 md:gap-3.5 md:items-start max-w-app">
       <AddonEditor

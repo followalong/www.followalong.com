@@ -3,7 +3,7 @@
     type="button"
     :aria-pressed="`${done}`"
     :aria-label="`Mark as ${done ? 'unread' : 'read'}${subject ? ` ${subject}` : ''}`"
-    :class="`h-touch w-touch -my-2 flex-none flex items-center justify-center ${done ? 'text-following' : 'text-inactive'}`"
+    :class="`h-touch w-touch -my-2 flex-none flex items-center justify-center transition-colors duration-150 ${done ? 'text-following' : 'text-inactive'}`"
     @click="$emit('toggle')"
   >
     <!-- Every icon on a card is an 18px glyph on a 20-unit viewBox, stroked at
