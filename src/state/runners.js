@@ -83,6 +83,7 @@ export default {
   'feeds.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because URL is outside of data; OK because URL is immutable for now
   'feeds.update': EventStore.RUNNERS.UPDATE,
   'feeds.delete': EventStore.RUNNERS.DELETE,
+  'feeds.fetched': TIMESTAMP('updatedAt'),
   'feeds.pause': TIMESTAMP('pausedAt'),
   'feeds.unpause': UNTIMESTAMP('pausedAt'),
   'entries.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because feedId is outside of data; OK because feedId is immutable for now

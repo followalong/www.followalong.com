@@ -1,5 +1,5 @@
 <template>
-  <article :class="`bg-white border-b md:border border-hairline rounded-none md:rounded-card overflow-hidden ${done ? 'opacity-70' : ''}`">
+  <article :class="`bg-white border-b border-hairline rounded-none overflow-hidden ${done ? 'opacity-70' : ''}`">
     <slot name="lead">
       <button
         v-if="media === 'video'"
@@ -23,7 +23,7 @@
       </button>
     </slot>
 
-    <div class="px-4 py-3.5 md:px-5 md:py-4">
+    <div class="px-4 py-3.5">
       <div class="flex justify-between gap-2.5">
         <div class="min-w-0">
           <component
@@ -35,7 +35,7 @@
           >
             <h2
               aria-label="Entry title"
-              class="text-card md:text-card-lg font-bold text-ink"
+              class="text-card font-bold text-ink"
               v-html="title"
             />
           </component>
@@ -65,7 +65,7 @@
         v-if="summary"
         data-summary
         :type="readable ? 'button' : undefined"
-        class="block w-full text-left mt-2.5 text-body md:text-sm text-ink-body"
+        class="block w-full text-left mt-2.5 text-body text-ink-body"
         @click="readable && $emit('read')"
       >
         {{ summary }}

@@ -25,7 +25,7 @@
     <slot name="trailing" />
 
     <!-- Anything that leads somewhere says so, whether it navigates or opens
-         a sheet. A row that acts in place carries its own trailing label. -->
+ a sheet. A row that acts in place carries its own trailing label. -->
     <span
       v-if="(to || action) && !$slots.trailing"
       data-row-chevron

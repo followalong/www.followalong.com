@@ -6,7 +6,7 @@
       :entries="existingEntries"
     />
 
-    <header class="px-4 pt-4 md:px-6 border-b border-hairline-strong max-w-river md:mx-auto">
+    <header class="px-4 pt-4 border-b border-hairline-strong">
       <div class="flex items-center gap-3">
         <img
           v-if="app.queries.imageForFeed(feed)"
@@ -82,7 +82,7 @@
       />
     </header>
 
-    <div class="md:px-6 md:py-5 flex flex-col gap-0 md:gap-3.5 max-w-river md:mx-auto">
+    <div class="flex flex-col gap-0">
       <FeedEntry
         v-for="entry in entries"
         :key="`entry-${entry.id}`"

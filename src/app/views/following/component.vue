@@ -58,7 +58,7 @@ export default {
 
   computed: {
     // Feeds with something waiting come first: the question this page answers
-    // is "what should I open?", not "what am I subscribed to?".
+    // is"what should I open?", not"what am I subscribed to?".
     feeds () {
       return this.app.queries.feedsForIdentity(this.identity)
         .slice()

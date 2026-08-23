@@ -1,5 +1,6 @@
 import localForage from 'localforage'
 import EventStoreEvent from './event-store-event.js'
+import SUPERSEDING from './superseding.js'
 import { v4 as uuidv4 } from 'uuid'
 
 class EventStore {
@@ -34,9 +35,36 @@ class EventStore {
     const event = new EventStoreEvent(collection, objectId || uuidv4(), action, data, time, version)
 
     this._runEvent(event)
+    this._supersede(event)
     this._db.setItem(event.key, event.toLocal())
 
     return event
+  }
+
+  // Drops the events this one replaces. Safe because every superseding action
+  // is a timestamp: the newest carries the whole meaning, so the ones before
+  // it cannot change the folded result.
+  _supersede (event) {
+    if (SUPERSEDING.indexOf(`${event.collection}.${event.action}`) === -1) {
+      return
+    }
+
+    for (let i = this._events.length - 1; i >= 0; i--) {
+      const old = this._events[i]
+
+      // By key, not by identity: the store is reactive in the app, so what
+      // comes back out of _events is a proxy and never === the event we just
+      // pushed. Comparing by identity made this delete its own event.
+      if (old.key === event.key ||
+        old.collection !== event.collection ||
+        old.objectId !== event.objectId ||
+        old.action !== event.action) {
+        continue
+      }
+
+      this._events.splice(i, 1)
+      this._db.removeItem(old.key)
+    }
   }
 
   eachCollectionName (func) {

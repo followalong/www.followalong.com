@@ -1,5 +1,5 @@
 <template>
-  <PageBody width="panel">
+  <PageBody>
     <Card :tone="sync.status === 'failed' ? 'danger' : sync.status === 'off' ? 'default' : 'success'">
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
@@ -340,7 +340,7 @@ export default {
     },
 
     // A password with nothing to protect yet should say so, rather than
-    // sitting under "Not backed up" implying otherwise.
+    // sitting under"Not backed up" implying otherwise.
     passwordMeta () {
       const label = STRATEGY_LABELS[this.strategy]
 

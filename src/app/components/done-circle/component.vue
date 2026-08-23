@@ -7,8 +7,8 @@
     @click="$emit('toggle')"
   >
     <!-- Every icon on a card is an 18px glyph on a 20-unit viewBox, stroked at
-         1.75 — the ring is drawn here rather than being the button's border, so
-         this and the SaveStar beside it carry the same weight. -->
+ 1.75 — the ring is drawn here rather than being the button's border, so
+ this and the SaveStar beside it carry the same weight. -->
     <svg
       class="h-icon w-icon"
       viewBox="0 0 20 20"

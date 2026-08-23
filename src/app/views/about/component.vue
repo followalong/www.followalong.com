@@ -6,20 +6,20 @@
         :key="part.title"
         :class="index ? 'mt-6 pt-6 border-t border-hairline-soft' : ''"
       >
-        <h2 class="text-card md:text-card-lg font-bold text-ink">
+        <h2 class="text-card font-bold text-ink">
           {{ part.title }}
         </h2>
         <p
           v-for="(paragraph, i) in part.body"
           :key="i"
-          class="text-body md:text-sm text-ink-secondary mt-2 leading-relaxed max-w-read"
+          class="text-body text-ink-secondary mt-2 leading-relaxed max-w-read"
         >
           {{ paragraph }}
         </p>
       </section>
     </Card>
 
-    <p class="px-4 md:px-0 text-meta text-ink-muted">
+    <p class="px-4 text-meta text-ink-muted">
       Follow Along is open source.
       <a
         href="https://github.com/followalong/www.followalong.com"

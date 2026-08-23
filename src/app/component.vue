@@ -1,20 +1,12 @@
 <template>
   <div
     v-if="!isLoading"
-    class="min-h-screen flex flex-col bg-page"
+    class="min-h-screen w-full max-w-app flex flex-col bg-page"
   >
     <AppBar
       :title="title"
       :back="back"
     >
-      <!-- Desktop is tablet: the same tabs, moved into the bar. -->
-      <template #nav>
-        <NavTabs
-          on="chrome"
-          class="hidden md:flex ml-auto"
-        />
-      </template>
-
       <template #action>
         <button
           type="button"
@@ -51,7 +43,7 @@
       @search="onSearch"
     />
 
-    <main class="flex-1 w-full max-w-app pb-24 md:pb-8">
+    <main class="flex-1 w-full pb-24">
       <router-view
         :app="app"
         :identity="identity"
@@ -88,9 +80,10 @@
       />
     </PipPlayer>
 
+    <!-- One nav, in one place, whatever the screen. -->
     <NavTabs
       on="surface"
-      class="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-hairline-strong bg-white pt-3 pb-6"
+      class="fixed bottom-0 left-0 w-full max-w-app z-30 border-t border-hairline-strong bg-white pt-3 pb-6"
     />
   </div>
 </template>
@@ -345,5 +338,5 @@ export default {
 </script>
 
 <style lang="scss">
-@import "./index.scss";
+@import"./index.scss";
 </style>

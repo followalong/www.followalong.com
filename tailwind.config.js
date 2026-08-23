@@ -92,11 +92,9 @@ module.exports = {
         pill: '999px'
       },
       maxWidth: {
-        // Desktop is tablet: content never grows past the tablet width.
-        app: '834px',
-        river: '640px',
-        read: '470px',
-        panel: '560px'
+        // The whole app, at every size. There is no wider layout to fall into.
+        app: '480px',
+        read: '470px'
       },
       maxHeight: {
         sheet: '92vh'
@@ -106,8 +104,7 @@ module.exports = {
         98: '.98'
       },
       width: {
-        pip: '310px',
-        'pip-lg': '460px'
+        pip: '310px'
       },
       spacing: {
         // Minimum touch target.
@@ -117,7 +114,6 @@ module.exports = {
         // The bar itself: the 34px slot plus its padding, stated outright so
         // a page without a logo cannot come out shorter.
         bar: '58px',
-        'bar-md': '54px',
         icon: '18px',
         play: '26px',
         // Clears the mobile tab bar.

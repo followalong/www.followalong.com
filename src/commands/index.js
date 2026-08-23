@@ -142,7 +142,13 @@ class Commands {
   }
 
   upsertFeedForIdentity (identity, feed, data) {
-    this.track(identity, 'feeds', feed.id, 'update', this.queries.feedChanged(feed, data) ? { data } : {})
+    if (!this.queries.feedChanged(feed, data)) {
+      // Nothing came back that we did not have. Record only that we looked.
+      this.track(identity, 'feeds', feed.id, 'fetched')
+      return
+    }
+
+    this.track(identity, 'feeds', feed.id, 'update', { data })
   }
 
   upsertEntryForIdentity (identity, feed, data, lastReadDateForFeed = 0) {

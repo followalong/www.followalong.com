@@ -23,11 +23,11 @@ describe('EntryCard', () => {
     expect(wrapper.emitted('done')).toHaveLength(1)
   })
 
-  test('is full-bleed on mobile and rounded from tablet up', () => {
+  test('spans the column, edge to edge', () => {
     const el = card().get('article')
 
     expect(el.classes()).toContain('rounded-none')
-    expect(el.classes()).toContain('md:rounded-card')
+    expect(el.classes()).toContain('border-b')
   })
 
   test('shows a summary for text', () => {

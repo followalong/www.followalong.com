@@ -1,9 +1,9 @@
 <template>
   <div
     data-search-panel
-    class="fixed inset-0 z-50 bg-chrome flex flex-col"
+    class="fixed inset-y-0 left-0 w-full max-w-app z-50 bg-chrome flex flex-col"
   >
-    <div class="max-w-app w-full flex items-center gap-3 px-4 py-3 md:px-6">
+    <div class="w-full flex items-center gap-3 px-4 py-3">
       <button
         type="button"
         aria-label="Close search"
@@ -27,10 +27,10 @@
     </div>
 
     <div class="flex-1 bg-page overflow-y-auto">
-      <div class="max-w-app">
+      <div>
         <p
           v-if="!q.trim()"
-          class="px-4 py-5 text-body text-ink-secondary md:px-6"
+          class="px-4 py-5 text-body text-ink-secondary"
         >
           Paste an RSS URL to follow something new, or type to search the feeds
           and entries you already have.
@@ -79,7 +79,7 @@
 
           <p
             v-if="!looksLikeUrl && !matchingFeeds.length && !matchingEntries.length"
-            class="px-4 py-5 text-body text-ink-secondary md:px-6"
+            class="px-4 py-5 text-body text-ink-secondary"
           >
             Nothing matches “{{ q.trim() }}”. Paste an RSS URL to follow something
             new.
@@ -94,7 +94,7 @@
 import SearchBox from '../search-box/component.vue'
 import ListRow from '../list-row/component.vue'
 
-const HEADING = 'px-4 pt-5 pb-2 text-tiny font-bold tracking-widest uppercase text-ink-subtle md:px-6'
+const HEADING = 'px-4 pt-5 pb-2 text-tiny font-bold tracking-widest uppercase text-ink-subtle'
 const LIMIT = 20
 
 export default {

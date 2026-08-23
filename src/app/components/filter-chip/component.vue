@@ -6,7 +6,7 @@
     @click="$emit('select')"
   >
     <!-- The pill is the size the design draws; the button around it is the
-         size a thumb needs. -->
+ size a thumb needs. -->
     <span
       :class="`rounded-pill px-3.5 py-1.5 text-chip font-semibold border whitespace-nowrap transition-colors duration-150 ${
         selected

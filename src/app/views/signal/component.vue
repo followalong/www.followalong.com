@@ -6,27 +6,13 @@
       :entries="entries"
     />
 
-    <div
-      v-if="unreadEntries.length"
-      class="flex justify-end px-4 pt-4 md:px-6 max-w-river md:mx-auto"
-    >
-      <Button
-        variant="secondary"
-        aria-label="Catch up on signal"
-        class="!py-1.5 !px-3 !text-chip"
-        @click="catchUpOnSignal"
-      >
-        Catch me up
-      </Button>
-    </div>
-
     <section
       v-if="showIntro"
-      class="md:px-6 md:pt-5 max-w-river md:mx-auto"
+      class=""
     >
       <Card>
         <div class="flex items-start justify-between gap-3">
-          <h2 class="text-card md:text-card-lg font-bold text-ink">
+          <h2 class="text-card font-bold text-ink">
             What is Follow Along?
           </h2>
           <button
@@ -38,7 +24,7 @@
             ✕
           </button>
         </div>
-        <p class="text-body md:text-sm text-ink-secondary mt-1.5">
+        <p class="text-body text-ink-secondary mt-1.5">
           A place to follow the things you care about directly, with nothing in
           between. Everything stays on this device.
         </p>
@@ -54,14 +40,14 @@
 
     <div
       v-if="app.queries.signalHasCards(signal)"
-      class="md:px-6 md:py-5 flex flex-col gap-0 md:gap-3.5 max-w-river md:mx-auto"
+      class="flex flex-col gap-0"
     >
       <Card
         v-for="card in signalCards"
         :key="`card-${card.title}`"
         as="article"
       >
-        <h2 class="text-card md:text-card-lg font-bold text-ink">
+        <h2 class="text-card font-bold text-ink">
           {{ card.title }}
         </h2>
         <p
@@ -80,7 +66,7 @@
 
     <div
       v-else-if="shownEntries.length"
-      class="md:px-6 md:py-5 flex flex-col gap-0 md:gap-3.5 max-w-river md:mx-auto"
+      class="flex flex-col gap-0"
     >
       <FeedEntry
         v-for="entry in shownEntries"
@@ -101,7 +87,6 @@
 <script>
 import FeedEntry from '../../components/feed-entry/component.vue'
 import NewBar from '../../components/new-bar/component.vue'
-import Button from '../../components/button/component.vue'
 import Card from '../../components/card/component.vue'
 import EmptyState from '../../components/empty-state/component.vue'
 import PullToRefresh from 'pulltorefreshjs'
@@ -111,7 +96,6 @@ const LIMIT = 4
 
 export default {
   components: {
-    Button,
     Card,
     EmptyState,
     FeedEntry,
@@ -140,14 +124,6 @@ export default {
 
     shownEntries () {
       return this.app.queries.filterNonNewEntries(this.identity, this.entries).slice(0, this.limit)
-    },
-
-    unreadEntries () {
-      return this.app.queries.unreadEntries(this.shownEntries)
-    },
-
-    catchUpEntries () {
-      return this.app.queries.unreadEntries(this.entries)
     },
 
     showIntro () {
@@ -215,14 +191,8 @@ export default {
 
     dismissIntro () {
       this.app.commands.hideHintForIdentity(this.identity, 'intro')
-    },
-
-    catchUpOnSignal () {
-      this.catchUpEntries.reverse().forEach((entry) => {
-        this.app.commands.markEntryAsReadForIdentity(this.identity, entry)
-      })
-      this.app.commands.showNewEntries(this.identity)
     }
+
   }
 }
 </script>

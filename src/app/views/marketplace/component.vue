@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="flex gap-2 overflow-x-auto px-4 py-3 border-b border-hairline md:px-6">
+    <div class="flex gap-2 overflow-x-auto px-4 py-3 border-b border-hairline">
       <FilterChip
         v-for="category in categories"
         :key="category.key"
@@ -17,7 +17,7 @@
       No add-ons here yet.
     </EmptyState>
 
-    <div class="md:px-6 md:py-5 md:grid md:grid-cols-2 md:gap-3.5 md:items-start max-w-app">
+    <div class="max-w-app">
       <AddonEditor
         v-for="addon in shown"
         :key="addon.type"

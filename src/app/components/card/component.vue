@@ -2,7 +2,7 @@
   <component
     :is="as"
     data-card
-    :class="`border-y md:border md:rounded-card ${TONES[tone]} ${padded ? 'p-4 md:p-5' : 'overflow-hidden'}`"
+    :class="`border-y ${TONES[tone]} ${padded ? 'p-4' : 'overflow-hidden'}`"
   >
     <slot />
   </component>

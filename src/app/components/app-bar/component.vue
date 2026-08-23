@@ -1,6 +1,6 @@
 <template>
   <header class="bg-chrome sticky top-0 z-40">
-    <div class="max-w-app h-bar md:h-bar-md px-4 md:px-6 flex items-stretch gap-3 md:gap-4">
+    <div class="h-bar px-4 flex items-stretch gap-3">
       <router-link
         v-if="back"
         data-bar-back

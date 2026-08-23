@@ -8,7 +8,7 @@
     <div
       v-if="open"
       data-sheet-scrim
-      class="fixed inset-0 z-50 bg-chrome/70 flex flex-col justify-end items-center"
+      class="fixed inset-y-0 left-0 w-full max-w-app z-50 bg-chrome/70 flex flex-col justify-end"
       @click.self="$emit('close')"
     >
       <Transition
@@ -24,7 +24,7 @@
           role="dialog"
           aria-modal="true"
           :aria-label="title"
-          class="bg-surface-sheet rounded-t-sheet max-h-sheet w-full max-w-app flex flex-col px-5 pt-3.5"
+          class="bg-surface-sheet rounded-t-sheet max-h-sheet w-full flex flex-col px-5 pt-3.5"
         >
           <div
             data-sheet-grabber
@@ -33,7 +33,7 @@
           />
 
           <!-- A reading sheet keeps its title, body and actions on one measure,
-           so the column does not start in three different places. -->
+ so the column does not start in three different places. -->
           <div :class="`flex-1 min-h-0 flex flex-col ${narrow ? 'w-full max-w-read mx-auto' : ''}`">
             <header class="flex items-center gap-2.5 mt-4">
               <h2 class="flex-1 text-lg font-bold text-ink truncate">

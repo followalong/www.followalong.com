@@ -1,7 +1,7 @@
 <template>
   <div
     data-page-body
-    :class="`md:px-6 md:py-5 flex flex-col ${WIDTHS[width]} ${gapless ? 'gap-0 md:gap-3.5' : 'gap-4'}`"
+    :class="`flex flex-col ${WIDTHS[width]} ${gapless ? 'gap-0' : 'gap-4'}`"
   >
     <slot />
   </div>
@@ -11,9 +11,9 @@
 // Every page sat on the same column and repeated the same six classes to say
 // so. Desktop is tablet, so nothing here grows past the app width.
 const WIDTHS = {
-  river: 'max-w-river md:mx-auto',
+  river: '',
   app: 'max-w-app',
-  panel: 'max-w-panel'
+  panel: ''
 }
 
 export default {

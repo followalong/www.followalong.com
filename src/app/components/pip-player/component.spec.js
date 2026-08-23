@@ -14,13 +14,13 @@ const player = (props) => {
 }
 
 describe('PipPlayer', () => {
-  test('floats bottom-right, clear of the mobile tab bar', () => {
+  test('sits at the bottom of the column, clear of the tab bar', () => {
     const el = player().get('[data-pip]')
 
     expect(el.classes()).toContain('fixed')
-    expect(el.classes()).toContain('right-3')
     expect(el.classes()).toContain('bottom-tab-bar')
-    expect(el.classes()).toContain('md:bottom-5')
+    expect(el.classes()).toContain('max-w-app')
+    expect(el.classes()).toContain('justify-end')
   })
 
   test('keeps a 16:9 frame', () => {
