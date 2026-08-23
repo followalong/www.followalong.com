@@ -81,18 +81,6 @@ const mountApp = (options) => {
       await flushPromisesAndTimers()
     }
 
-    app.getLocalDefaultIdentity = async () => {
-      const ids = await app.vm.commands.keychainAdapter.getKeys()
-
-      if (!ids.length) {
-        return null
-      }
-
-      const identity = await app.vm.commands.getLocalIdentity(ids[0])
-
-      return identity
-    }
-
     await app.wait()
 
     resolve(app)
