@@ -2,6 +2,28 @@ import EventStore from './event-store'
 import EventStoreEvent from './event-store-event.js'
 import VERSION from './version.js'
 
+// State that changes over time is recorded as a timestamp rather than a
+// boolean, so every such transition is the same runner with a different field.
+const TIMESTAMP = (attr) => (store, event) => {
+  const existing = store[event.collection].find((item) => item.id === event.objectId)
+
+  if (!existing) {
+    return console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+  }
+
+  existing[attr] = event.time
+}
+
+const UNTIMESTAMP = (attr) => (store, event) => {
+  const existing = store[event.collection].find((item) => item.id === event.objectId)
+
+  if (!existing) {
+    return console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+  }
+
+  delete existing[attr]
+}
+
 const ROLLUP = (store, event) => {
   const identities = [event.data.identity]
   identities.forEach((identity) => {
@@ -43,53 +65,16 @@ export default {
   'feeds.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because URL is outside of data; OK because URL is immutable for now
   'feeds.update': EventStore.RUNNERS.UPDATE,
   'feeds.delete': EventStore.RUNNERS.DELETE,
-  'feeds.pause': (store, event) => {
-    const collection = store[event.collection]
-    const existing = collection.find((item) => item.id === event.objectId)
-
-    if (!existing) {
-      console.warn(`Object not found for event: ${JSON.stringify(event)}`)
-      return
-    }
-
-    existing.pausedAt = event.time
-  },
-  'feeds.unpause': (store, event) => {
-    const collection = store[event.collection]
-    const existing = collection.find((item) => item.id === event.objectId)
-
-    if (!existing) {
-      console.warn(`Object not found for event: ${JSON.stringify(event)}`)
-      return
-    }
-
-    delete existing.pausedAt
-  },
+  'feeds.pause': TIMESTAMP('pausedAt'),
+  'feeds.unpause': UNTIMESTAMP('pausedAt'),
   'entries.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because feedId is outside of data; OK because feedId is immutable for now
   'entries.update': EventStore.RUNNERS.UPDATE,
   'entries.delete': EventStore.RUNNERS.DELETE,
-  'entries.read': (store, event) => {
-    const collection = store[event.collection]
-    const existing = collection.find((item) => item.id === event.objectId)
-
-    if (!existing) {
-      console.warn(`Object not found for event: ${JSON.stringify(event)}`)
-      return
-    }
-
-    existing.readAt = event.time
-  },
-  'entries.unread': (store, event) => {
-    const collection = store[event.collection]
-    const existing = collection.find((item) => item.id === event.objectId)
-
-    if (!existing) {
-      console.warn(`Object not found for event: ${JSON.stringify(event)}`)
-      return
-    }
-
-    delete existing.readAt
-  },
+  'entries.markRead': TIMESTAMP('readAt'),
+  'entries.markUnread': UNTIMESTAMP('readAt'),
+  // Action names used before v2.3. Events already on disk still carry them.
+  'entries.read': TIMESTAMP('readAt'),
+  'entries.unread': UNTIMESTAMP('readAt'),
   'identities.create': EventStore.RUNNERS.CREATE,
   'identities.delete': EventStore.RUNNERS.DELETE,
   'identities.rollup': ROLLUP,

@@ -35,7 +35,7 @@ describe('Mark entry as read', () => {
       await app.click(`[aria-label="Toggle entry content ${entryId}"]`)
     })
 
-    event('entries.read', {
+    event('entries.markRead', {
       objectId: entryId
     }, () => { return { app } })
   })

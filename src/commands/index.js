@@ -136,11 +136,11 @@ class Commands {
   }
 
   markEntryAsReadForIdentity (identity, entry) {
-    this.track(identity, 'entries', entry.id, 'read')
+    this.track(identity, 'entries', entry.id, 'markRead')
   }
 
   markEntryAsUnreadForIdentity (identity, entry) {
-    this.track(identity, 'entries', entry.id, 'unread')
+    this.track(identity, 'entries', entry.id, 'markUnread')
   }
 
   showNewEntries (identity) {

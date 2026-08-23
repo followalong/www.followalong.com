@@ -29,7 +29,7 @@ describe('Catch up on a feed', () => {
     expect(app.findAll(`[aria-label="Mark as unread ${entryId}"]`).length).toEqual(1)
   })
 
-  event('entries.read', {
+  event('entries.markRead', {
     objectId: entryId
   }, () => { return { app } })
 })

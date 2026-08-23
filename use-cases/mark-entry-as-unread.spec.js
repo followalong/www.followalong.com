@@ -28,7 +28,7 @@ describe('Mark entry as read', () => {
     expect(app.findAll(`[aria-label="Mark as read ${entryId}"]`).length).toEqual(1)
   })
 
-  event('entries.unread', {
+  event('entries.markUnread', {
     objectId: entryId
   }, () => { return { app } })
 })

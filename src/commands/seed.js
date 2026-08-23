@@ -13,10 +13,10 @@ const CHANGELOG_FEED = {
 
 // A function because the published date is stamped when the identity is made.
 const CHANGELOG_ENTRY = () => ({
-      id: 'about',
-      title: 'Twitter is done. Long live RSS.',
-      published: new Date().toISOString(),
-      content: `
+  id: 'about',
+  title: 'Twitter is done. Long live RSS.',
+  published: new Date().toISOString(),
+  content: `
       <p>
         It's not <em>just</em> Twitter. It's all the rest of the them as well!
       </p>

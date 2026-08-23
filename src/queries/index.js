@@ -318,11 +318,11 @@ class Queries {
   }
 
   isEntryRead (entry) {
-    return entry.readAt
+    return !!entry.readAt
   }
 
   isFeedPaused (feed) {
-    return feed.pausedAt
+    return !!feed.pausedAt
   }
 
   unreadEntries (entries) {
