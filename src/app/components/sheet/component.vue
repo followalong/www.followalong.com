@@ -20,31 +20,35 @@
         aria-hidden="true"
       />
 
-      <header class="flex items-center gap-2.5 mt-4">
-        <h2 class="flex-1 text-lg font-bold text-ink truncate">
-          {{ title }}
-        </h2>
-        <button
-          data-sheet-close
-          type="button"
-          aria-label="Close"
-          class="h-touch w-touch -mr-3 text-ink-subtle text-card"
-          @click="$emit('close')"
+      <!-- A reading sheet keeps its title, body and actions on one measure,
+           so the column does not start in three different places. -->
+      <div :class="`flex-1 min-h-0 flex flex-col ${narrow ? 'w-full max-w-read mx-auto' : ''}`">
+        <header class="flex items-center gap-2.5 mt-4">
+          <h2 class="flex-1 text-lg font-bold text-ink truncate">
+            {{ title }}
+          </h2>
+          <button
+            data-sheet-close
+            type="button"
+            aria-label="Close"
+            class="h-touch w-touch -mr-3 text-ink-subtle text-card"
+            @click="$emit('close')"
+          >
+            ✕
+          </button>
+        </header>
+
+        <div class="flex-1 overflow-y-auto py-2">
+          <slot />
+        </div>
+
+        <footer
+          v-if="$slots.footer"
+          class="flex gap-2.5 py-4 pb-7"
         >
-          ✕
-        </button>
-      </header>
-
-      <div class="flex-1 overflow-y-auto py-2">
-        <slot />
+          <slot name="footer" />
+        </footer>
       </div>
-
-      <footer
-        v-if="$slots.footer"
-        class="flex gap-2.5 py-4 pb-7"
-      >
-        <slot name="footer" />
-      </footer>
     </section>
   </div>
 </template>
@@ -53,7 +57,9 @@
 export default {
   props: {
     open: { type: Boolean, default: false },
-    title: { type: String, default: '' }
+    title: { type: String, default: '' },
+    // Reading content sits on a measure rather than the sheet's full width.
+    narrow: { type: Boolean, default: false }
   },
   emits: ['close']
 }

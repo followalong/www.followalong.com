@@ -41,7 +41,7 @@ describe('EntryCard', () => {
     const badge = card({ summary: 'A summary.', summaryLabel: 'SUMMARY' }).get('[data-summary-badge]')
 
     expect(badge.classes()).toContain('rounded-pill')
-    expect(badge.classes()).toContain('bg-accent/20')
+    expect(badge.classes()).toContain('bg-accent-tint')
   })
 
   test('earns the SUMMARY badge only when an add-on wrote it', () => {

@@ -6,8 +6,8 @@ describe('SaveStar', () => {
   test('matches the DoneCircle it sits beside', () => {
     const el = mount(SaveStar).get('button')
 
-    expect(el.classes()).toContain('h-7')
-    expect(el.classes()).toContain('w-7')
+    expect(el.classes()).toContain('h-touch')
+    expect(el.classes()).toContain('w-touch')
   })
 
   test('reads as unsaved until saved', () => {

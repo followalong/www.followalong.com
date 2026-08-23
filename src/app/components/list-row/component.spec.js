@@ -30,9 +30,16 @@ describe('ListRow', () => {
     expect(row().find('a').exists()).toBe(false)
   })
 
-  test('shows the trailing chevron only when it leads somewhere', () => {
+  test('shows the trailing chevron whenever it leads somewhere', () => {
     expect(row({ props: { to: '/feeds/1' } }).find('[data-row-chevron]').exists()).toBe(true)
+    expect(row({ props: { action: true } }).find('[data-row-chevron]').exists()).toBe(true)
     expect(row().find('[data-row-chevron]').exists()).toBe(false)
+  })
+
+  test('yields the chevron to a row that acts in place', () => {
+    const wrapper = row({ props: { action: true }, slots: { trailing: '<span>Copy</span>' } })
+
+    expect(wrapper.find('[data-row-chevron]').exists()).toBe(false)
   })
 
   test('dims a muted row', () => {

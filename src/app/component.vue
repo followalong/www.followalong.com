@@ -19,24 +19,26 @@
         <button
           type="button"
           aria-label="Open search"
-          class="h-slot w-slot rounded-full bg-white/10 flex items-center justify-center text-chrome-icon"
+          class="h-touch w-touch -mr-2 flex items-center justify-end text-chrome-icon"
           @click="searching = true"
         >
-          <svg
-            class="h-4 w-4"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <circle
-              cx="9"
-              cy="9"
-              r="6"
-            />
-            <path d="M14 14l4 4" />
-          </svg>
+          <span class="h-slot w-slot rounded-full bg-white/10 flex items-center justify-center">
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <circle
+                cx="9"
+                cy="9"
+                r="6"
+              />
+              <path d="M14 14l4 4" />
+            </svg>
+          </span>
         </button>
       </template>
     </AppBar>

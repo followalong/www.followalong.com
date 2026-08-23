@@ -4,7 +4,7 @@
     :aria-label="label"
     :aria-current="active ? 'page' : null"
     :class="`min-h-touch flex flex-col items-center justify-center gap-1 rounded-nav px-3.5 py-1.5 ${
-      on === 'chrome' && active ? 'bg-accent/[0.14]' : ''
+      on === 'chrome' && active ? 'bg-chrome-deep' : ''
     }`"
   >
     <svg
@@ -34,7 +34,7 @@ const ICONS = {
 // The same item sits on the teal bar (tablet) and on white (mobile tabs);
 // only what it must contrast against changes.
 const ICON_REST = { chrome: 'text-chrome-dim', surface: 'text-inactive' }
-const LABEL_REST = { chrome: 'text-chrome-muted font-medium', surface: 'text-ink-subtle font-medium' }
+const LABEL_REST = { chrome: 'text-white/90 font-medium', surface: 'text-ink-subtle font-medium' }
 const LABEL_ACTIVE = { chrome: 'text-white font-semibold', surface: 'text-primary font-semibold' }
 
 export default {

@@ -2,14 +2,20 @@
   <button
     type="button"
     :aria-pressed="`${selected}`"
-    :class="`rounded-pill px-3.5 py-1.5 text-chip font-semibold border ${
-      selected
-        ? 'bg-primary border-primary text-white'
-        : 'border-hairline-outline text-ink-secondary'
-    }`"
+    class="min-h-touch inline-flex items-center flex-none"
     @click="$emit('select')"
   >
-    <slot />
+    <!-- The pill is the size the design draws; the button around it is the
+         size a thumb needs. -->
+    <span
+      :class="`rounded-pill px-3.5 py-1.5 text-chip font-semibold border whitespace-nowrap ${
+        selected
+          ? 'bg-primary border-primary text-white'
+          : 'border-hairline-outline text-ink-secondary'
+      }`"
+    >
+      <slot />
+    </span>
   </button>
 </template>
 

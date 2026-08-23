@@ -139,6 +139,8 @@ export default {
     // The add-on hands back markup, and often the whole entry. The card wants
     // two sentences of plain text, so take them here rather than render a wall.
     summary () {
+      if (this.media === 'video') return ''
+
       return twoSentences(this.addonSummary || this.content)
     },
 

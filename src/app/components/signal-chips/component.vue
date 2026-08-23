@@ -2,7 +2,7 @@
   <div class="flex gap-2 items-center px-4 py-3 border-b border-hairline md:px-6">
     <!-- The chips scroll; anything in #end stays put, because the action there
          is the one you reach for when the list feels long. -->
-    <div class="flex gap-2 flex-1 min-w-0 overflow-x-auto">
+    <div class="flex gap-2 flex-1 min-w-0 overflow-x-auto pr-2">
       <FilterChip
         v-for="signal in app.queries.signalsForIdentity(identity)"
         :key="`chip-${signal.id}`"
@@ -20,7 +20,11 @@
       </FilterChip>
     </div>
 
-    <slot name="end" />
+    <!-- Divided because these are different kinds of control: the chips
+         narrow what you see, the action changes what you have. -->
+    <div class="flex-none flex items-center pl-3 border-l border-hairline">
+      <slot name="end" />
+    </div>
   </div>
 </template>
 

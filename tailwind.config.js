@@ -6,12 +6,14 @@ module.exports = {
     extend: {
       colors: {
         // Bars and rails. The light blue the .net site puts behind its top bar.
+        // Deep enough that white text on it clears 4.5:1. The .net blue
+        // (#1b8cd8) only reached 3.63:1, which the page title cannot afford.
         chrome: {
-          DEFAULT: '#1b8cd8',
+          DEFAULT: '#187bbe',
           deep: '#0f6ba8',
           icon: '#ffffff',
-          muted: '#d3ecfb',
-          dim: '#8ec6ec'
+          muted: '#eaf6ff',
+          dim: '#c2e2f7'
         },
         // Darker sibling of the bar blue: actions and links sit on white, where
         // #1b8cd8 would only reach 3.4:1 against it.
@@ -22,7 +24,8 @@ module.exports = {
         // Active nav, unread, progress.
         accent: {
           DEFAULT: '#f5b301',
-          ink: '#b0862a'
+          tint: '#fdf0d1',
+          ink: '#896921'
         },
         page: '#f7f5f1',
         surface: {
@@ -36,8 +39,8 @@ module.exports = {
           soft: '#2c3a41',
           body: '#3d4b52',
           secondary: '#5b6b73',
-          muted: '#7a848b',
-          subtle: '#8a9299',
+          muted: '#6f787e',
+          subtle: '#70767c',
           faint: '#b0aca2'
         },
         hairline: {
@@ -47,7 +50,7 @@ module.exports = {
           outline: '#d5cfc3'
         },
         inactive: {
-          DEFAULT: '#c9c4ba',
+          DEFAULT: '#8b857b',
           track: '#d9d4ca'
         },
         following: {

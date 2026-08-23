@@ -2,6 +2,7 @@
   <Sheet
     :open="open"
     :title="title"
+    narrow
     @close="$emit('close')"
   >
     <p class="text-meta text-ink-muted -mt-1 mb-3">

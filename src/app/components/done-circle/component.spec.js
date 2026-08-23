@@ -6,8 +6,8 @@ describe('DoneCircle', () => {
   test('is a 28px check circle', () => {
     const el = mount(DoneCircle).get('button')
 
-    expect(el.classes()).toContain('h-7')
-    expect(el.classes()).toContain('w-7')
+    expect(el.classes()).toContain('h-touch')
+    expect(el.classes()).toContain('w-touch')
     expect(el.get('svg').classes()).toContain('h-icon')
     expect(el.get('svg').attributes('viewBox')).toEqual('0 0 20 20')
   })

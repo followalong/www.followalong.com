@@ -30,12 +30,12 @@ describe('NavItem', () => {
   })
 
   test('adds a pill ground only on the chrome bar', () => {
-    expect(item({ active: true, on: 'chrome' }).get('a').classes()).toContain('bg-accent/[0.14]')
-    expect(item({ active: true, on: 'surface' }).get('a').classes()).not.toContain('bg-accent/[0.14]')
+    expect(item({ active: true, on: 'chrome' }).get('a').classes()).toContain('bg-chrome-deep')
+    expect(item({ active: true, on: 'surface' }).get('a').classes()).not.toContain('bg-chrome-deep')
   })
 
   test('labels against the ground it sits on', () => {
-    expect(item({ on: 'chrome' }).get('[data-nav-label]').classes()).toContain('text-chrome-muted')
+    expect(item({ on: 'chrome' }).get('[data-nav-label]').classes()).toContain('text-white/90')
     expect(item({ on: 'surface' }).get('[data-nav-label]').classes()).toContain('text-ink-subtle')
     expect(item({ on: 'surface', active: true }).get('[data-nav-label]').classes()).toContain('text-primary')
   })

@@ -8,19 +8,19 @@ const chip = (props) => {
 
 describe('FilterChip', () => {
   test('is an outlined pill when unselected', () => {
-    const el = chip().get('button')
+    const el = chip().get('span')
 
     expect(el.classes()).toContain('rounded-pill')
     expect(el.classes()).toContain('border-hairline-outline')
-    expect(el.attributes('aria-pressed')).toEqual('false')
+    expect(chip().get('button').attributes('aria-pressed')).toEqual('false')
   })
 
   test('fills with teal when selected', () => {
-    const el = chip({ selected: true }).get('button')
+    const el = chip({ selected: true }).get('span')
 
     expect(el.classes()).toContain('bg-primary')
     expect(el.classes()).toContain('text-white')
-    expect(el.attributes('aria-pressed')).toEqual('true')
+    expect(chip({ selected: true }).get('button').attributes('aria-pressed')).toEqual('true')
   })
 
   test('emits select when pressed', async () => {

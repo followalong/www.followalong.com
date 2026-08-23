@@ -1,5 +1,5 @@
 <template>
-  <article :class="`bg-white border-y md:border border-hairline rounded-none md:rounded-card overflow-hidden ${done ? 'opacity-70' : ''}`">
+  <article :class="`bg-white border-b md:border border-hairline rounded-none md:rounded-card overflow-hidden ${done ? 'opacity-70' : ''}`">
     <slot name="lead">
       <button
         v-if="media === 'video'"
@@ -30,7 +30,7 @@
             :is="readable ? 'button' : 'div'"
             :type="readable ? 'button' : undefined"
             :aria-label="readable && subject ? `Toggle entry content ${subject}` : undefined"
-            class="block w-full text-left"
+            class="block w-full text-left py-1 -my-1"
             @click="readable && $emit('read')"
           >
             <h2
@@ -72,7 +72,7 @@
         <span
           v-if="summaryLabel"
           data-summary-badge
-          class="align-middle ml-1 inline-block rounded-pill bg-accent/20 px-2 py-0.5 text-micro font-bold uppercase tracking-wider text-accent-ink whitespace-nowrap"
+          class="align-middle ml-1 inline-block rounded-pill bg-accent-tint px-2 py-0.5 text-micro font-bold uppercase tracking-wider text-accent-ink whitespace-nowrap"
         >{{ summaryLabel }}</span>
       </component>
 
