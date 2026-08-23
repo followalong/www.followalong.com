@@ -1,6 +1,9 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
+import tailwind from './tailwind.config.js'
+
+const CHROME = tailwind.theme.extend.colors.chrome.DEFAULT
 
 export default defineConfig({
   plugins: [
@@ -12,9 +15,9 @@ export default defineConfig({
         name: 'Follow Along',
         short_name: 'Follow Along',
         description: 'Follow the people and communities you care about.',
-        // Matches the icon background, so the splash and the icon agree.
-        theme_color: '#005B7C',
-        background_color: '#005B7C',
+        // The bar's colour, so the browser chrome and the app agree.
+        theme_color: CHROME,
+        background_color: CHROME,
         display: 'standalone',
         start_url: '/',
         scope: '/',

@@ -37,22 +37,20 @@
         </div>
       </div>
 
-      <div
-        data-pip-frame
-        class="relative aspect-video bg-ink"
-      >
-        <slot />
-
+      <!-- Controls sit above the picture rather than on top of it: a 310px
+           window has no room to spare, and overlaid buttons cover the thing
+           you are trying to watch. -->
+      <div class="bg-ink flex items-center gap-1 px-1.5 py-1">
         <button
           data-pip-menu
           type="button"
           :aria-expanded="`${showHistory}`"
           aria-label="Playback history"
-          class="absolute top-2 left-2 h-7 w-7 rounded-full bg-black/45 flex items-center justify-center text-accent"
+          class="h-8 w-8 flex-none flex items-center justify-center text-accent"
           @click="showHistory = !showHistory"
         >
           <svg
-            class="h-3 w-3"
+            class="h-3.5 w-3.5"
             viewBox="0 0 12 12"
             fill="none"
             stroke="currentColor"
@@ -65,20 +63,10 @@
         </button>
 
         <button
-          data-pip-close
-          type="button"
-          aria-label="Close player"
-          class="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/45 text-white text-field"
-          @click="$emit('close')"
-        >
-          ✕
-        </button>
-
-        <button
           data-pip-pause
           type="button"
           aria-label="Pause"
-          class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-black/45 flex items-center justify-center text-white"
+          class="h-8 w-8 flex-none flex items-center justify-center text-white"
           @click="$emit('pause')"
         >
           <svg
@@ -90,6 +78,27 @@
             <path d="M4.5 2.5h2.5v11H4.5zM9 2.5h2.5v11H9z" />
           </svg>
         </button>
+
+        <span class="flex-1 min-w-0 truncate text-tiny text-chrome-muted px-1">
+          {{ title }}
+        </span>
+
+        <button
+          data-pip-close
+          type="button"
+          aria-label="Close player"
+          class="h-8 w-8 flex-none flex items-center justify-center text-white text-field"
+          @click="$emit('close')"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div
+        data-pip-frame
+        class="relative aspect-video bg-ink"
+      >
+        <slot />
 
         <span class="absolute inset-x-0 bottom-0 h-0.75 bg-white/25">
           <span

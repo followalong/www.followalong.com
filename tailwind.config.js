@@ -93,7 +93,7 @@ module.exports = {
       },
       maxWidth: {
         // The whole app, at every size. There is no wider layout to fall into.
-        app: '480px',
+        app: '640px',
         read: '470px'
       },
       maxHeight: {
