@@ -57,7 +57,8 @@ class EventStore {
 
   findAllEvents () {
     return this._events
-      .sort(EventStore.SORT_BY_DATE)
+      .slice(0)
+      .sort(EventStore.SORT_BY_TIME)
   }
 
   findAll (collectionName) {
@@ -81,13 +82,20 @@ class EventStore {
   }
 
   restore () {
+    const events = []
+
     return this._db
       .iterate((value, key) => {
         const event = EventStoreEvent.from(key, value)
 
         if (event !== null) {
-          this._runEvent(event)
+          events.push(event)
         }
+      })
+      .then(() => {
+        events
+          .sort(EventStore.SORT_BY_TIME)
+          .forEach((event) => this._runEvent(event))
       })
   }
 
@@ -138,7 +146,6 @@ EventStore.RUNNERS = {
     }
 
     existing.updatedAt = event.time
-    existing.data = existing.data || {}
 
     for (const key in event.data) {
       existing[key] = event.data[key]
@@ -149,14 +156,21 @@ EventStore.RUNNERS = {
     const collection = store[event.collection]
     const existing = collection.find((item) => item.id === event.objectId)
 
+    if (!existing) {
+      return console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+    }
+
     existing._deleted = true
+    existing.deletedAt = event.time
   }
 }
 
-EventStore.SORT_BY_DATE = (a, b) => {
-  if (a.date < b.date) return -1
-  if (a.date > b.date) return 1
-  return 0
+EventStore.SORT_BY_TIME = (a, b) => {
+  return (a.time || 0) - (b.time || 0)
+}
+
+EventStore.SORT_BY_CREATED_AT = (a, b) => {
+  return (a.createdAt || 0) - (b.createdAt || 0)
 }
 
 export default EventStore

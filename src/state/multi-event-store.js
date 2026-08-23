@@ -16,9 +16,11 @@ class MultipleEventStore extends EventStore {
       }
     })
 
-    for (const key in runners) {
-      const collectionName = key.split('.')[0]
+    const collectionNames = new Set()
 
+    this.eachCollectionName((collectionName) => collectionNames.add(collectionName))
+
+    for (const collectionName of collectionNames) {
       Object.defineProperty(this, collectionName, {
         get: () => {
           return this.findAll(undefined, collectionName)
@@ -98,7 +100,7 @@ class MultipleEventStore extends EventStore {
 
     return dbs.reduce((events, db) => {
       return events.concat(db.findAllEvents.apply(db, args))
-    }, []).sort(EventStore.SORT_BY_DATE)
+    }, []).sort(EventStore.SORT_BY_TIME)
   }
 
   findAll (dbId, ...args) {
@@ -106,7 +108,7 @@ class MultipleEventStore extends EventStore {
 
     return dbs.reduce((collection, db) => {
       return collection.concat(db.findAll.apply(db, args))
-    }, []).sort(EventStore.SORT_BY_DATE)
+    }, []).sort(EventStore.SORT_BY_CREATED_AT)
   }
 
   findAllWithDeleted (dbId, ...args) {
@@ -114,15 +116,15 @@ class MultipleEventStore extends EventStore {
 
     return dbs.reduce((collection, db) => {
       return collection.concat(db.findAllWithDeleted.apply(db, args))
-    }, []).sort(EventStore.SORT_BY_DATE)
+    }, []).sort(EventStore.SORT_BY_CREATED_AT)
   }
 
   findById (dbId, ...args) {
     const dbs = this._findDBs(dbId ? [dbId] : undefined)
 
-    return dbs.reduce((collection, db) => {
-      return collection.concat([db.findById.apply(db, args)])
-    }, []).sort(EventStore.SORT_BY_DATE)[0]
+    return dbs
+      .map((db) => db.findById.apply(db, args))
+      .find((item) => item)
   }
 
   restore (...args) {
@@ -139,17 +141,6 @@ class MultipleEventStore extends EventStore {
 
         return Promise.all(promises)
       })
-  }
-
-  removeEvent (dbId, event) {
-    const dbs = this._findDBs(dbId ? [dbId] : undefined)
-    const promises = []
-
-    for (var i = 0; i < dbs.length; i++) {
-      promises.push(dbs[i].removeEvent(event))
-    }
-
-    return Promise.all(promises)
   }
 
   _initDB (dbId) {
