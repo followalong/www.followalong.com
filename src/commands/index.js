@@ -282,8 +282,10 @@ class Commands {
   // The keychain has always known all three strategies; nothing until now
   // let anyone pick between them.
   changeEncryptionForIdentity (identity, strategy) {
-    return this.keychain.remove(identity.id)
-      .then(() => this.keychain.add(strategy, identity.id))
+    // Not remove-then-add: every add path overwrites both store and memory,
+    // and removing first meant a cancelled password prompt left the identity
+    // with no keychain entry at all.
+    return this.keychain.add(strategy, identity.id)
       .then(() => this.syncIdentity(identity))
   }
 

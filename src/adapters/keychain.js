@@ -105,11 +105,13 @@ class KeychainAdapter {
               this._saveKeyInMemory(id, key)
               resolve(key)
             }).catch(reject)
-          } else if (typeof key !== 'undefined') {
+          } else if (typeof key === 'string') {
             this._saveKeyInMemory(id, key)
             return resolve(key)
           }
 
+          // localForage answers null for a missing entry, and typeof null is
+          // 'object' — which used to pass for a key and sync in the clear.
           reject(new Error('No key.'))
         })
         .catch(reject)

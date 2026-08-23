@@ -44,6 +44,38 @@ describe('Change how an identity is encrypted', () => {
     })
   })
 
+  describe('Cancelling the password prompt', () => {
+    beforeEach(async () => {
+      await app.click('[aria-label="Change encryption"]')
+      await app.click('[aria-label="Encrypt with ask"]')
+
+      prompt.mockReturnValue(null)
+
+      await app.click('[aria-label="Change encryption"]')
+      await app.click('[aria-label="Encrypt with store"]')
+    })
+
+    story('leaves the previous choice standing', async () => {
+      const strategy = await app.vm.commands.keychain.getStrategy(app.vm.identity.id)
+
+      expect(strategy).toEqual('ask')
+    })
+
+    story('does not quietly drop to syncing in the clear', async () => {
+      const key = await app.vm.commands.keychain.getKey(app.vm.identity.id)
+
+      expect(key).toEqual('hunter2')
+    })
+  })
+
+  describe('An identity with no keychain entry at all', () => {
+    story('refuses to hand back a key', async () => {
+      await app.vm.commands.keychain.remove(app.vm.identity.id)
+
+      await expect(app.vm.commands.keychain.getKey(app.vm.identity.id)).rejects.toThrow('No key')
+    })
+  })
+
   describe('Choosing to store the password', () => {
     beforeEach(async () => {
       await app.click('[aria-label="Change encryption"]')
