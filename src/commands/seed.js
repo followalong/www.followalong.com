@@ -47,30 +47,6 @@ const DEFAULT_ADDONS = [
   { type: 'FollowAlongFree' }
 ]
 
-const SAVED_SIGNAL = {
-  title: 'Saved',
-  description: 'Entries you set aside',
-  permalink: 'saved',
-  order: 5,
-  icon: `
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      class="h-5 w-5 flex-shrink-0"
-    >
-      <path d="M5 3.5A1.5 1.5 0 016.5 2h7A1.5 1.5 0 0115 3.5v13.2a.5.5 0 01-.77.42L10 14.4l-4.23 2.72a.5.5 0 01-.77-.42V3.5z" />
-    </svg>
-  `,
-  filter: `
-    (queries) => {
-      return (entry) => {
-        return !!entry.savedAt
-      }
-    }
-  `.trim()
-}
-
 const DEFAULT_SIGNALS = [
   {
     title: 'Home',
@@ -180,10 +156,47 @@ const DEFAULT_SIGNALS = [
         }
       }
     `.trim()
+  },
+  {
+    title: 'Saved',
+    description: 'Entries you kept for later',
+    permalink: 'saved',
+    order: 5,
+    icon: `
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        class="h-5 w-5 flex-shrink-0 text-gray-300 mr-3"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"
+          clip-rule="evenodd"
+        />
+      </svg>
+    `,
+    filter: `
+      (queries) => {
+        return (entry) => {
+          return queries.isEntrySaved(entry)
+        }
+      }
+    `.trim(),
+    sort: `
+      (queries) => {
+        return (a, b) => {
+          if (a.savedAt < b.savedAt) return 1
+          if (a.savedAt > b.savedAt) return -1
+          return 0
+        }
+      }
+    `.trim()
   }
 ]
 
-DEFAULT_SIGNALS.push(SAVED_SIGNAL)
+// The one the lazy migration hands to an identity that predates saving.
+const SAVED_SIGNAL = DEFAULT_SIGNALS.find((signal) => signal.permalink === 'saved')
 
 export {
   CHANGELOG_URL,

@@ -10,8 +10,23 @@ class EventStore {
     this._runners = runners
     this._version = version
 
+    // id -> object, per collection. Folding a log is O(events x objects)
+    // without it, and every lookup rescans the collection.
+    this._byId = {}
+
+    // Bumped on every applied event so readers can cache derived work and
+    // know when to throw it away.
+    this.revision = 0
+
+    // Bumped whenever the log is re-folded, which replaces every projection
+    // object. Readers holding references to them have to start over, and the
+    // collection length alone cannot tell them: folding an event that only
+    // changes an existing object leaves the count exactly as it was.
+    this.generation = 0
+
     this.eachCollectionName((collectionName) => {
       this[collectionName] = this[collectionName] || []
+      this._byId[collectionName] = this._byId[collectionName] || new Map()
     })
   }
 
@@ -85,16 +100,27 @@ class EventStore {
     return this[collectionName]
   }
 
+  // The live array, append-ordered and not copied. Readers that maintain their
+  // own indexes use it to see only what is new since they last looked.
+  rawCollection (collectionName) {
+    return this[collectionName] || []
+  }
+
   findById (collectionName, id) {
-    return this
-      .findAll(collectionName)
-      .find((item) => item.id === id)
+    const item = this.findByIdWithDeleted(collectionName, id)
+
+    return item && !item._deleted ? item : undefined
   }
 
   findByIdWithDeleted (collectionName, id) {
-    return this
-      .findAllWithDeleted(collectionName)
-      .find((item) => item.id === id)
+    const index = this._byId[collectionName]
+
+    return index ? index.get(id) : undefined
+  }
+
+  index (collectionName, item) {
+    this._byId[collectionName] = this._byId[collectionName] || new Map()
+    this._byId[collectionName].set(item.id, item)
   }
 
   restore () {
@@ -123,8 +149,11 @@ class EventStore {
   }
 
   _resetCollections () {
+    this.generation++
+
     this.eachCollectionName((collectionName) => {
       this[collectionName].splice(0)
+      this._byId[collectionName] = new Map()
     })
   }
 
@@ -146,19 +175,32 @@ class EventStore {
     runner(this, event)
 
     this._events.push(event)
+    this.revision++
   }
 }
 
 EventStore.RUNNERS = {
   CREATE (store, event) {
-    const collection = store[event.collection]
+    const existing = store.findByIdWithDeleted(event.collection, event.objectId)
 
-    collection.push(Object.assign({}, event.data, { id: event.objectId, createdAt: event.time, updatedAt: (event.data || {}).updatedAt || 0, _collection: event.collection }))
+    // UPDATE falls back to here for an object it has not seen, so by the time
+    // the real create replays there may already be one under this id. Fold
+    // into it: pushing again would leave two objects sharing an id, one of
+    // them indexed and the other a ghost that findAll still returns.
+    if (existing) {
+      Object.assign(existing, event.data, { id: event.objectId, createdAt: event.time, _collection: event.collection })
+
+      return
+    }
+
+    const item = Object.assign({}, event.data, { id: event.objectId, createdAt: event.time, updatedAt: (event.data || {}).updatedAt || 0, _collection: event.collection })
+
+    store[event.collection].push(item)
+    store.index(event.collection, item)
   },
 
   UPDATE (store, event) {
-    const collection = store[event.collection]
-    const existing = collection.find((item) => item.id === event.objectId)
+    const existing = store.findByIdWithDeleted(event.collection, event.objectId)
 
     if (!existing) {
       return EventStore.RUNNERS.CREATE(store, event)
@@ -172,8 +214,7 @@ EventStore.RUNNERS = {
   },
 
   DELETE (store, event) {
-    const collection = store[event.collection]
-    const existing = collection.find((item) => item.id === event.objectId)
+    const existing = store.findByIdWithDeleted(event.collection, event.objectId)
 
     if (!existing) {
       return console.warn(`Object not found for event: ${JSON.stringify(event)}`)

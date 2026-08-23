@@ -32,6 +32,11 @@ const build = () => {
 // which is what the notes below are for.
 const addFallback = () => {
   fs.copyFileSync(path.join(target, 'index.html'), path.join(target, '404.html'))
+
+  // Pages still runs the legacy Jekyll builder over this repo. Without this it
+  // tries to process the bundle output and the build fails — and a failed
+  // build takes the live site down rather than leaving the last one up.
+  fs.writeFileSync(path.join(target, '.nojekyll'), '')
 }
 
 const verify = () => {
@@ -65,6 +70,10 @@ const verify = () => {
 
   if (!fs.existsSync(path.join(target, '404.html'))) {
     problems.push('404.html is missing — deep links would not resolve')
+  }
+
+  if (!fs.existsSync(path.join(target, '.nojekyll'))) {
+    problems.push('.nojekyll is missing — Pages would fail the build and take the site down')
   }
 
   return problems

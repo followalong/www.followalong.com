@@ -5,7 +5,7 @@ import VERSION from './version.js'
 // State that changes over time is recorded as a timestamp rather than a
 // boolean, so every such transition is the same runner with a different field.
 const TIMESTAMP = (attr) => (store, event) => {
-  const existing = store[event.collection].find((item) => item.id === event.objectId)
+  const existing = store.findByIdWithDeleted(event.collection, event.objectId)
 
   if (!existing) {
     return console.warn(`Object not found for event: ${JSON.stringify(event)}`)
@@ -15,7 +15,7 @@ const TIMESTAMP = (attr) => (store, event) => {
 }
 
 const UNTIMESTAMP = (attr) => (store, event) => {
-  const existing = store[event.collection].find((item) => item.id === event.objectId)
+  const existing = store.findByIdWithDeleted(event.collection, event.objectId)
 
   if (!existing) {
     return console.warn(`Object not found for event: ${JSON.stringify(event)}`)
@@ -88,9 +88,9 @@ export default {
   'entries.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because feedId is outside of data; OK because feedId is immutable for now
   'entries.update': EventStore.RUNNERS.UPDATE,
   'entries.delete': EventStore.RUNNERS.DELETE,
-  'entries.markRead': TIMESTAMP('readAt'),
   'entries.save': TIMESTAMP('savedAt'),
   'entries.unsave': UNTIMESTAMP('savedAt'),
+  'entries.markRead': TIMESTAMP('readAt'),
   'entries.markUnread': UNTIMESTAMP('readAt'),
   // Action names used before v2.3. Events already on disk still carry them.
   'entries.read': TIMESTAMP('readAt'),
