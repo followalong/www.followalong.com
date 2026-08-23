@@ -38,7 +38,7 @@ describe('Sync to S3', () => {
 
     return mountApp({
       awsS3: () => Promise.resolve({ putObject, getObject }),
-      state: seed(),
+      state: seed(options.extra),
       ...options
     })
   }
@@ -108,6 +108,17 @@ describe('Sync to S3', () => {
       const titles = app.findAll('[aria-label="Entry title"]').map((el) => el.text())
 
       expect(titles).toContain('From the bucket')
+    })
+
+    test('does not let an older remote event undo a newer local one', async () => {
+      // The entry was marked read locally at t=8. The bucket still holds a
+      // markUnread from t=5, which must not win just by arriving later.
+      app = await mount({
+        extra: '8/entries/6363/markRead/v2.3 {}',
+        remote: '5/entries/6363/markUnread/v2.3 {}'
+      })
+
+      expect(app.findAll('[aria-label="Mark as unread 6363"]').length).toEqual(1)
     })
 
     test('does not duplicate events it already has', async () => {

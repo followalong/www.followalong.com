@@ -42,6 +42,8 @@ class EventStore {
       .map((line) => line.trim())
       .filter((line) => line.trim().length > 0)
 
+    const imported = []
+
     lines.forEach((line) => {
       const splat = line.split(' ')
       const event = EventStoreEvent.from(splat.shift(), splat.join(' '))
@@ -50,9 +52,23 @@ class EventStore {
         return
       }
 
-      this._runEvent(event)
+      imported.push(event)
       this._db.setItem(event.key, event.toLocal())
     })
+
+    if (!imported.length) {
+      return
+    }
+
+    // An imported event can predate events already folded in, so replaying it
+    // on top would let a stale change win just by arriving late. Fold the whole
+    // log again in time order instead.
+    const events = this._events.concat(imported).sort(EventStore.SORT_BY_TIME)
+
+    this._resetCollections()
+    this._events.splice(0)
+
+    events.forEach((event) => this._runEvent(event))
   }
 
   findAllEvents () {
@@ -100,13 +116,16 @@ class EventStore {
   }
 
   reset () {
-    this.eachCollectionName((collectionName) => {
-      this[collectionName].splice(0)
-    })
-
+    this._resetCollections()
     this._events.splice(0)
 
     return this._db.clear()
+  }
+
+  _resetCollections () {
+    this.eachCollectionName((collectionName) => {
+      this[collectionName].splice(0)
+    })
   }
 
   teardown () {
