@@ -7,26 +7,44 @@ export default defineConfig({
     vue(),
     VitePWA({
       registerType: 'autoUpdate',
-      icons: [
-        {
-          src: './public/img/icons/apple-touch-icon.png',
-          sizes: '180x180',
-          type: 'image/png'
-        },
-        {
-          src: './public/img/icons/favicon.ico',
-          sizes: '48x48',
-          type: 'image/vnd.microsoft.icon'
-        },
-        {
-          src: './src/assets/imgs/logo-white.svg',
-          type: 'image/svg+xml'
-        },
-        {
-          src: './src/assets/imgs/logo-mobile.svg',
-          type: 'image/svg+xml'
-        }
-      ],
+      includeAssets: ['img/icons/**/*'],
+      manifest: {
+        name: 'Follow Along',
+        short_name: 'Follow Along',
+        description: 'Follow the people and communities you care about.',
+        // Matches the icon background, so the splash and the icon agree.
+        theme_color: '#005B7C',
+        background_color: '#005B7C',
+        display: 'standalone',
+        start_url: '/',
+        scope: '/',
+        lang: 'en',
+        icons: [
+          {
+            src: '/img/icons/android-chrome-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/img/icons/android-chrome-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            // The mark sits inside the safe circle and the background is
+            // full-bleed, so the same art survives being masked.
+            src: '/img/icons/android-chrome-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
+          },
+          {
+            src: '/img/icons/apple-touch-icon.png',
+            sizes: '180x180',
+            type: 'image/png'
+          }
+        ]
+      },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,jpeg,jpg,png,svg}']
       }
