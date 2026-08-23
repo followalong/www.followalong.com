@@ -9,6 +9,44 @@
     <PageCard>
       <template #title>
         <p class="font-medium text-gray-900">
+          Import from followalong.net
+        </p>
+      </template>
+      <template
+        #content
+      >
+        <div class="prose">
+          <p>
+            On the old app, open Settings and choose <em>Download Identity</em>,
+            then pick that file here. Your feeds and saved entries are merged in;
+            anything already here is left alone, so importing twice is safe.
+          </p>
+          <div class="mt-5">
+            <input
+              id="import-legacy"
+              ref="legacyFile"
+              type="file"
+              accept="application/json,.json"
+              aria-label="Import identity file"
+              class="block w-full text-sm text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-blue-100 file:px-4 file:py-2 file:font-medium file:text-blue-700 hover:file:bg-blue-200"
+              @change="importLegacy"
+            >
+          </div>
+          <p
+            v-if="importResult"
+            aria-label="Import result"
+            class="mt-4 text-sm"
+            :class="importFailed ? 'text-red-700' : 'text-green-700'"
+          >
+            {{ importResult }}
+          </p>
+        </div>
+      </template>
+    </PageCard>
+
+    <PageCard>
+      <template #title>
+        <p class="font-medium text-gray-900">
           Roll up this identity
         </p>
       </template>
@@ -75,7 +113,38 @@ export default {
 
   props: ['app', 'identity'],
 
+  data () {
+    return {
+      importResult: null,
+      importFailed: false
+    }
+  },
+
   methods: {
+    importLegacy (event) {
+      const file = event.target.files && event.target.files[0]
+
+      if (!file) return
+
+      this.importResult = 'Reading...'
+      this.importFailed = false
+
+      return this.app.queries.readJsonFile(file)
+        .then((data) => {
+          const report = this.app.commands.importLegacyIdentity(this.identity, data)
+
+          this.importFailed = false
+          this.importResult = `Imported ${report.feedsCreated} new feed${report.feedsCreated === 1 ? '' : 's'} ` +
+            `and ${report.entriesCreated} entr${report.entriesCreated === 1 ? 'y' : 'ies'}, ` +
+            `marked ${report.saved} saved. ` +
+            `${report.feedsReused} feed${report.feedsReused === 1 ? ' was' : 's were'} already here.`
+        })
+        .catch((e) => {
+          this.importFailed = true
+          this.importResult = e.message
+        })
+    },
+
     forgetIdentity () {
       this.app.confirm('Are you sure you want to remove this identity?')
         .then(() => this.app.commands.forgetIdentity(this.identity))

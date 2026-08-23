@@ -1,4 +1,5 @@
 import { encrypt, decrypt } from '../queries/crypt.js'
+import { safeId, num, identifiersForEntry, identifiersForItem, entryDataFor, isLegacyIdentity, VERSION } from './legacy-import.js'
 import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT_SIGNALS } from './seed.js'
 
 const MAX_OLD_ITEMS_PER_FEED = 15
@@ -42,8 +43,8 @@ class Commands {
     })
   }
 
-  track (identity, collectionName, objectId, action, data) {
-    const event = this.state.track(identity.id, collectionName, objectId, action, data)
+  track (identity, collectionName, objectId, action, data, time) {
+    const event = this.state.track(identity.id, collectionName, objectId, action, data, time, time ? VERSION : undefined)
 
     this.debouncedSyncIdentity(identity)
 
@@ -185,6 +186,107 @@ class Commands {
           this.addIdentity({})
         }
       })
+  }
+
+  // Takes a "Download Identity" file from the old followalong.net app, which
+  // holds every feed and the saved items. Reuses whatever is already here, so
+  // importing the same file twice is a no-op.
+  importLegacyIdentity (identity, data) {
+    if (!isLegacyIdentity(data)) {
+      throw new Error('That does not look like a Follow Along identity file.')
+    }
+
+    const base = num(data.exportedAt) || Date.now()
+    const report = { feedsCreated: 0, feedsReused: 0, feedsSkipped: 0, entriesCreated: 0, entriesExisting: 0, entriesSkipped: 0, saved: 0, read: 0 }
+    const feedIdByUrl = new Map()
+
+    this.queries.feedsForIdentity(identity).forEach((feed) => {
+      const url = this.queries.urlForFeed(feed)
+
+      if (url) feedIdByUrl.set(url, feed.id)
+    })
+
+    data.feeds.forEach((feed, index) => {
+      if (!feed.url) {
+        report.feedsSkipped++
+        return
+      }
+
+      if (feedIdByUrl.has(feed.url)) {
+        report.feedsReused++
+        return
+      }
+
+      const at = num(feed.updatedAt) || (base + index)
+      const objectId = safeId(feed.id)
+      const payload = { title: feed.name }
+
+      if (feed.image && feed.image.url) payload.image = { url: feed.image.url }
+
+      this.track(identity, 'feeds', objectId, 'create', { url: feed.url, data: payload }, at)
+      feedIdByUrl.set(feed.url, objectId)
+      report.feedsCreated++
+
+      if (feed.pausedAt) {
+        this.track(identity, 'feeds', objectId, 'pause', {}, Math.max(num(feed.pausedAt), at + 1))
+      }
+    })
+
+    const byIdentifier = new Map()
+
+    this.queries.entriesForIdentity(identity).forEach((entry) => {
+      identifiersForEntry(entry).forEach((key) => {
+        if (!byIdentifier.has(key)) byIdentifier.set(key, entry)
+      })
+    })
+
+    data.items.forEach((item, index) => {
+      const feedId = feedIdByUrl.get(item.feedUrl)
+
+      if (!feedId) {
+        report.entriesSkipped++
+        return
+      }
+
+      let entry = identifiersForItem(item).map((key) => byIdentifier.get(key)).find((e) => e)
+      let createdAt
+
+      if (entry) {
+        report.entriesExisting++
+        createdAt = entry.createdAt || 0
+      } else {
+        createdAt = num(item.updatedAt) || num(item.pubDate) || (base + index)
+
+        const objectId = safeId(item.id)
+
+        this.track(identity, 'entries', objectId, 'create', { feedId, data: entryDataFor(item) }, createdAt)
+        report.entriesCreated++
+
+        entry = this.queries.entryForIdentity(identity, objectId)
+
+        if (entry) {
+          identifiersForEntry(entry).forEach((key) => {
+            if (!byIdentifier.has(key)) byIdentifier.set(key, entry)
+          })
+        }
+      }
+
+      if (!entry) return
+
+      // State has to land after the entry exists, or a later replay applies it
+      // to nothing and it is silently lost.
+      if (item.readAt && !this.queries.isEntryRead(entry)) {
+        this.track(identity, 'entries', entry.id, 'markRead', {}, Math.max(num(item.readAt), createdAt + 1))
+        report.read++
+      }
+
+      if (item.savedAt && !this.queries.isEntrySaved(entry)) {
+        this.track(identity, 'entries', entry.id, 'save', {}, Math.max(num(item.savedAt), createdAt + 2))
+        report.saved++
+      }
+    })
+
+    return report
   }
 
   saveEntryForIdentity (identity, entry) {

@@ -656,6 +656,23 @@ class Queries {
     return labels
   }
 
+  readJsonFile (file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+
+      reader.onload = () => {
+        try {
+          resolve(JSON.parse(reader.result))
+        } catch (e) {
+          reject(new Error('That file is not valid JSON.'))
+        }
+      }
+
+      reader.onerror = () => reject(reader.error)
+      reader.readAsText(file)
+    })
+  }
+
   linkify (text) {
     return linkifyHtml(text, { target: '_blank' })
   }
