@@ -242,6 +242,42 @@ class Commands {
     return this.state.reset(identity.id)
   }
 
+  // The event log is the identity: replaying it anywhere rebuilds the whole
+  // thing, so a backup is just the log and nothing else.
+  exportIdentity (identity) {
+    return this.queries.eventsToFile(identity)
+  }
+
+  downloadIdentity (identity) {
+    return this.saveAs(this.exportIdentity(identity), `follow-along.${identity.id}.log`)
+  }
+
+  copyIdentityToClipboard (identity) {
+    return this.copyToClipboard(this.exportIdentity(identity))
+  }
+
+  importIdentity (raw) {
+    const data = `${raw || ''}`.trim()
+    const found = data.match(/\/identities\/([^/\s]+)\/create/)
+
+    if (!found) {
+      return Promise.reject(new Error('That does not look like a Follow Along backup.'))
+    }
+
+    const id = found[1]
+
+    if (this.queries.allIdentities().some((identity) => identity.id === id)) {
+      return Promise.reject(new Error('That identity is already on this device.'))
+    }
+
+    // Keep the original id: the log's own keys are written against it.
+    this.state.createDB(id, {})
+    this.keychain.addNone(id)
+
+    return this.state.importRaw(id, data)
+      .then(() => this.queries.allIdentities().find((identity) => identity.id === id))
+  }
+
   createProjectionForIdentity (identity) {
     return new Promise((resolve, reject) => {
       const data = {

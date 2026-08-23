@@ -160,6 +160,23 @@ export default {
       type: Function,
       default: (question) => window.prompt(question)
     },
+    saveAs: {
+      type: Function,
+      default: (contents, filename) => {
+        const url = URL.createObjectURL(new Blob([contents], { type: 'text/plain;charset=utf-8' }))
+        const link = document.createElement('a')
+
+        link.href = url
+        link.download = filename
+        link.click()
+
+        URL.revokeObjectURL(url)
+      }
+    },
+    copyToClipboard: {
+      type: Function,
+      default: (text) => navigator.clipboard.writeText(text)
+    },
     keychainName: {
       type: String,
       default: KeychainAdapter.DEFAULT_NAME
@@ -185,7 +202,9 @@ export default {
       queries,
       keychain,
       scrollTo: this.scrollTo,
-      noSleep: this.noSleep
+      noSleep: this.noSleep,
+      saveAs: this.saveAs,
+      copyToClipboard: this.copyToClipboard
     })
 
     return {
