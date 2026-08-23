@@ -76,6 +76,7 @@ export default {
   'entries.read': TIMESTAMP('readAt'),
   'entries.unread': UNTIMESTAMP('readAt'),
   'identities.create': EventStore.RUNNERS.CREATE,
+  'identities.update': EventStore.RUNNERS.UPDATE,
   'identities.delete': EventStore.RUNNERS.DELETE,
   'identities.rollup': ROLLUP,
   'signals.create': EventStore.RUNNERS.CREATE,

@@ -238,6 +238,10 @@ class Commands {
     }
   }
 
+  renameIdentity (identity, name) {
+    this.track(identity, 'identities', identity.id, 'update', { name })
+  }
+
   resetIdentity (identity) {
     return this.state.reset(identity.id)
   }

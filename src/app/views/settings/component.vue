@@ -6,6 +6,23 @@
 
     <div class="bg-white border border-hairline-strong rounded-xl overflow-hidden">
       <ListRow
+        title="Name"
+        :meta="app.queries.nameForIdentity(identity)"
+        action
+        aria-label="Rename identity"
+        @click="openRename"
+      />
+      <ListRow
+        title="Switch identity"
+        :meta="`${identities.length} on this device`"
+        action
+        aria-label="Switch identity"
+        @click="switchOpen = true"
+      />
+    </div>
+
+    <div class="bg-white border border-hairline-strong rounded-xl overflow-hidden">
+      <ListRow
         title="Add-ons"
         :meta="`${addonCount} installed`"
         to="/add-ons"
@@ -78,6 +95,67 @@
     </button>
 
     <Sheet
+      :open="renameOpen"
+      title="Name this identity"
+      @close="renameOpen = false"
+    >
+      <form
+        id="rename-identity"
+        aria-label="Save identity name"
+        @submit.prevent="renameIdentity"
+      >
+        <p class="text-body text-ink-secondary">
+          Only you ever see this. It tells your identities apart on this device.
+        </p>
+        <input
+          v-model="name"
+          aria-label="Identity name"
+          class="mt-3 block w-full rounded-field border border-hairline-strong bg-white px-3 py-2.5 text-body text-ink outline-none focus:border-primary"
+          placeholder="My Account"
+        >
+      </form>
+
+      <template #footer>
+        <Button
+          type="submit"
+          form="rename-identity"
+          class="flex-1"
+          @click="renameIdentity"
+        >
+          Save
+        </Button>
+      </template>
+    </Sheet>
+
+    <Sheet
+      :open="switchOpen"
+      title="Your identities"
+      @close="switchOpen = false"
+    >
+      <div class="border border-hairline-strong rounded-xl overflow-hidden">
+        <ListRow
+          v-for="option in identities"
+          :key="option.id"
+          :title="app.queries.nameForIdentity(option)"
+          :meta="option.id === identity.id ? 'in use' : ''"
+          action
+          :aria-label="`Switch to ${app.queries.nameForIdentity(option)}`"
+          @click="useIdentity(option)"
+        />
+      </div>
+
+      <template #footer>
+        <Button
+          class="flex-1"
+          aria-label="Add identity"
+          @click="addIdentity"
+        >
+          Add another identity
+        </Button>
+      </template>
+    </Sheet>
+
+    <Sheet
       :open="importOpen"
       title="Import an identity"
       @close="closeImport"
@@ -139,18 +217,52 @@ export default {
   data: () => ({
     CHANGELOG_PATH,
     importOpen: false,
+    renameOpen: false,
+    switchOpen: false,
+    name: '',
     backup: '',
     importError: '',
     copied: false
   }),
 
   computed: {
+    identities () {
+      return this.app.queries.allIdentities()
+    },
+
     addonCount () {
       return this.app.queries.addonsForIdentity(this.identity).length
     }
   },
 
   methods: {
+    openRename () {
+      this.name = this.app.queries.nameForIdentity(this.identity)
+      this.renameOpen = true
+    },
+
+    renameIdentity () {
+      const name = this.name.trim()
+
+      if (name) this.app.commands.renameIdentity(this.identity, name)
+
+      this.renameOpen = false
+    },
+
+    useIdentity (identity) {
+      this.switchOpen = false
+      this.app.setIdentity(identity)
+      this.$router.push('/')
+    },
+
+    addIdentity () {
+      this.app.commands.addIdentity({})
+
+      const identities = this.app.queries.allIdentities()
+
+      this.useIdentity(identities[identities.length - 1])
+    },
+
     copyIdentity () {
       return Promise.resolve(this.app.commands.copyIdentityToClipboard(this.identity))
         .then(() => { this.copied = true })

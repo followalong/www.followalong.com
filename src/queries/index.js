@@ -81,6 +81,10 @@ class Queries {
     return this.state.findAll(null, 'identities')
   }
 
+  nameForIdentity (identity) {
+    return (identity && identity.name) || 'My Account'
+  }
+
   entriesForIdentity (identity, maxOldItems = null) {
     let entries = this.state.findAll(identity.id, 'entries')
       .sort(SORT_BY_TIME_AND_READ(this))
