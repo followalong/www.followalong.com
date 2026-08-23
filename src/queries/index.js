@@ -5,7 +5,6 @@ import SORT_BY_ORDER from './sorters/sort-by-order.js'
 import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
 import SORT_BY_TIME_AND_READ from './sorters/sort-by-time-and-read.js'
 import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
-import SORT_BY_LATEST_READ from './sorters/sort-by-latest-read.js'
 import sanitizeContent from './presenters/sanitize-content.js'
 
 const VIDEO_TYPES = /\.(mp4)/
@@ -539,11 +538,10 @@ class Queries {
       })
   }
 
-  lastReadDateForFeed (identity, feed, date) {
-    const latestReadEntry = this.entriesForIdentity(identity)
-      .filter(SORT_BY_LATEST_READ(this.queries))[0]
-
-    return latestReadEntry ? latestReadEntry.createdAt : 0
+  lastReadDateForFeed (identity, feed) {
+    return this.entriesForFeed(identity, feed)
+      .filter((entry) => this.isEntryRead(entry))
+      .reduce((latest, entry) => Math.max(latest, this.dateForEntry(entry).getTime()), 0)
   }
 }
 

@@ -212,7 +212,7 @@ class Commands {
 
         this.upsertFeedForIdentity(identity, feed, data)
 
-        entries.forEach((e) => this.upsertEntryForIdentity(identity, feed, e, this.queries.lastReadDateForFeed(feed)))
+        entries.forEach((e) => this.upsertEntryForIdentity(identity, feed, e, this.queries.lastReadDateForFeed(identity, feed)))
       })
   }
 
