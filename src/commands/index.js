@@ -143,13 +143,13 @@ class Commands {
   fetchOutdatedFeeds (identity) {
     // TODO: We can use the outdated feeds once we have a "last fetched at" mechanism
     // const feeds = this.queries.findOutdatedFeedsForIdentity(identity)
-    const feeds = this.queries.unpausedFeedsForIdentity(identity)
+    const feeds = this.queries.feedsToFetchForIdentity(identity)
 
     return this._fetchFeedsInSeries(identity, feeds)
   }
 
   fetchFeedsForIdentity (identity) {
-    const feeds = this.queries.unpausedFeedsForIdentity(identity)
+    const feeds = this.queries.feedsToFetchForIdentity(identity)
 
     return this._fetchFeedsInSeries(identity, feeds)
   }
@@ -164,7 +164,11 @@ class Commands {
     feeds.forEach((feed) => {
       promise = promise.then(() => {
         return new Promise((resolve) => {
+          // .finally alone re-throws, so every failed fetch became an
+          // unhandled rejection and the poll cycle stopped at the first
+          // unreachable feed.
           this.fetchFeed(identity, feed)
+            .catch((e) => console.warn(`Could not fetch ${this.queries.urlForFeed(feed)}`, e))
             .finally(() => setTimeout(resolve, 0))
         })
       })

@@ -315,6 +315,18 @@ class Queries {
       .filter((feed) => !this.isFeedPaused(feed))
   }
 
+  // A feed with no url cannot be fetched. Asking anyway makes the proxy addon
+  // reject, and the rejection surfaces as an unhandled one on every poll.
+  feedsToFetchForIdentity (identity) {
+    return this.unpausedFeedsForIdentity(identity)
+      .filter((feed) => this.urlForFeed(feed))
+  }
+
+  feedsWithoutUrlForIdentity (identity) {
+    return this.feedsForIdentity(identity)
+      .filter((feed) => !this.urlForFeed(feed))
+  }
+
   lastUpdatedForFeed (feed) {
     return feed.updatedAt
   }
@@ -358,7 +370,9 @@ class Queries {
   }
 
   titleForFeed (feed) {
-    return getAttr(feed, 'title')
+    return getAttr(feed, 'title') ||
+      this.urlForFeed(feed) ||
+      'Untitled feed'
   }
 
   dateForEntry (entry) {
