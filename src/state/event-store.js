@@ -181,6 +181,18 @@ class EventStore {
 
 EventStore.RUNNERS = {
   CREATE (store, event) {
+    const existing = store.findByIdWithDeleted(event.collection, event.objectId)
+
+    // UPDATE falls back to here for an object it has not seen, so by the time
+    // the real create replays there may already be one under this id. Fold
+    // into it: pushing again would leave two objects sharing an id, one of
+    // them indexed and the other a ghost that findAll still returns.
+    if (existing) {
+      Object.assign(existing, event.data, { id: event.objectId, createdAt: event.time, _collection: event.collection })
+
+      return
+    }
+
     const item = Object.assign({}, event.data, { id: event.objectId, createdAt: event.time, updatedAt: (event.data || {}).updatedAt || 0, _collection: event.collection })
 
     store[event.collection].push(item)

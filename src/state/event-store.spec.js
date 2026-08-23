@@ -213,3 +213,39 @@ describe('EventStore indexing', () => {
     expect(store.revision).toBeGreaterThan(before)
   })
 })
+
+describe('EventStore.RUNNERS.CREATE with an id already present', () => {
+  let store
+
+  beforeEach(async () => {
+    store = new EventStore(`test-${Math.random()}`, 'v1', RUNNERS)
+    await store.reset()
+  })
+
+  // UPDATE falls back to CREATE for an object it has not seen. When the real
+  // create then replays, a blind push leaves two objects sharing one id: the
+  // indexed one and a ghost that findAll still returns.
+  test('does not leave two objects sharing one id', () => {
+    store.importRaw([
+      '9000/feeds/phantom/update/v1 {"title":"Arrived first"}',
+      '9100/feeds/phantom/create/v1 {"url":"https://real.example/rss","title":"Real"}'
+    ].join('\n'))
+
+    expect(store.findAll('feeds').length).toEqual(1)
+    expect(store.findAll('feeds').filter((f) => !f.url).length).toEqual(0)
+    expect(store.findById('feeds', 'phantom').url).toEqual('https://real.example/rss')
+  })
+
+  test('keeps what the update had already set', () => {
+    store.importRaw([
+      '9000/feeds/phantom/update/v1 {"title":"Arrived first"}',
+      '9100/feeds/phantom/create/v1 {"url":"https://real.example/rss"}'
+    ].join('\n'))
+
+    const feed = store.findById('feeds', 'phantom')
+
+    expect(feed.url).toEqual('https://real.example/rss')
+    expect(feed.title).toEqual('Arrived first')
+    expect(feed.createdAt).toEqual(9100)
+  })
+})
