@@ -108,18 +108,11 @@
         </template>
       </ListRow>
       <ListRow
-        title="Import an identity"
-        meta="from a backup or another device"
+        title="Restore from a backup"
+        meta="a file you downloaded from here"
         action
-        aria-label="Import identity"
-        @click="importOpen = true"
-      />
-      <ListRow
-        title="Import from followalong.net"
-        meta="the old app's identity file"
-        action
-        aria-label="Import legacy identity"
-        @click="legacyOpen = true"
+        aria-label="Restore backup"
+        @click="restoreOpen = true"
       />
       <ListRow
         title="Roll up this identity"
@@ -196,35 +189,6 @@
     </Sheet>
 
     <Sheet
-      :open="legacyOpen"
-      title="Import from followalong.net"
-      @close="legacyOpen = false"
-    >
-      <p class="text-body text-ink-secondary">
-        On the old app, open Settings and choose <em>Download Identity</em>,
-        then pick that file here. Your feeds and saved entries are merged in;
-        anything already here is left alone, so importing twice is safe.
-      </p>
-
-      <input
-        ref="legacyFile"
-        type="file"
-        accept="application/json,.json"
-        aria-label="Import identity file"
-        class="mt-4 block w-full text-body text-ink-secondary file:mr-4 file:rounded-lg file:border-0 file:bg-primary file:px-4 file:py-2.5 file:text-body file:font-semibold file:text-white"
-        @change="importLegacy"
-      >
-
-      <p
-        v-if="importResult"
-        aria-label="Import result"
-        :class="`mt-4 text-body ${importFailed ? 'text-danger' : 'text-following'}`"
-      >
-        {{ importResult }}
-      </p>
-    </Sheet>
-
-    <Sheet
       :open="renameOpen"
       title="Name this identity"
       @close="renameOpen = false"
@@ -286,44 +250,29 @@
     </Sheet>
 
     <Sheet
-      :open="importOpen"
-      title="Import an identity"
-      @close="closeImport"
+      :open="restoreOpen"
+      title="Restore from a backup"
+      @close="closeRestore"
     >
-      <form
-        id="import-identity"
-        aria-label="Import a backup"
-        @submit.prevent="importIdentity"
-      >
-        <p class="text-body text-ink-secondary">
-          Paste a backup exported from Follow Along. It is added alongside what
-          is already on this device — nothing here is replaced.
-        </p>
-        <textarea
-          v-model="backup"
-          aria-label="Identity backup"
-          rows="7"
-          class="mt-3 block w-full rounded-field border border-hairline-strong bg-white px-3 py-2.5 text-field font-mono text-ink outline-none focus:border-primary"
-          placeholder="0/identities/…"
-        />
-        <p
-          v-if="importError"
-          class="mt-2 text-body text-danger"
-        >
-          {{ importError }}
-        </p>
-      </form>
+      <p class="text-body text-ink-secondary">
+        Pick a backup file downloaded from this app. It is added alongside what
+        is already here — nothing is replaced.
+      </p>
 
-      <template #footer>
-        <Button
-          type="submit"
-          form="import-identity"
-          class="flex-1"
-          @click="importIdentity"
-        >
-          Import
-        </Button>
-      </template>
+      <input
+        type="file"
+        accept=".log,text/plain"
+        aria-label="Backup file"
+        class="mt-4 block w-full text-body text-ink-secondary file:mr-4 file:rounded-lg file:border-0 file:bg-primary file:px-4 file:py-2.5 file:text-body file:font-semibold file:text-white"
+        @change="restore"
+      >
+
+      <p
+        v-if="restoreError"
+        class="mt-3 text-body text-danger"
+      >
+        {{ restoreError }}
+      </p>
     </Sheet>
   </div>
 </template>
@@ -366,10 +315,8 @@ export default {
 
   data: () => ({
     CHANGELOG_PATH,
-    importOpen: false,
-    legacyOpen: false,
-    importResult: null,
-    importFailed: false,
+    restoreOpen: false,
+    restoreError: '',
     encryptionOpen: false,
     strategy: 'none',
     STRATEGY_LABELS,
@@ -379,8 +326,6 @@ export default {
     renameOpen: false,
     switchOpen: false,
     name: '',
-    backup: '',
-    importError: '',
     copied: false
   }),
 
@@ -424,30 +369,6 @@ export default {
   },
 
   methods: {
-    importLegacy (event) {
-      const file = event.target.files && event.target.files[0]
-
-      if (!file) return
-
-      this.importResult = 'Reading...'
-      this.importFailed = false
-
-      return this.app.queries.readJsonFile(file)
-        .then((data) => {
-          const report = this.app.commands.importLegacyIdentity(this.identity, data)
-
-          this.importFailed = false
-          this.importResult = `Imported ${report.feedsCreated} new feed${report.feedsCreated === 1 ? '' : 's'} ` +
-            `and ${report.entriesCreated} entr${report.entriesCreated === 1 ? 'y' : 'ies'}, ` +
-            `marked ${report.saved} saved. ` +
-            `${report.feedsReused} feed${report.feedsReused === 1 ? ' was' : 's were'} already here.`
-        })
-        .catch((e) => {
-          this.importFailed = true
-          this.importResult = e.message
-        })
-    },
-
     plural (count, one, many) {
       return `${count} ${count === 1 ? one : (many || `${one}s`)}`
     },
@@ -505,22 +426,26 @@ export default {
         .catch(() => {})
     },
 
-    closeImport () {
-      this.importOpen = false
-      this.importError = ''
-      this.backup = ''
+    closeRestore () {
+      this.restoreOpen = false
+      this.restoreError = ''
     },
 
-    importIdentity () {
-      this.importError = ''
+    restore (event) {
+      const file = event.target.files && event.target.files[0]
 
-      return this.app.commands.importIdentity(this.backup)
+      if (!file) return
+
+      this.restoreError = ''
+
+      return this.app.queries.readTextFile(file)
+        .then((text) => this.app.commands.importIdentity(text))
         .then((identity) => {
-          this.closeImport()
+          this.closeRestore()
           this.app.setIdentity(identity)
           this.$router.push('/')
         })
-        .catch((e) => { this.importError = e.message })
+        .catch((e) => { this.restoreError = e.message })
     },
 
     forgetIdentity () {
