@@ -18,6 +18,12 @@ class EventStore {
     // know when to throw it away.
     this.revision = 0
 
+    // Bumped whenever the log is re-folded, which replaces every projection
+    // object. Readers holding references to them have to start over, and the
+    // collection length alone cannot tell them: folding an event that only
+    // changes an existing object leaves the count exactly as it was.
+    this.generation = 0
+
     this.eachCollectionName((collectionName) => {
       this[collectionName] = this[collectionName] || []
       this._byId[collectionName] = this._byId[collectionName] || new Map()
@@ -143,6 +149,8 @@ class EventStore {
   }
 
   _resetCollections () {
+    this.generation++
+
     this.eachCollectionName((collectionName) => {
       this[collectionName].splice(0)
       this._byId[collectionName] = new Map()

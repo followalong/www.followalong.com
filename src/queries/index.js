@@ -223,10 +223,14 @@ class Queries {
     this._indexes = this._indexes || {}
 
     const raw = this.state.rawCollection(identity.id, 'entries')
-    const index = this._indexes[identity.id] = this._indexes[identity.id] || { cursor: 0, byFeed: new Map(), byKey: new Map() }
+    const generation = this.state.generationFor(identity.id)
+    const index = this._indexes[identity.id] = this._indexes[identity.id] || { cursor: 0, generation, byFeed: new Map(), byKey: new Map() }
 
-    // A re-fold (import, reset) replaces the array wholesale, so start over.
-    if (index.cursor > raw.length) {
+    // A re-fold (import, reset) builds every projection object afresh, so what
+    // is indexed now points at objects nothing else references. The count is no
+    // help: folding a save or a markRead leaves it unchanged.
+    if (index.generation !== generation || index.cursor > raw.length) {
+      index.generation = generation
       index.cursor = 0
       index.byFeed = new Map()
       index.byKey = new Map()

@@ -117,6 +117,11 @@ class MultipleEventStore extends EventStore {
     return db ? db.rawCollection(collectionName) : []
   }
 
+  generationFor (dbId) {
+    return this._findDBs(dbId ? [dbId] : undefined)
+      .reduce((total, db) => total + db.generation, 0)
+  }
+
   revisionFor (dbId) {
     return this._findDBs(dbId ? [dbId] : undefined)
       .reduce((total, db) => total + db.revision, 0)

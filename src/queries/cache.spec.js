@@ -95,3 +95,68 @@ describe('Queries caching', () => {
     expect(queries.entriesForIdentity(identity).map((e) => e.id)).toEqual(before)
   })
 })
+
+// importRaw re-folds the whole log, which replaces every projection object.
+// An index that only notices the collection getting shorter keeps handing back
+// the dead ones.
+describe('Queries indexes after a re-fold', () => {
+  let state, queries, identity, feed
+
+  beforeEach(async () => {
+    state = new MultiEventStore(`refold-${Math.random()}`, 'v2.3', runners)
+    await state.clear()
+    identity = { id: state.createDB(null, {}) }
+    queries = new Queries({ state })
+
+    state.track(identity.id, 'feeds', 'f1', 'create', { url: 'https://a.example', data: { title: 'A' } }, 10)
+    state.track(identity.id, 'entries', 'e1', 'create', { feedId: 'f1', data: { id: 'g1', guid: 'g1', title: 'One' } }, 20)
+
+    feed = queries.feedForIdentity(identity, 'f1')
+
+    // warm the indexes, as any render would
+    queries.entriesForFeed(identity, feed)
+    queries.entryForFeedForIdentity(identity, feed, 'g1')
+  })
+
+  test('sees an entry that arrives by import', () => {
+    state.importRaw(identity.id, '30/entries/e2/create/v2.3 {"feedId":"f1","data":{"id":"g2","guid":"g2","title":"Two"}}')
+
+    expect(queries.entriesForFeed(identity, feed).length).toEqual(2)
+    expect(queries.entryForFeedForIdentity(identity, feed, 'g2')).toBeTruthy()
+  })
+
+  test('does not hand back objects the re-fold discarded', () => {
+    // Same event count after the fold, so a length check cannot notice.
+    state.importRaw(identity.id, '5/entries/e0/create/v2.3 {"feedId":"f1","data":{"id":"g0","guid":"g0","title":"Zero"}}')
+
+    const live = state.findById(identity.id, 'entries', 'e1')
+    const viaIndex = queries.entryForFeedForIdentity(identity, feed, 'g1')
+
+    expect(viaIndex).toBe(live)
+  })
+})
+
+describe('Queries indexes after a re-fold that adds no entries', () => {
+  test('does not keep serving objects the re-fold replaced', async () => {
+    const state = new MultiEventStore(`refold2-${Math.random()}`, 'v2.3', runners)
+    await state.clear()
+    const identity = { id: state.createDB(null, {}) }
+    const queries = new Queries({ state })
+
+    state.track(identity.id, 'feeds', 'f1', 'create', { url: 'https://a.example', data: { title: 'A' } }, 10)
+    state.track(identity.id, 'entries', 'e1', 'create', { feedId: 'f1', data: { id: 'g1', guid: 'g1', title: 'One' } }, 20)
+
+    const feed = queries.feedForIdentity(identity, 'f1')
+
+    queries.entryForFeedForIdentity(identity, feed, 'g1')
+    queries.entriesForFeed(identity, feed)
+
+    // A save arriving from sync: re-folds the log, replaces every projection
+    // object, and leaves the entry count exactly as it was.
+    state.importRaw(identity.id, '30/entries/e1/save/v2.3 {}')
+
+    expect(queries.isEntrySaved(state.findById(identity.id, 'entries', 'e1'))).toBe(true)
+    expect(queries.isEntrySaved(queries.entryForFeedForIdentity(identity, feed, 'g1'))).toBe(true)
+    expect(queries.rawEntriesForFeed(identity, feed).filter((e) => queries.isEntrySaved(e)).length).toEqual(1)
+  })
+})

@@ -35,10 +35,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    // Worktrees live under .claude and carry their own copies of these specs.
-    // Without this, running the suite here also runs whatever old code another
-    // worktree happens to be sitting on.
-    exclude: ['**/node_modules/**', '**/dist/**', '**/.claude/**'],
+    // Worktrees live under .claude/worktrees and carry their own copies of
+    // these specs, so running the suite here would also run whatever old code
+    // another worktree sits on. Relative on purpose: a glob matching .claude
+    // anywhere in the path would exclude a worktree's own specs when the suite
+    // is run from inside it.
+    exclude: ['**/node_modules/**', '**/dist/**', '.claude/worktrees/**'],
     coverage: {
       exclude: ['use-cases/*']
     }
