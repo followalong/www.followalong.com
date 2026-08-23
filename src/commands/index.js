@@ -2,6 +2,11 @@ import VERSION from '../state/version.js'
 import { encrypt, decrypt } from '../queries/crypt.js'
 import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT_SIGNALS, SAVED_SIGNAL } from './seed.js'
 
+// An empty bucket is not a failure to read; anything else is. The difference
+// matters because writing over a copy we could not read loses whatever the
+// other device put there.
+const NOTHING_THERE = /nosuchkey|notfound|no data returned|404/i
+
 const MAX_OLD_ITEMS_PER_FEED = 15
 const SYNC_DEBOUNCE = 1500
 
@@ -74,7 +79,12 @@ class Commands {
     this.state.updateConfig(identity.id, { syncStatus: 'syncing', syncError: '' })
 
     return this.keyForIdentity(identity)
-      .then((key) => remote.save(this.queries.eventsToFile(identity), encrypt(key)))
+      // Read, merge, then write the union. Writing the local log straight over
+      // the remote made two devices clobber each other: the log is only read
+      // at boot, so whichever one tracked an event last won, and the other's
+      // events were gone until it happened to restart.
+      .then((key) => this.mergeRemoteInto(identity, remote, key)
+        .then(() => remote.save(this.queries.eventsToFile(identity), encrypt(key))))
       .then(() => {
         this.state.updateConfig(identity.id, {
           syncStatus: 'saved',
@@ -91,6 +101,16 @@ class Commands {
         })
       })
       .then(() => this.queries.syncStatusForIdentity(identity))
+  }
+
+  mergeRemoteInto (identity, remote, key) {
+    return Promise.resolve(remote.get(identity, decrypt(key)))
+      .then((data) => this.state.importRaw(identity.id, data))
+      .catch((e) => {
+        if (NOTHING_THERE.test((e && e.message) || '')) return
+
+        throw new Error(`Could not read the copy already there: ${(e && e.message) || 'unknown'}`)
+      })
   }
 
   restoreIdentityFromRemote (identity) {
