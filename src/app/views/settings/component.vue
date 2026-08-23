@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4 md:p-6 flex flex-col gap-4 md:gap-[18px] max-w-[560px]">
+  <div class="p-4 md:p-6 flex flex-col gap-4 md:gap-4.5 max-w-panel">
     <section
       :class="`rounded-xl border p-4 md:p-5 ${
         sync.status === 'failed'
@@ -12,7 +12,7 @@
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
           <h2
-            :class="`text-[14px] font-bold ${
+            :class="`text-sm font-bold ${
               sync.status === 'failed'
                 ? 'text-danger'
                 : sync.status === 'off' ? 'text-ink' : 'text-following'
@@ -151,7 +151,7 @@
       @click="forgetIdentity"
     >
       <span>
-        <span class="block text-[14px] font-bold text-danger">Forget this identity</span>
+        <span class="block text-sm font-bold text-danger">Forget this identity</span>
         <span class="block text-meta text-ink-secondary mt-0.5">Removes all traces on this device</span>
       </span>
       <span class="text-meta font-semibold text-danger flex-none">Forget me</span>
@@ -259,7 +259,7 @@
           v-model="backup"
           aria-label="Identity backup"
           rows="7"
-          class="mt-3 block w-full rounded-field border border-hairline-strong bg-white px-3 py-2.5 text-[13px] font-mono text-ink outline-none focus:border-primary"
+          class="mt-3 block w-full rounded-field border border-hairline-strong bg-white px-3 py-2.5 text-field font-mono text-ink outline-none focus:border-primary"
           placeholder="0/identities/…"
         />
         <p

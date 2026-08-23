@@ -19,7 +19,7 @@
         <button
           type="button"
           aria-label="Open search"
-          class="h-[34px] w-[34px] rounded-full bg-white/10 flex items-center justify-center text-chrome-icon"
+          class="h-slot w-slot rounded-full bg-white/10 flex items-center justify-center text-chrome-icon"
           @click="searching = true"
         >
           <svg

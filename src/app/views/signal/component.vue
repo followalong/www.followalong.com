@@ -41,7 +41,7 @@
             ✕
           </button>
         </div>
-        <p class="text-body md:text-[14px] text-ink-secondary mt-1.5">
+        <p class="text-body md:text-sm text-ink-secondary mt-1.5">
           A place to follow the things you care about directly, with nothing in
           between. Everything stays on this device.
         </p>

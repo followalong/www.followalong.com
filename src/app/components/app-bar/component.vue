@@ -3,14 +3,14 @@
     <div class="max-w-app px-4 py-3 md:px-6 md:py-2.5 flex items-center gap-3 md:gap-4">
       <div
         data-bar-slot
-        class="h-[34px] w-[34px] flex-none"
+        class="h-slot w-slot flex-none"
       >
         <router-link
           v-if="back"
           data-bar-back
           :to="back"
           aria-label="Back"
-          class="h-[34px] w-[34px] rounded-full bg-white/10 flex items-center justify-center text-chrome-icon text-base font-bold"
+          class="h-slot w-slot rounded-full bg-white/10 flex items-center justify-center text-chrome-icon text-base font-bold"
         >
           ←
         </router-link>
@@ -19,11 +19,11 @@
           data-bar-logo
           to="/"
           aria-label="Follow Along home"
-          class="block h-[34px] w-[34px]"
+          class="block h-slot w-slot"
         >
           <img
             :src="logoIcon"
-            class="h-[34px] w-[34px]"
+            class="h-slot w-slot"
             alt="Follow Along"
           >
         </router-link>
@@ -45,7 +45,7 @@
 
       <div
         data-bar-slot
-        class="h-[34px] w-[34px] flex-none flex items-center justify-end"
+        class="h-slot w-slot flex-none flex items-center justify-end"
       >
         <slot name="action" />
       </div>

@@ -25,8 +25,8 @@ describe('AppBar', () => {
 
     expect(slots).toHaveLength(2)
     slots.forEach((slot) => {
-      expect(slot.classes()).toContain('h-[34px]')
-      expect(slot.classes()).toContain('w-[34px]')
+      expect(slot.classes()).toContain('h-slot')
+      expect(slot.classes()).toContain('w-slot')
     })
   })
 

@@ -7,7 +7,7 @@
     @click="$emit('toggle')"
   >
     <svg
-      class="h-[18px] w-[18px]"
+      class="h-icon w-icon"
       viewBox="0 0 20 20"
       :fill="saved ? 'currentColor' : 'none'"
       stroke="currentColor"

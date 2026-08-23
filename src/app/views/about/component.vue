@@ -11,7 +11,7 @@
       <p
         v-for="(paragraph, index) in part.body"
         :key="index"
-        class="text-body md:text-[14px] text-ink-secondary mt-2 leading-relaxed"
+        class="text-body md:text-sm text-ink-secondary mt-2 leading-relaxed"
       >
         {{ paragraph }}
       </p>

@@ -24,21 +24,21 @@
       autocomplete="off"
       autocapitalize="off"
       spellcheck="false"
-      class="flex-1 min-w-0 bg-transparent text-[13px] leading-none text-ink placeholder:text-ink-subtle outline-none"
+      class="flex-1 min-w-0 bg-transparent text-field leading-none text-ink placeholder:text-ink-subtle outline-none"
       @input="$emit('update:modelValue', $event.target.value)"
     >
     <button
       v-if="modelValue"
       type="button"
       aria-label="Clear search"
-      class="flex-none text-ink-subtle text-[13px] leading-none px-1 -mr-1"
+      class="flex-none text-ink-subtle text-field leading-none px-1 -mr-1"
       @click="$emit('update:modelValue', '')"
     >
       ✕
     </button>
     <span
       v-else-if="hint"
-      class="flex-none text-[11px] text-ink-faint"
+      class="flex-none text-tiny text-ink-faint"
     >{{ hint }}</span>
   </label>
 </template>

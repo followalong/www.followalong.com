@@ -1,5 +1,5 @@
 <template>
-  <span :class="`inline-flex items-center rounded-pill px-3 py-1 text-[11px] font-semibold ${THEMES[status]}`">
+  <span :class="`inline-flex items-center rounded-pill px-3 py-1 text-tiny font-semibold ${THEMES[status]}`">
     <slot />
   </span>
 </template>

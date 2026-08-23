@@ -7,7 +7,7 @@
       <button
         type="button"
         aria-label="Close search"
-        class="h-[34px] w-[34px] flex-none rounded-full bg-white/10 text-chrome-icon text-base font-bold"
+        class="h-slot w-slot flex-none rounded-full bg-white/10 text-chrome-icon text-base font-bold"
         @click="$emit('close')"
       >
         ←
@@ -94,7 +94,7 @@
 import SearchBox from '../search-box/component.vue'
 import ListRow from '../list-row/component.vue'
 
-const HEADING = 'px-4 pt-5 pb-2 text-[11px] font-bold tracking-widest uppercase text-ink-subtle md:px-6'
+const HEADING = 'px-4 pt-5 pb-2 text-tiny font-bold tracking-widest uppercase text-ink-subtle md:px-6'
 const LIMIT = 20
 
 export default {

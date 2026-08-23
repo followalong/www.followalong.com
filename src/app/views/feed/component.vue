@@ -11,7 +11,7 @@
         <img
           v-if="app.queries.imageForFeed(feed)"
           :src="app.queries.imageForFeed(feed)"
-          class="h-11 w-11 rounded-[11px] flex-none"
+          class="h-11 w-11 rounded-avatar flex-none"
           alt=""
         >
         <div class="min-w-0">

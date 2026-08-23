@@ -11,7 +11,7 @@
         :aria-label="`Visit ${app.queries.titleForFeed(feed)} feed`"
       >
         <template #leading>
-          <span class="h-[34px] w-[34px] flex-none rounded-[9px] bg-surface-sunken overflow-hidden flex items-center justify-center">
+          <span class="h-slot w-slot flex-none rounded-field bg-surface-sunken overflow-hidden flex items-center justify-center">
             <img
               v-if="app.queries.imageForFeed(feed)"
               class="h-full w-full object-cover"
@@ -20,7 +20,7 @@
             >
             <span
               v-else
-              class="text-[13px] font-bold text-ink-subtle"
+              class="text-field font-bold text-ink-subtle"
             >{{ (app.queries.titleForFeed(feed) || '?').trim().charAt(0).toUpperCase() }}</span>
           </span>
         </template>

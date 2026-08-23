@@ -19,7 +19,7 @@ describe('PipPlayer', () => {
 
     expect(el.classes()).toContain('fixed')
     expect(el.classes()).toContain('right-3')
-    expect(el.classes()).toContain('bottom-[100px]')
+    expect(el.classes()).toContain('bottom-tab-bar')
     expect(el.classes()).toContain('md:bottom-5')
   })
 

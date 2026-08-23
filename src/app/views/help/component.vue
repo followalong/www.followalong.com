@@ -1,7 +1,7 @@
 <template>
   <div class="p-4 md:px-6 md:py-5 flex flex-col gap-4 max-w-river md:mx-auto">
     <div class="bg-white border border-hairline-strong rounded-xl p-4 md:p-5">
-      <h2 class="text-[14px] font-bold text-ink">
+      <h2 class="text-sm font-bold text-ink">
         Contact us via email
       </h2>
       <p class="text-body text-ink-secondary mt-1.5">

@@ -3,13 +3,13 @@
     :to="to"
     :aria-label="label"
     :aria-current="active ? 'page' : null"
-    :class="`min-h-touch flex flex-col items-center justify-center gap-1 rounded-[10px] px-3.5 py-1.5 ${
+    :class="`min-h-touch flex flex-col items-center justify-center gap-1 rounded-nav px-3.5 py-1.5 ${
       on === 'chrome' && active ? 'bg-accent/[0.14]' : ''
     }`"
   >
     <svg
       data-nav-icon
-      :class="`h-[18px] w-[18px] flex-none ${active ? 'text-accent' : ICON_REST[on]}`"
+      :class="`h-icon w-icon flex-none ${active ? 'text-accent' : ICON_REST[on]}`"
       viewBox="0 0 20 20"
       fill="currentColor"
       aria-hidden="true"

@@ -11,12 +11,12 @@
     <slot name="leading" />
 
     <div class="flex-1 min-w-0">
-      <div class="text-[14px] font-semibold text-ink truncate">
+      <div class="text-sm font-semibold text-ink truncate">
         {{ title }}
       </div>
       <div
         v-if="meta"
-        :class="`text-[11.5px] mt-0.5 truncate ${warn ? 'text-warning' : 'text-ink-muted'}`"
+        :class="`text-tiny mt-0.5 truncate ${warn ? 'text-warning' : 'text-ink-muted'}`"
       >
         {{ meta }}
       </div>

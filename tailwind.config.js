@@ -68,7 +68,10 @@ module.exports = {
         serif: ['Newsreader', 'Palatino', 'Times', 'serif']
       },
       fontSize: {
+        micro: ['10px', { lineHeight: '1.2' }],
+        tiny: ['11px', { lineHeight: '1.3' }],
         nav: ['10.5px', { lineHeight: '1.2' }],
+        field: ['13px', { lineHeight: '1.4' }],
         meta: ['12px', { lineHeight: '1.4' }],
         chip: ['12.5px', { lineHeight: '1.4' }],
         body: ['13.5px', { lineHeight: '1.5' }],
@@ -79,6 +82,8 @@ module.exports = {
       },
       borderRadius: {
         field: '9px',
+        nav: '10px',
+        avatar: '11px',
         card: '14px',
         sheet: '18px',
         pill: '999px'
@@ -87,11 +92,27 @@ module.exports = {
         // Desktop is tablet: content never grows past the tablet width.
         app: '834px',
         river: '640px',
-        read: '470px'
+        read: '470px',
+        panel: '560px'
+      },
+      maxHeight: {
+        sheet: '92vh'
+      },
+      width: {
+        pip: '310px',
+        'pip-lg': '460px'
       },
       spacing: {
         // Minimum touch target.
-        touch: '44px'
+        touch: '44px',
+        // The AppBar's fixed left and right slots, so the title never shifts.
+        slot: '34px',
+        icon: '18px',
+        play: '26px',
+        // Clears the mobile tab bar.
+        'tab-bar': '100px',
+        0.75: '3px',
+        4.5: '18px'
       },
       // `prose` is reading content, so it is the only place serif appears.
       typography: ({ theme }) => ({

@@ -10,8 +10,15 @@
         aria-label="Play"
         @click="$emit('play')"
       >
-        <span class="h-11 w-11 rounded-full bg-ink flex items-center justify-center">
-          <span class="ml-1 border-y-[9px] border-y-transparent border-l-[14px] border-l-white" />
+        <span class="h-11 w-11 rounded-full bg-ink flex items-center justify-center text-white">
+          <svg
+            class="h-5 w-5 ml-0.5"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M5 3v10l8-5z" />
+          </svg>
         </span>
       </button>
     </slot>
@@ -58,14 +65,14 @@
         v-if="summary"
         data-summary
         :type="readable ? 'button' : undefined"
-        class="block w-full text-left mt-2.5 text-body md:text-[14px] text-ink-body"
+        class="block w-full text-left mt-2.5 text-body md:text-sm text-ink-body"
         @click="readable && $emit('read')"
       >
         {{ summary }}
         <span
           v-if="summaryLabel"
           data-summary-badge
-          class="align-middle ml-1 inline-block rounded-pill bg-accent/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent-ink whitespace-nowrap"
+          class="align-middle ml-1 inline-block rounded-pill bg-accent/20 px-2 py-0.5 text-micro font-bold uppercase tracking-wider text-accent-ink whitespace-nowrap"
         >{{ summaryLabel }}</span>
       </component>
 
@@ -77,11 +84,18 @@
           <button
             data-play
             type="button"
-            class="h-[26px] w-[26px] flex-none rounded-full bg-ink flex items-center justify-center"
+            class="h-play w-play flex-none rounded-full bg-ink flex items-center justify-center text-white"
             aria-label="Play"
             @click="$emit('play')"
           >
-            <span class="ml-0.5 border-y-[5px] border-y-transparent border-l-[9px] border-l-white" />
+            <svg
+              class="h-3 w-3 ml-0.5"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M5 3v10l8-5z" />
+            </svg>
           </button>
           <span class="flex-1 h-1 rounded-sm bg-inactive-track">
             <span
@@ -90,7 +104,7 @@
               :style="{ width: `${progress}%` }"
             />
           </span>
-          <span class="text-[11px] text-ink-muted">{{ elapsed }}</span>
+          <span class="text-tiny text-ink-muted">{{ elapsed }}</span>
         </div>
       </slot>
     </div>

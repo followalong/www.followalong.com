@@ -1,7 +1,7 @@
 <template>
-  <div class="bg-white border-y md:border border-hairline md:rounded-card p-4 md:p-[18px]">
+  <div class="bg-white border-y md:border border-hairline md:rounded-card p-4 md:p-4.5">
     <div class="flex items-center gap-2">
-      <h2 class="flex-1 text-[14.5px] font-bold text-ink">
+      <h2 class="flex-1 text-sm font-bold text-ink">
         {{ addon.title }}
       </h2>
       <StatusPill
@@ -58,7 +58,7 @@
         >
           <label
             :for="`input-${key}`"
-            class="block text-[12px] font-bold tracking-wide uppercase text-ink-subtle"
+            class="block text-meta font-bold tracking-wide uppercase text-ink-subtle"
             v-html="field.label"
           />
           <input

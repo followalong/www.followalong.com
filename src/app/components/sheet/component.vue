@@ -12,7 +12,7 @@
       role="dialog"
       aria-modal="true"
       :aria-label="title"
-      class="bg-surface-sheet rounded-t-sheet max-h-[92vh] w-full max-w-app flex flex-col px-5 pt-3.5"
+      class="bg-surface-sheet rounded-t-sheet max-h-sheet w-full max-w-app flex flex-col px-5 pt-3.5"
     >
       <div
         data-sheet-grabber
@@ -28,7 +28,7 @@
           data-sheet-close
           type="button"
           aria-label="Close"
-          class="h-touch w-touch -mr-3 text-ink-subtle text-[15px]"
+          class="h-touch w-touch -mr-3 text-ink-subtle text-card"
           @click="$emit('close')"
         >
           ✕
