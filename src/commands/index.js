@@ -357,16 +357,6 @@ class Commands {
     return this.state.reset(identity.id)
   }
 
-  // The event log is the identity: replaying it anywhere rebuilds the whole
-  // thing, so a backup is just the log and nothing else.
-  exportIdentity (identity) {
-    return this.queries.eventsToFile(identity)
-  }
-
-  downloadIdentity (identity) {
-    return this.saveAs(this.exportIdentity(identity), `follow-along.${identity.id}.log`)
-  }
-
   // What it takes to be you somewhere else: the identity, its feeds, signals
   // and add-ons, and the entries you set aside. Not the entry corpus — that
   // refetches itself from the feeds, and copying thousands of them makes the
@@ -378,8 +368,19 @@ class Commands {
 
     return this.queries.findAllEvents(identity)
       .filter((event) => event.collection !== 'entries' || saved.indexOf(event.objectId) !== -1)
-      .map((event) => `${event.key} ${event.toLocal() || ''}`.trim())
+      .map((event) => `${event.key} ${this.portableEvent(event) || ''}`.trim())
       .join('\n')
+  }
+
+  // A roll up folds every entry into one event, where the filter above cannot
+  // see them one at a time.
+  portableEvent (event) {
+    if (event.action !== 'rollup') return event.toLocal()
+
+    const entries = (event.data.entries || [])
+      .filter((entry) => this.queries.isEntrySaved(entry))
+
+    return JSON.stringify(Object.assign({}, event.data, { entries }))
   }
 
   copyIdentityToClipboard (identity) {

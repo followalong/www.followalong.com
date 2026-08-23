@@ -775,16 +775,6 @@ class Queries {
     return labels
   }
 
-  readTextFile (file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-
-      reader.onload = () => resolve(`${reader.result}`)
-      reader.onerror = () => reject(reader.error)
-      reader.readAsText(file)
-    })
-  }
-
   linkify (text) {
     return linkifyHtml(text, { target: '_blank' })
   }

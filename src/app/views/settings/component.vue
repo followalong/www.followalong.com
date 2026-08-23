@@ -46,14 +46,6 @@
         >
           {{ sync.status === 'syncing' ? 'Backing up…' : 'Back up now' }}
         </Button>
-        <Button
-          variant="secondary"
-          aria-label="Export identity"
-          class="!py-1.5 !px-3 !text-chip"
-          @click="app.commands.downloadIdentity(identity)"
-        >
-          Download a copy
-        </Button>
       </div>
     </Card>
 
@@ -106,10 +98,10 @@
         </template>
       </ListRow>
       <ListRow
-        title="Restore from a backup"
-        meta="a file you downloaded from here"
+        title="Paste an identity"
+        meta="a copy from another device"
         action
-        aria-label="Restore backup"
+        aria-label="Paste identity"
         @click="restoreOpen = true"
       />
       <ListRow
@@ -252,28 +244,33 @@
 
     <Sheet
       :open="restoreOpen"
-      title="Restore from a backup"
+      title="Paste an identity"
       @close="closeRestore"
     >
       <p class="text-body text-ink-secondary">
-        Pick a backup file downloaded from this app. It is added alongside what
-        is already here — nothing is replaced.
+        Copy an identity from another device, then paste it here. It is added
+        alongside what is already here — nothing is replaced.
       </p>
 
-      <input
-        type="file"
-        accept=".log,text/plain"
-        aria-label="Backup file"
-        class="mt-4 block w-full text-body text-ink-secondary file:mr-4 file:rounded-lg file:border-0 file:bg-primary file:px-4 file:py-2.5 file:text-body file:font-semibold file:text-white"
-        @change="restore"
-      >
+      <TextField
+        v-model="pasted"
+        multiline
+        aria-label="Identity to paste"
+        class="mt-3"
+        placeholder="0/identities/…"
+        :invalid="!!restoreError"
+        :hint="restoreError"
+      />
 
-      <p
-        v-if="restoreError"
-        class="mt-3 text-body text-danger"
-      >
-        {{ restoreError }}
-      </p>
+      <template #footer>
+        <Button
+          class="flex-1"
+          aria-label="Restore identity"
+          @click="restore"
+        >
+          Add it
+        </Button>
+      </template>
     </Sheet>
   </PageBody>
 </template>
@@ -324,6 +321,7 @@ export default {
     CHANGELOG_PATH,
     restoreOpen: false,
     restoreError: '',
+    pasted: '',
     encryptionOpen: false,
     strategy: 'none',
     STRATEGY_LABELS,
@@ -440,17 +438,13 @@ export default {
     closeRestore () {
       this.restoreOpen = false
       this.restoreError = ''
+      this.pasted = ''
     },
 
-    restore (event) {
-      const file = event.target.files && event.target.files[0]
-
-      if (!file) return
-
+    restore () {
       this.restoreError = ''
 
-      return this.app.queries.readTextFile(file)
-        .then((text) => this.app.commands.importIdentity(text))
+      return this.app.commands.importIdentity(this.pasted)
         .then((identity) => {
           this.closeRestore()
           this.app.setIdentity(identity)

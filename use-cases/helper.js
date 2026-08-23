@@ -46,7 +46,6 @@ const mountApp = (options) => {
         scrollTo: vi.fn(),
         prompt: options.prompt || vi.fn(),
         keychainName: `keychain-${Math.random()}`,
-        saveAs: options.saveAs || vi.fn(),
         copyToClipboard: options.copyToClipboard || vi.fn(),
         awsS3: options.awsS3 || (() => Promise.resolve({}))
       }

@@ -14,7 +14,7 @@ describe('Copy an identity', () => {
   let app
   let copyToClipboard
 
-  const copied = () => copyToClipboard.mock.calls[0][0]
+  const copied = () => copyToClipboard.mock.calls[copyToClipboard.mock.calls.length - 1][0]
 
   beforeEach(async () => {
     copyToClipboard = vi.fn()
@@ -44,14 +44,14 @@ describe('Copy an identity', () => {
     expect(copied()).not.toContain('entries/drop')
   })
 
-  story('is smaller than the full backup', async () => {
-    const saveAs = vi.fn()
-    const full = await mountApp({ saveAs, state: { abc123: { config: {}, data: seed } } })
+  // A roll up folds the entries into one event, where the filter above cannot
+  // see them one at a time.
+  story('leaves the rest of the entries behind after a roll up', async () => {
+    await app.click('[aria-label="Roll up identity"]')
+    await app.click('[aria-label="You"]')
+    await app.click('[aria-label="Copy identity"]')
 
-    await full.click('[aria-label="You"]')
-    await full.click('[aria-label="Export identity"]')
-
-    expect(saveAs.mock.calls[0][0]).toContain('entries/drop')
-    expect(copied().length).toBeLessThan(saveAs.mock.calls[0][0].length)
+    expect(copied()).toContain('Kept entry')
+    expect(copied()).not.toContain('Ordinary entry')
   })
 })
