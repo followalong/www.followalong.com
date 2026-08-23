@@ -29,8 +29,9 @@
             <span v-else>Saving to {{ sync.target }}…</span>
           </p>
           <p class="text-meta text-ink-muted mt-1.5">
-            {{ contents.feeds }} feeds · {{ contents.entries }} entries ·
-            {{ contents.events }} events in the log
+            {{ plural(contents.feeds, 'feed') }} ·
+            {{ plural(contents.entries, 'entry', 'entries') }} ·
+            {{ plural(contents.events, 'event') }} in the log
           </p>
         </div>
       </div>
@@ -368,6 +369,10 @@ export default {
   },
 
   methods: {
+    plural (count, one, many) {
+      return `${count} ${count === 1 ? one : (many || `${one}s`)}`
+    },
+
     backUpNow () {
       this.now = Date.now()
 
