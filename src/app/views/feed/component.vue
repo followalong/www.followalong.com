@@ -6,57 +6,71 @@
       :entries="existingEntries"
     />
 
-    <PageTitle :title="title">
-      <template #description>
-        <a
-          :href="app.queries.linkForFeed(feed)"
-          target="_blank"
+    <header class="px-4 pt-4 md:px-6 border-b border-hairline-strong">
+      <div class="flex items-center gap-3">
+        <img
+          v-if="app.queries.imageForFeed(feed)"
+          :src="app.queries.imageForFeed(feed)"
+          class="h-11 w-11 rounded-[11px] flex-none"
+          alt=""
         >
-          {{ app.queries.linkForFeed(feed) }} &rarr;
-          <span v-if="!remoteFeed">Loading...</span>
-        </a>
-      </template>
-      <template #meta>
-        <div class="flex">
-          <button
-            class="rounded-md border border-transparent bg-green-100 px-4 py-2 font-medium text-green-700 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:text-sm ml-1"
-            :aria-label="`${existingFeed ? 'Unf' : 'F'}ollow ${app.queries.titleForFeed(feed)}`"
-            @click="toggleFollow"
+        <div class="min-w-0">
+          <h2 class="text-lg font-bold text-ink truncate">
+            {{ title }}
+          </h2>
+          <a
+            :href="app.queries.linkForFeed(feed)"
+            target="_blank"
+            class="text-meta text-primary"
           >
-            Follow<span v-if="existingFeed">ing</span>
-          </button>
-          <DropDown
-            v-if="existingFeed"
-            :app="app"
-            :identity="identity"
-          >
-            <template #items>
-              <a
-                v-if="unreadEntries.length"
-                href="javascript:;"
-                class="text-gray-700 flex justify-between px-4 py-2 text-sm"
-                role="menuitem"
-                tabindex="-1"
-                aria-label="Catch up on feed"
-                @click="catchUpOnFeed"
-              >
-                <span>Catch me up</span>
-              </a>
-              <a
-                href="javascript:;"
-                class="text-gray-700 flex justify-between px-4 py-2 text-sm"
-                role="menuitem"
-                tabindex="-1"
-                :aria-label="`${app.queries.isFeedPaused(existingFeed) ? 'Unp' : 'P'}ause feed`"
-                @click="togglePause"
-              >
-                <span>{{ app.queries.isFeedPaused(existingFeed) ? 'Unp' : 'P' }}ause Feed</span>
-              </a>
-            </template>
-          </DropDown>
+            {{ app.queries.linkForFeed(feed) }} &rarr;
+            <span v-if="!remoteFeed">Loading...</span>
+          </a>
         </div>
-      </template>
-    </PageTitle>
+      </div>
+
+      <div class="flex items-center gap-2 mt-3">
+        <button
+          type="button"
+          :aria-label="`${existingFeed ? 'Unf' : 'F'}ollow ${app.queries.titleForFeed(feed)}`"
+          :class="`rounded-pill px-3 py-1.5 text-chip font-semibold ${
+            existingFeed
+              ? 'bg-following-bg text-following'
+              : 'bg-primary text-white'
+          }`"
+          @click="toggleFollow"
+        >
+          Follow<span v-if="existingFeed">ing</span>
+        </button>
+
+        <button
+          v-if="existingFeed && unreadEntries.length"
+          type="button"
+          aria-label="Catch up on feed"
+          class="rounded-pill border border-hairline-outline px-3 py-1.5 text-chip font-semibold text-ink-body"
+          @click="catchUpOnFeed"
+        >
+          Catch me up
+        </button>
+
+        <button
+          v-if="existingFeed"
+          type="button"
+          :aria-label="`${app.queries.isFeedPaused(existingFeed) ? 'Unp' : 'P'}ause feed`"
+          class="rounded-pill border border-hairline-outline px-3 py-1.5 text-chip font-semibold text-ink-body"
+          @click="togglePause"
+        >
+          {{ app.queries.isFeedPaused(existingFeed) ? 'Unp' : 'P' }}ause
+        </button>
+      </div>
+
+      <SearchBox
+        v-model="filter"
+        scope="scoped"
+        :hint="`${entries.length} items`"
+        class="my-3"
+      />
+    </header>
 
     <FeedEntry
       v-for="entry in entries"
@@ -72,22 +86,21 @@
 <script>
 import FeedEntry from '../../components/feed-entry/component.vue'
 import NewBar from '../../components/new-bar/component.vue'
-import PageTitle from '../../components/page-title/component.vue'
-import DropDown from '../../components/drop-down/component.vue'
+import SearchBox from '../../components/search-box/component.vue'
 
 export default {
   components: {
-    DropDown,
     FeedEntry,
     NewBar,
-    PageTitle
+    SearchBox
   },
 
   props: ['app', 'identity'],
 
   data () {
     return {
-      remoteFeed: null
+      remoteFeed: null,
+      filter: ''
     }
   },
 
@@ -101,6 +114,10 @@ export default {
     },
 
     url () {
+      // fullPath, not the param, so a feed URL keeps its query string — but
+      // only while the feed route is the one matched.
+      if (!this.$route.params.feedUrl) return ''
+
       return this.$route.fullPath.replace(/^\//, '')
     },
 
@@ -132,6 +149,8 @@ export default {
     },
 
     title () {
+      if (!this.feed) return ''
+
       let title = this.app.queries.titleForFeed(this.feed)
 
       if (this.app.queries.isFeedPaused(this.feed)) {
@@ -143,8 +162,16 @@ export default {
   },
 
   watch: {
-    url () {
-      this.fetchFeed()
+    title: {
+      immediate: true,
+      handler (value) {
+        this.app.pageTitle = value
+      }
+    },
+
+    // Leaving the feed route empties the url; there is nothing to fetch then.
+    url (value) {
+      if (value) this.fetchFeed()
     }
   },
 

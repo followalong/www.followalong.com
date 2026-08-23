@@ -20,13 +20,11 @@
 
 <script>
 import AddonEditor from '../../components/addon-editor/component.vue'
-import PageCard from '../../components/page-card/component.vue'
 import PageTitle from '../../components/page-title/component.vue'
 
 export default {
   components: {
     AddonEditor,
-    PageCard,
     PageTitle
   },
 

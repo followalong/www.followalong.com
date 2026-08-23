@@ -1,52 +1,70 @@
 <template>
-  <div v-if="!isLoading">
-    <!-- Background color split screen for large screens -->
-    <div
-      class="fixed top-0 left-0 right-0 h-full bg-gray-50"
-      aria-hidden="true"
+  <div
+    v-if="!isLoading"
+    class="min-h-screen flex flex-col bg-page"
+  >
+    <AppBar
+      :title="title"
+      :back="back"
+    >
+      <!-- Desktop is tablet: the same tabs, moved into the bar. -->
+      <template #nav>
+        <NavTabs
+          on="chrome"
+          class="hidden md:flex ml-auto"
+        />
+      </template>
+
+      <template #action>
+        <button
+          type="button"
+          aria-label="Open search"
+          class="h-[34px] w-[34px] rounded-full bg-white/10 flex items-center justify-center text-chrome-icon"
+          @click="searching = true"
+        >
+          <svg
+            class="h-4 w-4"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <circle
+              cx="9"
+              cy="9"
+              r="6"
+            />
+            <path d="M14 14l4 4" />
+          </svg>
+        </button>
+      </template>
+    </AppBar>
+
+    <SearchPanel
+      v-if="searching"
+      @close="searching = false"
+      @search="onSearch"
     />
-    <div class="flex min-h-screen flex-col">
-      <TopBar
+
+    <main class="flex-1 w-full max-w-app pb-24 md:pb-8">
+      <router-view
         :app="app"
         :identity="identity"
       />
+    </main>
 
-      <!-- 3 column wrapper -->
-      <div class="w-full max-w-5xl flex-grow md:flex">
-        <!-- Left sidebar & main wrapper -->
-        <div class="min-w-0 md:pl-7 flex-1 bg-white md:flex">
-          <SideBar
-            :app="app"
-            :identity="identity"
-            class="hidden md:block"
-          />
-
-          <div
-            class="bg-gray-50 md:min-w-0 md:flex-1 md:ml-sidebar"
-          >
-            <div class="h-full mt-16 md:py-6 md:px-8">
-              <!-- Start main area-->
-              <div
-                class="relative h-full"
-                style="min-height: 36rem"
-              >
-                <router-view
-                  :app="app"
-                  :identity="identity"
-                />
-              </div>
-              <!-- End main area -->
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <NavTabs
+      on="surface"
+      class="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-hairline-strong bg-white pt-3 pb-6"
+    />
   </div>
 </template>
 
 <script>
-import SideBar from './components/side-bar/component.vue'
-import TopBar from './components/top-bar/component.vue'
+import AppBar from './components/app-bar/component.vue'
+import NavTabs from './components/nav-tabs/component.vue'
+import SearchPanel from './components/search-panel/component.vue'
 import Commands from '../commands/index.js'
 import MultiEventStore from '../state/multi-event-store.js'
 import VERSION from '../state/version.js'
@@ -58,10 +76,22 @@ import KeychainAdapter from '../adapters/keychain.js'
 const POLL_INTERVAL = 30000
 let POLL_TIMEOUT
 
+// Every page gets its title and, on a sub-page, its back target from here, so
+// the bar stays pixel-identical instead of each view rolling its own header.
+const PAGES = {
+  '/': { title: 'Home' },
+  '/following': { title: 'Feeds you follow' },
+  '/marketplace': { title: 'Marketplace' },
+  '/settings': { title: 'You' },
+  '/help': { title: 'Help', back: '/settings' },
+  '/add-ons': { title: 'Add-ons', back: '/settings' }
+}
+
 export default {
   components: {
-    SideBar,
-    TopBar
+    AppBar,
+    NavTabs,
+    SearchPanel
   },
   props: {
     state: {
@@ -130,10 +160,49 @@ export default {
       commands,
       now: new Date(),
       isLoading: true,
-      identity: null
+      identity: null,
+      pageTitle: '',
+      searching: false
+    }
+  },
+  computed: {
+    page () {
+      return PAGES[this.$route.path] || {}
+    },
+    title () {
+      if (this.page.title) return this.page.title
+
+      // A view showing something the shell cannot look up — a feed that is not
+      // followed yet — names the page itself.
+      if (this.pageTitle) return this.pageTitle
+
+      const { signal, feedUrl } = this.$route.params
+
+      if (signal) {
+        const found = this.queries.signalForIdentity(this.identity, signal)
+
+        return (found && this.queries.titleForSignal(found)) || 'Home'
+      }
+
+      if (feedUrl) {
+        const feed = this.queries.feedForIdentityByUrl(this.identity, feedUrl)
+
+        return (feed && this.queries.titleForFeed(feed)) || 'Feed'
+      }
+
+      return 'Follow Along'
+    },
+    back () {
+      if (this.page.back) return this.page.back
+
+      return this.$route.params.feedUrl ? '/following' : ''
     }
   },
   watch: {
+    '$route.path' () {
+      this.pageTitle = ''
+    },
+
     identity (val) {
       if (val && this.automaticFetch) {
         setTimeout(() => this.pollFeeds(), 10)
@@ -160,6 +229,11 @@ export default {
         POLL_TIMEOUT = setTimeout(() => this.pollFeeds(), POLL_INTERVAL)
       })
     },
+    onSearch (q) {
+      this.searching = false
+      this.search(q)
+    },
+
     search (q) {
       if (q.toLowerCase().indexOf('http') !== -1) {
         this.$router.push(`/${q}`)

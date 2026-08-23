@@ -1,14 +1,12 @@
-import { mountApp, describe, test, story } from './helper.js'
-import localForage from 'localforage'
+import { mountApp, describe, story } from './helper.js'
 
 describe('Get help', () => {
   let app
-  let identity
 
   beforeEach(async () => {
     app = await mountApp()
-    identity = app.vm.identity
 
+    await app.click('[aria-label="You"]')
     await app.click('[aria-label="Help"]')
   })
 

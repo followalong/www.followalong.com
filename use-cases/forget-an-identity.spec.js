@@ -9,7 +9,7 @@ describe('Forget an identity', () => {
     app = await mountApp()
     identity = app.vm.identity
 
-    await app.click('[aria-label="Settings"]')
+    await app.click('[aria-label="You"]')
     await app.click('[aria-label="Forget identity"]')
   })
 

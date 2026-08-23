@@ -6,33 +6,24 @@
       :entries="entries"
     />
 
-    <PageTitle :title="app.queries.titleForSignal(signal)">
-      <template #description>
-        {{ app.queries.descriptionForSignal(signal) }}
-      </template>
+    <SignalChips
+      :app="app"
+      :identity="identity"
+      :current="$route.params.signal"
+    />
 
-      <template #meta>
-        <DropDown
-          v-if="unreadEntries.length"
-          :app="app"
-          :identity="identity"
-        >
-          <template #items>
-            <a
-              v-if="unreadEntries.length"
-              href="javascript:;"
-              class="text-gray-700 flex justify-between px-4 py-2 text-sm"
-              role="menuitem"
-              tabindex="-1"
-              aria-label="Catch up on signal"
-              @click="catchUpOnSignal"
-            >
-              <span>Catch me up</span>
-            </a>
-          </template>
-        </DropDown>
-      </template>
-    </PageTitle>
+    <div
+      v-if="unreadEntries.length"
+      class="px-4 py-3 md:px-6"
+    >
+      <Button
+        variant="secondary"
+        aria-label="Catch up on signal"
+        @click="catchUpOnSignal"
+      >
+        Catch me up
+      </Button>
+    </div>
 
     <div
       v-if="app.queries.signalHasCards(signal)"
@@ -95,11 +86,11 @@
 </template>
 
 <script>
-import DropDown from '../../components/drop-down/component.vue'
 import FeedEntry from '../../components/feed-entry/component.vue'
 import PageCard from '../../components/page-card/component.vue'
 import NewBar from '../../components/new-bar/component.vue'
-import PageTitle from '../../components/page-title/component.vue'
+import SignalChips from '../../components/signal-chips/component.vue'
+import Button from '../../components/button/component.vue'
 import PullToRefresh from 'pulltorefreshjs'
 
 const DISTANCE_FROM_BOTTOM = 500
@@ -107,11 +98,11 @@ const LIMIT = 4
 
 export default {
   components: {
-    DropDown,
+    Button,
     FeedEntry,
     NewBar,
     PageCard,
-    PageTitle
+    SignalChips
   },
 
   props: ['app', 'identity'],

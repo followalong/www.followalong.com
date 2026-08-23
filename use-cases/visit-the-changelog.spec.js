@@ -10,6 +10,7 @@ describe('Visit the changelog', () => {
       fetch: responses([`<feed><entry><id>123</id><title>${remoteEntryName}</title></entry></feed>`])
     })
 
+    await app.click('[aria-label="You"]')
     await app.click('[aria-label="Visit Changelog"]')
   })
 

@@ -8,13 +8,10 @@ describe('Pause a feed', () => {
       path: '/https://changelog.followalong.com/feed.xml'
     })
 
-    await app.click('[aria-label="Show menu"]')
     await app.click('[aria-label="Pause feed"]')
   })
 
   story('pauses the feed', async () => {
-    await app.click('[aria-label="Show menu"]')
-
     expect(app.findAll('[aria-label="Unpause feed"]').length).toEqual(1)
   })
 

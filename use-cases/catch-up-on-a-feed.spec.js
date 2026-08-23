@@ -21,7 +21,6 @@ describe('Catch up on a feed', () => {
     })
 
     await app.click('[aria-label="Feed link"]')
-    await app.click('[aria-label="Show menu"]')
     await app.click('[aria-label="Catch up on feed"]')
   })
 

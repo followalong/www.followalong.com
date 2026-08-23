@@ -1,79 +1,74 @@
 <template>
-  <div>
-    <PageTitle title="Settings">
-      <template #description>
-        <p>Set up your identity for Follow Along</p>
-      </template>
-    </PageTitle>
+  <div class="p-4 md:p-6 flex flex-col gap-4 md:gap-[18px] max-w-[560px]">
+    <p class="text-meta text-ink-muted">
+      Your identity lives only on this device
+    </p>
 
-    <PageCard>
-      <template #title>
-        <p class="font-medium text-gray-900">
-          Roll up this identity
-        </p>
-      </template>
-      <template
-        #content
-      >
-        <div class="prose">
-          <p>
-            Clean up the local database for better performance.
-          </p>
-          <div class="mt-5">
-            <button
-              type="button"
-              class="rounded-md border border-transparent bg-orange-100 px-4 py-2 font-medium text-orange-700 hover:bg-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 sm:text-sm"
-              aria-label="Roll up identity"
-              @click="rollUpIdentity"
-            >
-              Roll up this identity
-            </button>
-          </div>
-        </div>
-      </template>
-    </PageCard>
+    <div class="bg-white border border-hairline-strong rounded-xl overflow-hidden">
+      <ListRow
+        title="Add-ons"
+        :meta="`${addonCount} installed`"
+        to="/add-ons"
+        aria-label="Add-ons"
+      />
+      <ListRow
+        title="Roll up this identity"
+        meta="clean up"
+        action
+        aria-label="Roll up identity"
+        @click="rollUpIdentity"
+      />
+    </div>
 
-    <PageCard>
-      <template #title>
-        <p class="font-medium text-gray-900">
-          Forget this identity
-        </p>
-      </template>
-      <template
-        #content
-      >
-        <div class="prose">
-          <p>
-            Forgetting this identity will remove all traces of it on this device.
-            Ensure you have a backup before proceeding.
-          </p>
-          <div class="mt-5">
-            <button
-              type="button"
-              class="rounded-md border border-transparent bg-red-100 px-4 py-2 font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:text-sm"
-              aria-label="Forget identity"
-              @click="forgetIdentity"
-            >
-              Forget me!
-            </button>
-          </div>
-        </div>
-      </template>
-    </PageCard>
+    <div class="bg-white border border-hairline-strong rounded-xl overflow-hidden">
+      <ListRow
+        title="Help"
+        meta="followalong@protonmail.com"
+        to="/help"
+        aria-label="Help"
+      />
+      <ListRow
+        title="Changelog"
+        meta="a feed you follow"
+        :to="CHANGELOG_PATH"
+        aria-label="Visit Changelog"
+      />
+    </div>
+
+    <button
+      type="button"
+      aria-label="Forget identity"
+      class="bg-danger-bg border border-danger-border rounded-xl px-4 py-3.5 flex items-center justify-between gap-3 text-left"
+      @click="forgetIdentity"
+    >
+      <span>
+        <span class="block text-[14px] font-bold text-danger">Forget this identity</span>
+        <span class="block text-meta text-ink-secondary mt-0.5">Removes all traces on this device</span>
+      </span>
+      <span class="text-meta font-semibold text-danger flex-none">Forget me</span>
+    </button>
   </div>
 </template>
 
 <script>
-import PageCard from '../../components/page-card/component.vue'
-import PageTitle from '../../components/page-title/component.vue'
+import ListRow from '../../components/list-row/component.vue'
+
+const CHANGELOG_PATH = '/https://changelog.followalong.com/feed.xml'
 
 export default {
   components: {
-    PageCard,
-    PageTitle
+    ListRow
   },
 
   props: ['app', 'identity'],
+
+  data: () => ({ CHANGELOG_PATH }),
+
+  computed: {
+    addonCount () {
+      return this.app.queries.addonsForIdentity(this.identity).length
+    }
+  },
 
   methods: {
     forgetIdentity () {

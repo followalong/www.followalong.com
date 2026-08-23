@@ -10,6 +10,7 @@ describe('Search for a feed', () => {
       fetch: responses([`<feed><title>${feedTitle}</title></feed>`])
     })
 
+    await app.click('[aria-label="Open search"]')
     await app.find('[aria-label="Search input"]').setValue('https://foo.bar/rss.xml')
     await app.submit('[aria-label="Search"]')
   })

@@ -21,6 +21,7 @@ describe('Set up an RSS proxy', () => {
       }
     })
 
+    await app.click('[aria-label="You"]')
     await app.click('[aria-label="Add-ons"]')
     await app.click('[aria-label="Go to marketplace"]')
     await app.click('[aria-label="Configure CORSAnywhere"]')

@@ -7,7 +7,6 @@ describe('Catch up on a signal', () => {
     app = await mountApp()
 
     await app.click('[aria-label="Visit Read"]')
-    await app.click('[aria-label="Show menu"]')
     await app.click('[aria-label="Catch up on signal"]')
   })
 

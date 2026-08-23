@@ -29,7 +29,7 @@ describe('See my feeds', () => {
       }
     })
 
-    await app.click('[aria-label="Following"]')
+    await app.click('[aria-label="Feeds"]')
   })
 
   story('shows the feeds I am following', () => {

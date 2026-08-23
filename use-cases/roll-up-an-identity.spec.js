@@ -6,7 +6,7 @@ describe('Roll up an identity', () => {
   beforeEach(async () => {
     app = await mountApp()
 
-    await app.click('[aria-label="Settings"]')
+    await app.click('[aria-label="You"]')
     await app.click('[aria-label="Roll up identity"]')
   })
 
@@ -31,7 +31,7 @@ describe('Roll up an identity', () => {
   })
 
   test('preserves the feeds', async () => {
-    await app.click('[aria-label="Following"]')
+    await app.click('[aria-label="Feeds"]')
     await app.click('[aria-label="Visit Changelog feed"]')
 
     expect(app.find('[aria-label="Page title"]').text()).toEqual('Changelog')
