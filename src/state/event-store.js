@@ -9,11 +9,6 @@ class EventStore {
     this._db = localForage.createInstance({ name })
     this._runners = runners
     this._version = version
-    // Values are written through the identity's cipher; keys stay in the
-    // clear because restore has to parse and sort by them.
-    this._encrypt = (data) => Promise.resolve(data)
-    this._decrypt = (data) => Promise.resolve(data)
-    this.undecryptable = 0
 
     this.eachCollectionName((collectionName) => {
       this[collectionName] = this[collectionName] || []
@@ -24,10 +19,7 @@ class EventStore {
     const event = new EventStoreEvent(collection, objectId || uuidv4(), action, data, time, version)
 
     this._runEvent(event)
-
-    // Encryption is async, the write already was, and track() is not — so the
-    // event is returned now and lands on disk a tick later, as before.
-    this._write(event)
+    this._db.setItem(event.key, event.toLocal())
 
     return event
   }
@@ -61,7 +53,7 @@ class EventStore {
       }
 
       imported.push(event)
-      this._write(event)
+      this._db.setItem(event.key, event.toLocal())
     })
 
     if (!imported.length) {
@@ -105,47 +97,17 @@ class EventStore {
       .find((item) => item.id === id)
   }
 
-  setCipher ({ encrypt, decrypt }) {
-    this._encrypt = encrypt
-    this._decrypt = decrypt
-
-    return this
-  }
-
-  // Re-persists every event through the current cipher. Nothing is deleted:
-  // each key is overwritten in place, so a failure part-way leaves a log that
-  // still reads, because decryption is decided per value.
-  rewriteAll () {
-    return Promise.all(this._events.map((event) => this._write(event)))
-  }
-
-  _write (event) {
-    return Promise.resolve(this._encrypt(event.toLocal()))
-      .then((value) => this._db.setItem(event.key, value))
-  }
-
   restore () {
     const events = []
 
-    this.undecryptable = 0
-
-    const stored = []
-
     return this._db
-      .iterate((value, key) => { stored.push({ key, value }) })
-      .then(() => Promise.all(stored.map(({ key, value }) => {
-        return Promise.resolve(this._decrypt(value))
-          .then((decoded) => {
-            const event = EventStoreEvent.from(key, decoded)
+      .iterate((value, key) => {
+        const event = EventStoreEvent.from(key, value)
 
-            if (event !== null) events.push(event)
-          })
-          .catch(() => {
-            // The value stays on disk untouched; it just cannot be read with
-            // the password we were given.
-            this.undecryptable++
-          })
-      })))
+        if (event !== null) {
+          events.push(event)
+        }
+      })
       .then(() => {
         events
           .sort(EventStore.SORT_BY_TIME)

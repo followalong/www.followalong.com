@@ -371,20 +371,6 @@ class Queries {
 
   // Events on disk that this session's password could not open. They are not
   // lost — they simply did not load, and saying so beats showing an empty app.
-  // True when there is data on this device that the password given this
-  // session did not open. Seeding a fresh identity in that state would make a
-  // locked-out user look like a brand-new one.
-  hasLockedData () {
-    return this.state.lockedDbIds().length > 0
-  }
-
-  // Counted across every store, not just the one in use: a locked identity
-  // sitting beside a working one would otherwise go unmentioned.
-  unreadableEvents () {
-    return this.state.lockedDbIds()
-      .reduce((total, dbId) => total + this.state.undecryptableFor(dbId), 0)
-  }
-
   backupContentsForIdentity (identity) {
     return {
       feeds: this.feedsForIdentity(identity).length,

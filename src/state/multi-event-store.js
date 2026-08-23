@@ -141,47 +141,21 @@ class MultipleEventStore extends EventStore {
       .find((item) => item)
   }
 
-  // `unlock` is given each identity's id before its log is read, so a cipher
-  // can be installed first — the password has to be known before the local
-  // log can be decrypted, not after.
-  restore (unlock) {
+  restore (...args) {
     return this._config
       .iterate((value, dbId) => {
         this._configs[dbId] = value || {}
         this._initDB(dbId)
       })
       .then(() => {
-        const ids = Object.keys(this._dbs)
+        const promises = []
 
-        return Promise.all(ids.map((dbId) => {
-          const cipher = unlock ? unlock(dbId) : null
+        for (const key in this._dbs) {
+          promises.push(this._dbs[key].restore(...args))
+        }
 
-          return Promise.resolve(cipher)
-            .then((c) => { if (c) this._dbs[dbId].setCipher(c) })
-            .catch(() => {})
-            .then(() => this._dbs[dbId].restore())
-        }))
+        return Promise.all(promises)
       })
-  }
-
-  setCipher (dbId, cipher) {
-    if (this._dbs[dbId]) this._dbs[dbId].setCipher(cipher)
-
-    return this
-  }
-
-  rewriteAll (dbId) {
-    return this._dbs[dbId] ? this._dbs[dbId].rewriteAll() : Promise.resolve()
-  }
-
-  // Stores that hold events this session's password could not open. Their
-  // data is intact; it simply did not load.
-  lockedDbIds () {
-    return Object.keys(this._dbs).filter((dbId) => this._dbs[dbId].undecryptable > 0)
-  }
-
-  undecryptableFor (dbId) {
-    return this._dbs[dbId] ? this._dbs[dbId].undecryptable : 0
   }
 
   _initDB (dbId) {

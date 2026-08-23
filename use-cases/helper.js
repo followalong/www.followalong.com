@@ -12,9 +12,9 @@ const mountApp = (options) => {
   return new Promise(async (resolve) => {
     options = options || {}
 
-    const store = options.store || new MultiEventStore(Math.random(), 'v2.1', runners)
+    const store = new MultiEventStore(Math.random(), 'v2.1', runners)
 
-    if (!options.store) await store.clear()
+    await store.clear()
 
     if (options.state) {
       for (const id in options.state) {
