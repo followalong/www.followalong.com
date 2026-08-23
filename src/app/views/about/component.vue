@@ -1,6 +1,6 @@
 <template>
-  <div class="p-4 md:px-6 md:py-5 flex flex-col gap-4 max-w-river md:mx-auto">
-    <article class="bg-white border border-hairline-strong rounded-xl p-4 md:p-5">
+  <div class="md:px-6 md:py-5 flex flex-col gap-4 max-w-river md:mx-auto">
+    <article class="bg-white border-y md:border border-hairline-strong md:rounded-xl p-4 md:p-5">
       <section
         v-for="(part, index) in PARTS"
         :key="part.title"
@@ -19,7 +19,7 @@
       </section>
     </article>
 
-    <p class="text-meta text-ink-muted">
+    <p class="px-4 md:px-0 text-meta text-ink-muted">
       Follow Along is open source.
       <a
         href="https://github.com/followalong/www.followalong.com"
