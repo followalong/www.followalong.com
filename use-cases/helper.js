@@ -47,6 +47,7 @@ const mountApp = (options) => {
         prompt: options.prompt || vi.fn(),
         keychainName: `keychain-${Math.random()}`,
         copyToClipboard: options.copyToClipboard || vi.fn(),
+        handoffHash: options.handoffHash || '',
         awsS3: options.awsS3 || (() => Promise.resolve({}))
       }
     })

@@ -1,5 +1,6 @@
 import VERSION from '../state/version.js'
 import { encrypt, decrypt } from '../queries/crypt.js'
+import { encodeHandoff } from '../queries/handoff.js'
 import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT_SIGNALS, SAVED_SIGNAL } from './seed.js'
 
 // An empty bucket is not a failure to read; anything else is. The difference
@@ -385,6 +386,33 @@ class Commands {
 
   copyIdentityToClipboard (identity) {
     return this.copyToClipboard(this.portableIdentity(identity))
+  }
+
+  // Everything else about the identity is already in the bucket, so the only
+  // thing that has to cross the room is how to open it. Small enough to be a
+  // picture, which is why this is not the clipboard copy.
+  handoffForIdentity (identity) {
+    const remote = this.queries.remoteAdapterForIdentity(identity)
+
+    if (!remote) return Promise.resolve('')
+
+    return this.keyForIdentity(identity)
+      .then((key) => encodeHandoff({ t: remote.type, d: remote.data, k: key || '' }))
+  }
+
+  // The other half: read the bucket the code points at and import what is in
+  // it. The identity's own add-ons ride in that log, so this device ends up
+  // configured to keep backing up without being told twice.
+  setUpFromHandoff (payload) {
+    if (!payload || !payload.t) {
+      return Promise.reject(new Error('That code is not a Follow Along setup.'))
+    }
+
+    const adapter = this.queries.adapterForAddonForIdentity(null, { type: payload.t, data: payload.d })
+
+    return Promise.resolve(adapter.get({}, decrypt(payload.k)))
+      .then((data) => this.importIdentity(data))
+      .then((identity) => this.keychain.addKnown(identity.id, payload.k).then(() => identity))
   }
 
   importIdentity (raw) {

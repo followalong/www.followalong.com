@@ -94,7 +94,10 @@ module.exports = {
       maxWidth: {
         // The whole app, at every size. There is no wider layout to fall into.
         app: '640px',
-        read: '470px'
+        read: '470px',
+        // Big enough that each module of a dense code is a few pixels across,
+        // which is what a phone camera needs to read one off a screen.
+        qr: '320px'
       },
       maxHeight: {
         sheet: '92vh'

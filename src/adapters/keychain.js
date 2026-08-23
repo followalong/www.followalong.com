@@ -52,6 +52,16 @@ class KeychainAdapter {
     })
   }
 
+  // A key that arrived from another device rather than from asking. Stored
+  // like the 'store' strategy, because the device it came from already made
+  // that choice for this identity and asking again would only be theatre.
+  addKnown (id, key) {
+    if (!key) return this.addNone(id)
+
+    return this._saveKeyInStore(id, key)
+      .then(() => this._saveKeyInMemory(id, key))
+  }
+
   addNone (id) {
     return new Promise((resolve, reject) => {
       this._saveKeyInStore(id, 'none')

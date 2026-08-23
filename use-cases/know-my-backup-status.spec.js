@@ -77,6 +77,26 @@ describe('Know my backup status', () => {
     })
   })
 
+  // 'off' is a description of having nowhere to sync to, so it cannot outlive
+  // somewhere being configured. It used to sit in the config until the next
+  // sync, and the page said "Not backed up" over a working bucket.
+  describe('With a remote just configured', () => {
+    let app
+
+    beforeEach(async () => {
+      app = await mountApp({
+        state: { abc123: { config: { syncStatus: 'off' }, data: withS3 } }
+      })
+
+      await app.click('[aria-label="You"]')
+    })
+
+    story('does not claim there is nowhere to back up', () => {
+      expect(app.vm.queries.syncStatusForIdentity(app.vm.identity).status).toEqual('idle')
+      expect(app.text()).not.toContain('Not backed up')
+    })
+  })
+
   describe('When the remote refuses', () => {
     let app
 

@@ -98,6 +98,14 @@
         </template>
       </ListRow>
       <ListRow
+        v-if="sync.status !== 'off'"
+        title="Set up another device"
+        meta="show it a code to scan"
+        action
+        aria-label="Show setup code"
+        @click="openHandoff"
+      />
+      <ListRow
         title="Paste an identity"
         meta="a copy from another device"
         action
@@ -243,6 +251,59 @@
     </Sheet>
 
     <Sheet
+      :open="handoffOpen"
+      title="Set up another device"
+      @close="handoffOpen = false"
+    >
+      <p class="text-body text-ink-secondary">
+        Point the other device's camera at this. It opens Follow Along there
+        and pulls this identity down from your backup, so nothing has to be
+        typed or pasted.
+      </p>
+
+      <QrCode
+        v-if="handoffLink"
+        :value="handoffLink"
+        alt="Setup code"
+        aria-label="Setup code"
+        class="mt-4"
+      />
+
+      <p class="mt-4 text-body text-danger">
+        Anyone who scans this can read your backup. Show it to your own camera,
+        do not photograph it for anyone else.
+      </p>
+
+      <TextField
+        :model-value="handoffLink"
+        readonly
+        multiline
+        :rows="3"
+        aria-label="Handoff link"
+        class="mt-3"
+        hint="The same thing as a link, for a device that cannot scan."
+      />
+
+      <p
+        v-if="handoffError"
+        class="mt-3 text-body text-danger"
+      >
+        {{ handoffError }}
+      </p>
+
+      <template #footer>
+        <Button
+          class="flex-1"
+          variant="secondary"
+          aria-label="Copy setup link"
+          @click="copyHandoff"
+        >
+          {{ handoffCopied ? 'Copied' : 'Copy the link' }}
+        </Button>
+      </template>
+    </Sheet>
+
+    <Sheet
       :open="restoreOpen"
       title="Paste an identity"
       @close="closeRestore"
@@ -282,6 +343,7 @@ import Button from '../../components/button/component.vue'
 import PageBody from '../../components/page-body/component.vue'
 import Card from '../../components/card/component.vue'
 import TextField from '../../components/text-field/component.vue'
+import QrCode from '../../components/qr-code/component.vue'
 
 const CHANGELOG_PATH = '/https://changelog.followalong.com/feed.xml'
 
@@ -312,7 +374,8 @@ export default {
     Button,
     PageBody,
     Card,
-    TextField
+    TextField,
+    QrCode
   },
 
   props: ['app', 'identity'],
@@ -322,6 +385,10 @@ export default {
     restoreOpen: false,
     restoreError: '',
     pasted: '',
+    handoffOpen: false,
+    handoffLink: '',
+    handoffError: '',
+    handoffCopied: false,
     encryptionOpen: false,
     strategy: 'none',
     STRATEGY_LABELS,
@@ -432,6 +499,24 @@ export default {
     copyIdentity () {
       return Promise.resolve(this.app.commands.copyIdentityToClipboard(this.identity))
         .then(() => { this.copied = true })
+        .catch(() => {})
+    },
+
+    openHandoff () {
+      this.handoffOpen = true
+      this.handoffError = ''
+      this.handoffCopied = false
+
+      return this.app.commands.handoffForIdentity(this.identity)
+        .then((setup) => {
+          this.handoffLink = setup ? `${window.location.origin}/#${setup}` : ''
+        })
+        .catch((e) => { this.handoffError = e.message })
+    },
+
+    copyHandoff () {
+      return Promise.resolve(this.app.commands.copyToClipboard(this.handoffLink))
+        .then(() => { this.handoffCopied = true })
         .catch(() => {})
     },
 

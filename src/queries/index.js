@@ -580,7 +580,9 @@ class Queries {
     if (!remote) return { status: 'off', at: 0, error: '', target: '' }
 
     return {
-      status: config.syncStatus || 'idle',
+      // 'off' describes having nowhere to sync to, so a remote being
+      // configured retires it, whatever the last run left behind.
+      status: !config.syncStatus || config.syncStatus === 'off' ? 'idle' : config.syncStatus,
       at: config.syncedAt || 0,
       error: config.syncError || '',
       target: remote.title || remote.type

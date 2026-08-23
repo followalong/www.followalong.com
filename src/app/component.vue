@@ -80,6 +80,35 @@
       />
     </PipPlayer>
 
+    <Sheet
+      :open="!!handoff"
+      title="Set up this device"
+      @close="handoff = null"
+    >
+      <p class="text-body text-ink-secondary">
+        This code came from another device that is backing up to
+        {{ handoff && handoff.d && handoff.d.bucket }}. Setting up reads that
+        backup and makes this device the same identity.
+      </p>
+
+      <p
+        v-if="handoffError"
+        class="mt-3 text-body text-danger"
+      >
+        {{ handoffError }}
+      </p>
+
+      <template #footer>
+        <Button
+          class="flex-1"
+          aria-label="Set it up"
+          @click="setUp"
+        >
+          {{ settingUp ? 'Setting up…' : 'Set it up' }}
+        </Button>
+      </template>
+    </Sheet>
+
     <!-- One nav, in one place, whatever the screen. -->
     <NavTabs
       on="surface"
@@ -93,6 +122,9 @@ import AppBar from './components/app-bar/component.vue'
 import NavTabs from './components/nav-tabs/component.vue'
 import SearchPanel from './components/search-panel/component.vue'
 import PipPlayer from './components/pip-player/component.vue'
+import Sheet from './components/sheet/component.vue'
+import Button from './components/button/component.vue'
+import { decodeHandoff } from '../queries/handoff.js'
 import Commands from '../commands/index.js'
 import MultiEventStore from '../state/multi-event-store.js'
 import VERSION from '../state/version.js'
@@ -123,7 +155,9 @@ export default {
     AppBar,
     NavTabs,
     SearchPanel,
-    PipPlayer
+    PipPlayer,
+    Sheet,
+    Button
   },
   props: {
     state: {
@@ -166,6 +200,12 @@ export default {
       type: String,
       default: KeychainAdapter.DEFAULT_NAME
     },
+    // Handed in by main.js, which takes it off the URL before the first
+    // navigation can lose it.
+    handoffHash: {
+      type: String,
+      default: ''
+    },
     // Loaded on demand: the SDK is far larger than the rest of the app, and
     // only identities syncing to a bucket ever need it.
     awsS3: {
@@ -200,6 +240,9 @@ export default {
       identity: null,
       pageTitle: '',
       searching: false,
+      handoff: decodeHandoff(this.handoffHash),
+      handoffError: '',
+      settingUp: false,
       playing: null,
       playHistory: [],
       playingEntries: {},
@@ -275,6 +318,23 @@ export default {
       })
   },
   methods: {
+    // The code carries the bucket's credentials, so it leaves the address bar
+    // the moment it has been used.
+    setUp () {
+      this.settingUp = true
+      this.handoffError = ''
+
+      return this.commands.setUpFromHandoff(this.handoff)
+        .then((identity) => {
+          this.handoff = null
+          this.setIdentity(identity)
+
+          return this.$router.replace('/')
+        })
+        .catch((e) => { this.handoffError = e.message })
+        .then(() => { this.settingUp = false })
+    },
+
     pollFeeds () {
       clearTimeout(POLL_TIMEOUT)
 
