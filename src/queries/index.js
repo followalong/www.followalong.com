@@ -4,7 +4,6 @@ import { ADAPTERS, None } from './addons.js'
 import SORT_BY_ORDER from './sorters/sort-by-order.js'
 import SORT_BY_TIME from './sorters/sort-by-time.js'
 import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
-import SORT_BY_TIME_AND_READ from './sorters/sort-by-time-and-read.js'
 import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
 import sanitizeContent from './presenters/sanitize-content.js'
 
@@ -77,13 +76,36 @@ class Queries {
     }
   }
 
+  // Derived reads are recomputed per render and each one walks every entry.
+  // Everything here is a pure function of the folded state, so it is cached
+  // against the store's revision and thrown away the moment an event lands.
+  _memo (identity, key, build) {
+    const revision = this.state.revisionFor(identity.id)
+
+    this._cache = this._cache || {}
+
+    const slot = this._cache[identity.id] = this._cache[identity.id] || { revision: -1, values: {} }
+
+    if (slot.revision !== revision) {
+      slot.revision = revision
+      slot.values = {}
+    }
+
+    if (!(key in slot.values)) {
+      slot.values[key] = build()
+    }
+
+    return slot.values[key]
+  }
+
   allIdentities () {
     return this.state.findAll(null, 'identities')
   }
 
   entriesForIdentity (identity, maxOldItems = null) {
-    let entries = this.state.findAll(identity.id, 'entries')
-      .sort(SORT_BY_TIME_AND_READ(this))
+    let entries = this._memo(identity, 'entries', () => {
+      return this.sortEntries(this.state.findAll(identity.id, 'entries'))
+    })
 
     if (maxOldItems) {
       let oldItems = 0
@@ -103,33 +125,56 @@ class Queries {
   }
 
   entriesForSignal (identity, signal) {
-    let entries = this.entriesForIdentity(identity)
-    let filter
-    let sort
+    return this._memo(identity, `signal:${this.keyForSignal(signal)}`, () => {
+      const filter = this.signalFunction(signal, 'filter')
+      const sort = this.signalFunction(signal, 'sort')
 
-    if (signal && signal.data && signal.data.filter) {
-      try {
-        filter = eval(signal.data.filter)(this) // eslint-disable-line no-eval
-      } catch (e) { }
+      // Already ordered by entriesForIdentity, so only a signal with its own
+      // comparator re-sorts, and it copies rather than reordering the cache.
+      let entries = this.entriesForIdentity(identity)
 
-      if (typeof filter === 'function') {
+      if (filter) {
         entries = entries.filter(filter)
       }
+
+      if (sort) {
+        entries = entries.slice(0).sort(sort)
+      }
+
+      return entries
+    })
+  }
+
+  keyForSignal (signal) {
+    if (!signal) {
+      return 'none'
     }
 
-    if (signal && signal.data && signal.data.sort) {
+    return signal.id || this.permalinkForSignal(signal) || 'unknown'
+  }
+
+  // Compiling the same source on every render was a measurable slice of the
+  // sidebar, so each distinct source is compiled once.
+  signalFunction (signal, attr) {
+    const source = signal && signal.data && signal.data[attr]
+
+    if (!source) {
+      return null
+    }
+
+    this._compiled = this._compiled || {}
+
+    if (!(source in this._compiled)) {
+      let func = null
+
       try {
-        sort = eval(signal.data.sort)(this) // eslint-disable-line no-eval
+        func = eval(source)(this) // eslint-disable-line no-eval
       } catch (e) { }
 
-      if (typeof sort === 'function') {
-        entries = entries.sort(sort)
-      }
-    } else {
-      entries = entries.sort(SORT_BY_TIME_AND_READ(this))
+      this._compiled[source] = typeof func === 'function' ? func : null
     }
 
-    return entries
+    return this._compiled[source]
   }
 
   cardsForIdentityForSignal (identity, signal) {
@@ -146,15 +191,61 @@ class Queries {
   }
 
   unreadEntriesForSignalLength (identity, signal) {
-    return this.entriesForSignal(identity, signal)
-      .filter((entry) => !this.isEntryRead(entry))
-      .length
+    return this._memo(identity, `unread:${this.keyForSignal(signal)}`, () => {
+      let count = 0
+
+      this.entriesForSignal(identity, signal).forEach((entry) => {
+        if (!this.isEntryRead(entry)) count++
+      })
+
+      return count
+    })
   }
 
   entriesForFeed (identity, feed) {
-    return this.state.findAll(identity.id, 'entries')
-      .filter((e) => e.feedId === feed.id)
-      .sort(SORT_BY_TIME_AND_READ(this))
+    return this._memo(identity, `entriesForFeed:${feed.id}`, () => {
+      // The index is built off the raw collection, so deleted entries are
+      // filtered here rather than by the state layer.
+      return this.sortEntries(this.rawEntriesForFeed(identity, feed).filter((entry) => !entry._deleted))
+    })
+  }
+
+  // Unsorted and including deleted, straight off the incremental index.
+  // Callers that do not care about order use this and skip the sort.
+  rawEntriesForFeed (identity, feed) {
+    return this._entryIndex(identity).byFeed.get(feed.id) || []
+  }
+
+  // Entries are only ever appended, so this walks what is new since it last
+  // ran rather than rebuilding. That matters because fetching a feed writes an
+  // event per entry, and a rebuild-per-write is quadratic.
+  _entryIndex (identity) {
+    this._indexes = this._indexes || {}
+
+    const raw = this.state.rawCollection(identity.id, 'entries')
+    const index = this._indexes[identity.id] = this._indexes[identity.id] || { cursor: 0, byFeed: new Map(), byKey: new Map() }
+
+    // A re-fold (import, reset) replaces the array wholesale, so start over.
+    if (index.cursor > raw.length) {
+      index.cursor = 0
+      index.byFeed = new Map()
+      index.byKey = new Map()
+    }
+
+    for (let i = index.cursor; i < raw.length; i++) {
+      const entry = raw[i]
+      const bucket = index.byFeed.get(entry.feedId)
+
+      bucket ? bucket.push(entry) : index.byFeed.set(entry.feedId, [entry])
+
+      try {
+        index.byKey.set(`${entry.feedId}\u0000${this.keyForEntry(entry)}`, entry)
+      } catch (e) { }
+    }
+
+    index.cursor = raw.length
+
+    return index
   }
 
   lastEntryForFeed (identity, feed) {
@@ -205,8 +296,9 @@ class Queries {
   }
 
   entryForFeedForIdentity (identity, feed, key) {
-    return this.entriesForFeed(identity, feed)
-      .find((e) => this.keyForEntry(e) === key)
+    const entry = this._entryIndex(identity).byKey.get(`${feed.id}\u0000${key}`)
+
+    return entry && !entry._deleted ? entry : undefined
   }
 
   feedsForIdentity (identity) {
@@ -329,6 +421,18 @@ class Queries {
     return entries.filter((entry) => !this.isEntryRead(entry))
   }
 
+  // Unread first, then newest first. Decorated so each entry's date is derived
+  // once rather than on both sides of every comparison.
+  sortEntries (entries) {
+    return entries
+      .map((entry) => ({ entry, read: this.isEntryRead(entry), time: this.dateForEntry(entry).getTime() || 0 }))
+      .sort((a, b) => {
+        if (a.read !== b.read) return a.read ? 1 : -1
+        return b.time - a.time
+      })
+      .map((decorated) => decorated.entry)
+  }
+
   sortEntriesByTime (entries) {
     return entries.slice(0).sort(SORT_BY_TIME(this))
   }
@@ -431,12 +535,14 @@ class Queries {
   }
 
   signalsForIdentity (identity) {
-    const signals = this.signalsForIdentityForProjection(identity)
-    const addonAdaptersWithSignals = this.addonAdaptersForActionForIdentity(identity, 'signals')
+    return this._memo(identity, 'signals', () => {
+      const signals = this.signalsForIdentityForProjection(identity)
+      const addonAdaptersWithSignals = this.addonAdaptersForActionForIdentity(identity, 'signals')
 
-    return addonAdaptersWithSignals
-      .reduce((arr, addon) => arr.concat(addon.signals()), signals)
-      .sort(SORT_BY_ORDER)
+      return addonAdaptersWithSignals
+        .reduce((arr, addon) => arr.concat(addon.signals()), signals.slice(0))
+        .sort(SORT_BY_ORDER)
+    })
   }
 
   signalsForIdentityForProjection (identity) {
@@ -489,8 +595,10 @@ class Queries {
   }
 
   addonAdaptersForIdentity (identity) {
-    return this.state.findAll(identity.id, 'addons')
-      .map((addon) => this.adapterForAddonForIdentity(identity, addon))
+    return this._memo(identity, 'addonAdapters', () => {
+      return this.state.findAll(identity.id, 'addons')
+        .map((addon) => this.adapterForAddonForIdentity(identity, addon))
+    })
   }
 
   addonAdaptersForActionForIdentity (identity, action) {
@@ -554,9 +662,12 @@ class Queries {
   }
 
   lastReadDateForFeed (identity, feed) {
-    return this.entriesForFeed(identity, feed)
-      .filter((entry) => this.isEntryRead(entry))
-      .reduce((latest, entry) => Math.max(latest, this.dateForEntry(entry).getTime()), 0)
+    return this.rawEntriesForFeed(identity, feed)
+      .reduce((latest, entry) => {
+        if (entry._deleted || !this.isEntryRead(entry)) return latest
+
+        return Math.max(latest, this.dateForEntry(entry).getTime() || 0)
+      }, 0)
   }
 }
 

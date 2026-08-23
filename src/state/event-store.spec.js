@@ -161,3 +161,55 @@ describe('MultiEventStore config', () => {
     expect(store.getConfig(dbId)).toEqual({})
   })
 })
+
+describe('EventStore indexing', () => {
+  let store
+
+  beforeEach(async () => {
+    store = new EventStore(`test-${Math.random()}`, 'v1', RUNNERS)
+    await store.reset()
+  })
+
+  test('finds by id without scanning the collection', () => {
+    for (let i = 0; i < 100; i++) store.track('feeds', `f${i}`, 'create', { url: `u${i}` })
+
+    expect(store.findByIdWithDeleted('feeds', 'f42').url).toEqual('u42')
+    expect(store.findById('feeds', 'f42').url).toEqual('u42')
+  })
+
+  test('keeps the index correct across update and delete', () => {
+    store.track('feeds', 'abc', 'create', { url: 'first' })
+    store.track('feeds', 'abc', 'update', { url: 'second' })
+
+    expect(store.findById('feeds', 'abc').url).toEqual('second')
+
+    store.track('feeds', 'abc', 'delete')
+
+    expect(store.findById('feeds', 'abc')).toBeUndefined()
+    expect(store.findByIdWithDeleted('feeds', 'abc')._deleted).toBe(true)
+  })
+
+  test('rebuilds the index when the log is re-folded', async () => {
+    store.track('feeds', 'abc', 'create', { url: 'local' }, 10)
+    store.importRaw('5/feeds/xyz/create/v1 {"url":"remote"}')
+
+    expect(store.findById('feeds', 'xyz').url).toEqual('remote')
+    expect(store.findById('feeds', 'abc').url).toEqual('local')
+  })
+
+  test('clears the index on reset', async () => {
+    store.track('feeds', 'abc', 'create', { url: 'first' })
+    await store.reset()
+
+    expect(store.findById('feeds', 'abc')).toBeUndefined()
+    expect(store.findAll('feeds').length).toEqual(0)
+  })
+
+  test('bumps a revision on every event so readers can cache', () => {
+    const before = store.revision
+
+    store.track('feeds', 'abc', 'create', { url: 'first' })
+
+    expect(store.revision).toBeGreaterThan(before)
+  })
+})
