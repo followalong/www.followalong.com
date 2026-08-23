@@ -498,6 +498,13 @@ class Queries {
     return objHasNewData(entry.data, newData)
   }
 
+  savedEntriesForIdentity (identity) {
+    return this._memo(identity, 'saved', () => {
+      return this.entriesForIdentity(identity)
+        .filter((entry) => this.isEntrySaved(entry))
+    })
+  }
+
   isEntrySaved (entry) {
     return !!(entry && entry.savedAt)
   }

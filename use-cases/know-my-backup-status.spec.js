@@ -44,7 +44,7 @@ describe('Know my backup status', () => {
         state: { abc123: { config: {}, data: withS3 } },
         awsS3: () => Promise.resolve({
           putObject: (params, cb) => { save(params); cb(null) },
-          getObject: (params, cb) => cb(new Error('no data'))
+          getObject: (params, cb) => cb(new Error('NoSuchKey'))
         })
       })
 
@@ -85,7 +85,7 @@ describe('Know my backup status', () => {
         state: { abc123: { config: {}, data: withS3 } },
         awsS3: () => Promise.resolve({
           putObject: (params, cb) => cb(new Error('Access denied')),
-          getObject: (params, cb) => cb(new Error('no data'))
+          getObject: (params, cb) => cb(new Error('NoSuchKey'))
         })
       })
 
