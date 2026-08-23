@@ -147,7 +147,7 @@ export default {
     },
 
     kind () {
-      return { video: 'Watch', audio: 'Listen', text: 'Read' }[this.media] || ''
+      return { video: 'Watch', audio: 'Listen' }[this.media] || ''
     },
 
     readerMeta () {

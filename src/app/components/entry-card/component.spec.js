@@ -87,4 +87,9 @@ describe('EntryCard', () => {
 
     expect(wrapper.emitted('play')).toHaveLength(1)
   })
+
+  test('steps back once it is done', () => {
+    expect(card({ done: true }).get('article').classes()).toContain('opacity-70')
+    expect(card().get('article').classes()).not.toContain('opacity-70')
+  })
 })

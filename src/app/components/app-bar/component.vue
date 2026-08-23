@@ -1,5 +1,5 @@
 <template>
-  <header class="bg-chrome">
+  <header class="bg-chrome sticky top-0 z-40">
     <div class="max-w-app px-4 py-3 md:px-6 md:py-2.5 flex items-center gap-3 md:gap-4">
       <div
         data-bar-slot

@@ -1,5 +1,5 @@
 <template>
-  <article class="bg-white border-y md:border border-hairline rounded-none md:rounded-card overflow-hidden">
+  <article :class="`bg-white border-y md:border border-hairline rounded-none md:rounded-card overflow-hidden ${done ? 'opacity-70' : ''}`">
     <slot name="lead">
       <button
         v-if="media === 'video'"

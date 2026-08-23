@@ -3,7 +3,7 @@ import { describe, test, expect } from 'vitest'
 import SignalChips from './component.vue'
 
 const SIGNALS = [
-  { id: 'a', permalink: 'home', title: 'Home' },
+  { id: 'a', permalink: 'home', title: 'Home', unread: 8 },
   { id: 'b', permalink: 'read', title: 'Read' },
   { id: 'c', permalink: 'done', title: 'Done' }
 ]
@@ -12,7 +12,8 @@ const app = {
   queries: {
     signalsForIdentity: () => SIGNALS,
     permalinkForSignal: (signal) => signal.permalink,
-    titleForSignal: (signal) => signal.title
+    titleForSignal: (signal) => signal.title,
+    unreadEntriesForSignalLength: (identity, signal) => signal.unread || 0
   }
 }
 
@@ -52,5 +53,12 @@ describe('SignalChips', () => {
     await wrapper.get('[aria-label="Visit Done"]').trigger('click')
 
     expect(wrapper.push).toEqual(['/signals/done'])
+  })
+
+  test('shows how much is waiting, and nothing when nothing is', () => {
+    const counts = chips().findAll('[data-chip-count]')
+
+    expect(counts).toHaveLength(1)
+    expect(counts[0].text()).toEqual('8')
   })
 })

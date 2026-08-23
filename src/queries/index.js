@@ -165,6 +165,13 @@ class Queries {
       .sort(SORT_BY_TIME_AND_READ(this))
   }
 
+  // What the Feeds page is actually for: "has this one got anything new?"
+  unreadEntriesForFeedLength (identity, feed) {
+    return this.entriesForFeed(identity, feed)
+      .filter((entry) => !this.isEntryRead(entry))
+      .length
+  }
+
   lastEntryForFeed (identity, feed) {
     return this.entriesForFeed(identity, feed)[0]
   }

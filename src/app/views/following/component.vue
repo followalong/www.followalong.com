@@ -7,7 +7,7 @@
         :title="app.queries.titleForFeed(feed)"
         :meta="metaFor(feed)"
         :to="`/${app.queries.urlForFeed(feed)}`"
-        :muted="app.queries.isFeedPaused(feed)"
+        :muted="!unreadFor(feed)"
         :aria-label="`Visit ${app.queries.titleForFeed(feed)} feed`"
       >
         <template #leading>
@@ -23,6 +23,13 @@
               class="text-field font-bold text-ink-subtle"
             >{{ (app.queries.titleForFeed(feed) || '?').trim().charAt(0).toUpperCase() }}</span>
           </span>
+        </template>
+
+        <template #trailing>
+          <span
+            v-if="unreadFor(feed)"
+            class="flex-none rounded-pill bg-accent px-2 py-0.5 text-tiny font-bold text-ink"
+          >{{ unreadFor(feed) }} new</span>
         </template>
       </ListRow>
     </div>
@@ -47,21 +54,32 @@ export default {
   props: ['app', 'identity'],
 
   computed: {
+    // Feeds with something waiting come first: the question this page answers
+    // is "what should I open?", not "what am I subscribed to?".
     feeds () {
       return this.app.queries.feedsForIdentity(this.identity)
+        .slice()
+        .sort((a, b) => this.unreadFor(b) - this.unreadFor(a))
     }
   },
 
   methods: {
+    unreadFor (feed) {
+      return this.app.queries.unreadEntriesForFeedLength(this.identity, feed)
+    },
+
     metaFor (feed) {
       if (this.app.queries.isFeedPaused(feed)) return 'Paused'
 
-      const count = this.app.queries.entriesForFeed(this.identity, feed).length
-      const last = this.app.queries.niceDateForEntry(
-        this.app.queries.lastEntryForFeed(this.identity, feed)
-      )
+      if (!this.unreadFor(feed)) {
+        const last = this.app.queries.niceDateForEntry(
+          this.app.queries.lastEntryForFeed(this.identity, feed)
+        )
 
-      return last ? `${count} items · last ${last}` : `${count} items`
+        return last ? `Nothing new · last ${last}` : 'Nothing new'
+      }
+
+      return `${this.app.queries.entriesForFeed(this.identity, feed).length} items`
     }
   }
 }

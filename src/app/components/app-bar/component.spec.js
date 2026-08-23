@@ -15,6 +15,9 @@ describe('AppBar', () => {
     const wrapper = bar()
 
     expect(wrapper.get('header').classes()).toContain('bg-chrome')
+    // Stays put while the river scrolls under it.
+    expect(wrapper.get('header').classes()).toContain('sticky')
+    expect(wrapper.get('header').classes()).toContain('top-0')
     expect(wrapper.get('h1').classes()).toContain('text-title')
     expect(wrapper.get('h1').classes()).toContain('font-extrabold')
     expect(wrapper.text()).toContain('Home')
