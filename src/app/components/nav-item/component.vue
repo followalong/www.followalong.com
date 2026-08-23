@@ -34,8 +34,8 @@ const ICONS = {
 // The same item sits on the teal bar (tablet) and on white (mobile tabs);
 // only what it must contrast against changes.
 const ICON_REST = { chrome: 'text-chrome-dim', surface: 'text-inactive' }
-const LABEL_REST = { chrome: 'text-chrome-muted font-semibold', surface: 'text-ink-subtle font-semibold' }
-const LABEL_ACTIVE = { chrome: 'text-white font-bold', surface: 'text-primary font-bold' }
+const LABEL_REST = { chrome: 'text-chrome-muted font-medium', surface: 'text-ink-subtle font-medium' }
+const LABEL_ACTIVE = { chrome: 'text-white font-semibold', surface: 'text-primary font-semibold' }
 
 export default {
   props: {

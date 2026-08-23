@@ -13,11 +13,11 @@
         <span class="h-11 w-11 rounded-full bg-ink flex items-center justify-center text-white">
           <svg
             class="h-5 w-5 ml-0.5"
-            viewBox="0 0 16 16"
+            viewBox="0 0 20 20"
             fill="currentColor"
             aria-hidden="true"
           >
-            <path d="M5 3v10l8-5z" />
+            <path d="M7 5v10l8-5z" />
           </svg>
         </span>
       </button>
@@ -89,12 +89,12 @@
             @click="$emit('play')"
           >
             <svg
-              class="h-3 w-3 ml-0.5"
-              viewBox="0 0 16 16"
+              class="h-icon w-icon ml-0.5"
+              viewBox="0 0 20 20"
               fill="currentColor"
               aria-hidden="true"
             >
-              <path d="M5 3v10l8-5z" />
+              <path d="M7 5v10l8-5z" />
             </svg>
           </button>
           <span class="flex-1 h-1 rounded-sm bg-inactive-track">

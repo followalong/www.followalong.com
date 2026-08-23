@@ -1,51 +1,45 @@
 <template>
   <header class="bg-chrome sticky top-0 z-40">
-    <div class="max-w-app px-4 py-3 md:px-6 md:py-2.5 flex items-center gap-3 md:gap-4">
-      <div
-        data-bar-slot
-        class="h-slot w-slot flex-none"
+    <div class="max-w-app px-4 md:px-6 flex items-stretch gap-3 md:gap-4">
+      <router-link
+        v-if="back"
+        data-bar-back
+        :to="back"
+        aria-label="Back"
+        class="flex-none flex items-center"
       >
-        <router-link
-          v-if="back"
-          data-bar-back
-          :to="back"
-          aria-label="Back"
-          class="h-slot w-slot rounded-full bg-white/10 flex items-center justify-center text-chrome-icon text-base font-bold"
-        >
+        <span class="h-slot w-slot rounded-full bg-white/10 flex items-center justify-center text-chrome-icon text-base font-bold">
           ←
-        </router-link>
-        <router-link
-          v-else
-          data-bar-logo
-          to="/"
-          aria-label="Follow Along home"
-          class="block h-slot w-slot"
-        >
-          <img
-            :src="logoIcon"
-            class="h-slot w-slot"
-            alt="Follow Along"
-          >
-        </router-link>
-      </div>
+        </span>
+      </router-link>
 
-      <h1
-        aria-label="Page title"
-        class="text-title font-extrabold text-white flex-1 min-w-0 truncate"
+      <!-- Logo and title are one target, the full height of the bar. -->
+      <router-link
+        data-bar-home
+        to="/"
+        aria-label="Follow Along home"
+        class="flex-1 min-w-0 flex items-center gap-3 py-3 md:py-2.5 -ml-2 pl-2 rounded-nav"
       >
-        <router-link
-          to="/"
-          class="block truncate"
+        <img
+          v-if="!back"
+          data-bar-logo
+          :src="logoIcon"
+          class="h-slot w-slot flex-none"
+          alt=""
+        >
+        <h1
+          aria-label="Page title"
+          class="text-title font-semibold text-white min-w-0 truncate"
         >
           {{ title }}
-        </router-link>
-      </h1>
+        </h1>
+      </router-link>
 
       <slot name="nav" />
 
       <div
         data-bar-slot
-        class="h-slot w-slot flex-none flex items-center justify-end"
+        class="h-slot w-slot flex-none self-center flex items-center justify-end"
       >
         <slot name="action" />
       </div>

@@ -19,18 +19,23 @@ describe('AppBar', () => {
     expect(wrapper.get('header').classes()).toContain('sticky')
     expect(wrapper.get('header').classes()).toContain('top-0')
     expect(wrapper.get('h1').classes()).toContain('text-title')
-    expect(wrapper.get('h1').classes()).toContain('font-extrabold')
+    expect(wrapper.get('h1').classes()).toContain('font-semibold')
     expect(wrapper.text()).toContain('Home')
   })
 
-  test('holds both 34px slots open so the title never shifts', () => {
-    const slots = bar().findAll('[data-bar-slot]')
+  test('keeps the action slot open so the title never shifts', () => {
+    const slot = bar().get('[data-bar-slot]')
 
-    expect(slots).toHaveLength(2)
-    slots.forEach((slot) => {
-      expect(slot.classes()).toContain('h-slot')
-      expect(slot.classes()).toContain('w-slot')
-    })
+    expect(slot.classes()).toContain('h-slot')
+    expect(slot.classes()).toContain('w-slot')
+  })
+
+  test('makes the logo and title one target, the height of the bar', () => {
+    const home = bar().get('[data-bar-home]')
+
+    expect(home.find('[data-bar-logo]').exists()).toBe(true)
+    expect(home.find('h1').exists()).toBe(true)
+    expect(home.classes()).toContain('flex-1')
   })
 
   test('shows the logo mark on a top-level page', () => {
