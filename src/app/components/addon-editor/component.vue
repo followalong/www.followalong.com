@@ -1,136 +1,128 @@
 <template>
-  <PageCard>
-    <template #title>
-      <div>
-        <p class="font-medium text-gray-900">
-          {{ addon.title }}
-          <span
-            v-for="label in app.queries.labelsForAddon(addon)"
-            :key="`${addon.id}-label-${label}`"
-            class="inline-flex items-center ml-2 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
-            v-html="label"
-          />
-        </p>
-        <p
-          class="mt-1 text-sm text-gray-500"
-        >
-          {{ addon.id ? addon.preview : '' }}
-        </p>
-      </div>
-    </template>
-    <template #meta>
-      <div>
-        <button
-          :aria-label="`Configure ${addonKey}`"
-          class="block float-right rounded-md border border-transparent bg-indigo-100 -m-2 px-4 py-2 font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:text-sm ml-1"
-          @click="modalOpen = true"
-        >
-          {{ buttonText }}
-        </button>
-      </div>
-    </template>
-    <template #content>
-      <div
-        class="prose"
-        v-html="app.queries.sanitizeCopy(addon.description)"
-      />
-      <Modal
-        v-if="modalOpen"
-        :app="app"
-        :identity="identity"
-        :title="`${addon.title}`"
+  <div class="bg-white border-y md:border border-hairline md:rounded-card p-4 md:p-[18px]">
+    <div class="flex items-center gap-2">
+      <h2 class="flex-1 text-[14.5px] font-bold text-ink">
+        {{ addon.title }}
+      </h2>
+      <StatusPill
+        v-for="label in app.queries.labelsForAddon(addon)"
+        :key="`${addon.id}-label-${label}`"
+        status="tag"
       >
-        <template #content>
-          <form
-            class="space-y-6"
-            :aria-label="`Save ${addonKey}`"
-            @submit.prevent="save"
-          >
-            <div
-              class="prose"
-              v-html="app.queries.sanitizeCopy(addon.description)"
-            />
-            <div
-              v-for="(field, key) in addon.fields"
-              :key="`field-${key}`"
-            >
-              <label
-                :for="`input-${key}`"
-                class="block text-sm font-medium text-gray-700"
-                v-html="field.label"
-              />
-              <div class="mt-1">
-                <input
-                  :id="`input-${key}`"
-                  v-model="newAdapterConfig.data[key]"
-                  :aria-label="`Configure ${addonKey} ${key}`"
-                  :name="`input-${key}`"
-                  :type="field.type"
-                  :autocomplete="field.autocomplete"
-                  :required="field.required"
-                  :placeholder="field.placeholder"
-                  :min="field.min"
-                  :max="field.max"
-                  class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500"
-                >
-              </div>
-            </div>
+        <span v-html="label" />
+      </StatusPill>
+    </div>
 
-            <div class="sm:flex justify-between">
-              <div>
-                <a
-                  v-if="addon.id"
-                  href="javascript:;"
-                  class="mb-4 sm:mb-0 inline-flex w-full justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                  @click="uninstall"
-                >
-                  Uninstall
-                </a>
-              </div>
-              <div class="sm:flex sm:flex-row-reverse">
-                <button
-                  v-if="!addon.id || hasFields"
-                  type="submit"
-                  class="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:ml-3 sm:w-auto"
-                >
-                  {{ submitText }}
-                </button>
-                <button
-                  type="button"
-                  class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:mt-0 sm:ml-3 sm:w-auto"
-                  @click="modalOpen = false"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </form>
-        </template>
-        <template #actions />
-      </Modal>
-    </template>
-  </PageCard>
+    <p class="text-chip text-ink-secondary mt-1.5 leading-snug">
+      {{ addon.id ? addon.preview : '' }}
+    </p>
+
+    <div class="flex gap-2 mt-3">
+      <StatusPill
+        v-if="addon.id"
+        status="installed"
+        class="!rounded-lg !px-3 !py-1.5 !text-chip"
+      >
+        Installed ✓
+      </StatusPill>
+
+      <Button
+        :variant="addon.id ? 'secondary' : 'primary'"
+        :aria-label="`Configure ${addonKey}`"
+        class="!py-1.5 !px-3 !text-chip"
+        @click="modalOpen = true"
+      >
+        {{ buttonText }}
+      </Button>
+    </div>
+
+    <Sheet
+      :open="modalOpen"
+      :title="addon.title"
+      @close="modalOpen = false"
+    >
+      <form
+        :id="formId"
+        class="flex flex-col gap-4"
+        :aria-label="`Save ${addonKey}`"
+        @submit.prevent="save"
+      >
+        <div
+          class="prose prose-sm"
+          v-html="app.queries.sanitizeCopy(addon.description)"
+        />
+
+        <div
+          v-for="(field, key) in addon.fields"
+          :key="`field-${key}`"
+        >
+          <label
+            :for="`input-${key}`"
+            class="block text-[12px] font-bold tracking-wide uppercase text-ink-subtle"
+            v-html="field.label"
+          />
+          <input
+            :id="`input-${key}`"
+            v-model="newAdapterConfig.data[key]"
+            :aria-label="`Configure ${addonKey} ${key}`"
+            :name="`input-${key}`"
+            :type="field.type"
+            :autocomplete="field.autocomplete"
+            :required="field.required"
+            :placeholder="field.placeholder"
+            :min="field.min"
+            :max="field.max"
+            class="mt-2 block w-full rounded-field border border-hairline-strong bg-white px-3 py-3 text-body text-ink placeholder:text-ink-subtle outline-none focus:border-primary"
+          >
+        </div>
+      </form>
+
+      <template #footer>
+        <Button
+          v-if="!addon.id || hasFields"
+          type="submit"
+          :form="formId"
+          class="flex-1"
+          @click="save"
+        >
+          {{ submitText }}
+        </Button>
+        <Button
+          v-if="addon.id"
+          variant="destructive"
+          @click="uninstall"
+        >
+          Uninstall
+        </Button>
+      </template>
+    </Sheet>
+  </div>
 </template>
 
 <script>
-import Modal from '../../components/modal/component.vue'
-import PageCard from '../../components/page-card/component.vue'
+import Sheet from '../sheet/component.vue'
+import Button from '../button/component.vue'
+import StatusPill from '../status-pill/component.vue'
 
 export default {
   components: {
-    Modal,
-    PageCard
+    Sheet,
+    Button,
+    StatusPill
   },
   props: ['app', 'identity', 'addon', 'buttonText', 'submitText'],
   data () {
     return {
       modalOpen: false,
-      newAdapterConfig: {}
+      newAdapterConfig: { data: {} }
     }
   },
   computed: {
     addonKey () {
       return this.addon.id || this.addon.type
+    },
+    formId () {
+      return `addon-form-${this.addonKey}`
     },
     hasFields () {
       return Object.keys(this.addon.fields).length

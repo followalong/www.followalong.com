@@ -1,6 +1,6 @@
 import { mountApp, describe, story, event } from './helper.js'
 
-describe('Mark entry as read', () => {
+describe('Read a long entry', () => {
   const entryId = '6363'
 
   let app
@@ -20,19 +20,23 @@ describe('Mark entry as read', () => {
       }
     })
 
-    expect(app.find(`[aria-label="Content for ${entryId}"]`).element.className).toContain('max-h-48')
+    expect(app.find(`[aria-label="Content for ${entryId}"]`).exists()).toEqual(false)
 
     await app.click(`[aria-label="Toggle entry content ${entryId}"]`)
   })
 
-  story('shows more content', () => {
-    expect(app.find(`[aria-label="Content for ${entryId}"]`).element.className).not.toContain('max-h-48')
-    expect(app.find(`[aria-label="Toggle entry content ${entryId}"]`).text()).toEqual('Mark as read')
+  story('opens the reader with the full content', () => {
+    expect(app.find(`[aria-label="Content for ${entryId}"]`).text())
+      .toContain('This is an entry that has long content.')
   })
 
-  describe('Collapsing an item', () => {
+  describe('Finishing the entry', () => {
     beforeEach(async () => {
-      await app.click(`[aria-label="Toggle entry content ${entryId}"]`)
+      await app.click('[data-reader-done]')
+    })
+
+    story('closes the reader', () => {
+      expect(app.find(`[aria-label="Content for ${entryId}"]`).exists()).toEqual(false)
     })
 
     event('entries.markRead', {

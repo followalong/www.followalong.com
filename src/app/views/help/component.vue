@@ -1,40 +1,23 @@
 <template>
-  <div>
-    <PageTitle title="Help">
-      <template #description>
-        <p>Get support for Follow Along</p>
-      </template>
-    </PageTitle>
-
-    <PageCard>
-      <template #title>
-        <p class="font-medium text-gray-900">
-          Contact us via email
-        </p>
-      </template>
-      <template
-        #content
-      >
-        <div class="prose">
-          <p>
-            Email us at followalong@protonmail.com for a quick response.
-          </p>
-        </div>
-      </template>
-    </PageCard>
+  <div class="p-4 md:p-6 flex flex-col gap-4 max-w-[560px]">
+    <div class="bg-white border border-hairline-strong rounded-xl p-4 md:p-5">
+      <h2 class="text-[14px] font-bold text-ink">
+        Contact us via email
+      </h2>
+      <p class="text-body text-ink-secondary mt-1.5">
+        Email us at
+        <a
+          href="mailto:followalong@protonmail.com"
+          class="text-primary font-semibold"
+        >followalong@protonmail.com</a>
+        for a quick response.
+      </p>
+    </div>
   </div>
 </template>
 
 <script>
-import PageCard from '../../components/page-card/component.vue'
-import PageTitle from '../../components/page-title/component.vue'
-
 export default {
-  components: {
-    PageCard,
-    PageTitle
-  },
-
   props: ['app', 'identity']
 }
 </script>

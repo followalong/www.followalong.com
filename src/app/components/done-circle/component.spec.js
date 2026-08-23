@@ -17,7 +17,7 @@ describe('DoneCircle', () => {
 
     expect(el.classes()).toContain('border-inactive')
     expect(el.attributes('aria-pressed')).toEqual('false')
-    expect(el.attributes('aria-label')).toEqual('Mark as done')
+    expect(el.attributes('aria-label')).toEqual('Mark as read')
   })
 
   test('fills with the following colour once done', () => {
@@ -25,7 +25,13 @@ describe('DoneCircle', () => {
 
     expect(el.classes()).toContain('bg-following')
     expect(el.attributes('aria-pressed')).toEqual('true')
-    expect(el.attributes('aria-label')).toEqual('Mark as not done')
+    expect(el.attributes('aria-label')).toEqual('Mark as unread')
+  })
+
+  test('names its subject so several circles stay distinct', () => {
+    const el = mount(DoneCircle, { props: { subject: '6363' } }).get('button')
+
+    expect(el.attributes('aria-label')).toEqual('Mark as read 6363')
   })
 
   test('emits toggle when pressed', async () => {

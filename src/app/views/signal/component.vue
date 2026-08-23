@@ -27,67 +27,55 @@
 
     <div
       v-if="app.queries.signalHasCards(signal)"
+      class="md:p-6 flex flex-col gap-0 md:gap-4"
     >
-      <PageCard
+      <article
         v-for="card in signalCards"
         :key="`signal-${signal.id}-card-${card.title}`"
+        class="bg-white border-y md:border border-hairline md:rounded-card p-4 md:p-5"
       >
-        <template #title>
-          <div>
-            <span
-              class="font-medium text-gray-900"
-            >
-              {{ card.title }}
-            </span>
-            <div>
-              <span
-                v-if="card.description"
-                class="mt-1 text-sm text-gray-500"
-              >
-                {{ card.description }}
-              </span>
-            </div>
-          </div>
-        </template>
-        <template
-          v-if="card.content"
-          #content
+        <h2 class="text-card md:text-card-lg font-bold text-ink">
+          {{ card.title }}
+        </h2>
+        <p
+          v-if="card.description"
+          class="text-meta text-ink-muted mt-1"
         >
-          <div
-            class="prose"
-            v-html="card.content"
-          />
-        </template>
-      </PageCard>
+          {{ card.description }}
+        </p>
+        <div
+          v-if="card.content"
+          class="prose mt-3"
+          v-html="card.content"
+        />
+      </article>
     </div>
 
-    <div v-else-if="shownEntries.length">
+    <div
+      v-else-if="shownEntries.length"
+      class="md:p-6 flex flex-col gap-0 md:gap-4 max-w-river"
+    >
       <FeedEntry
         v-for="entry in shownEntries"
         :key="`signal-${signal.id}-entry-${entry.id}`"
         :app="app"
         :identity="identity"
         :entry="entry"
+        @play="$emit('play', $event)"
       />
     </div>
 
-    <div v-else-if="!signalCards.length">
-      <PageCard>
-        <template #title>
-          <div class="prose">
-            <p>
-              You're all caught up!
-            </p>
-          </div>
-        </template>
-      </PageCard>
-    </div>
+    <p
+      v-else-if="!signalCards.length"
+      class="p-4 md:p-6 text-body text-ink-secondary"
+    >
+      You're all caught up!
+    </p>
   </div>
 </template>
 
 <script>
 import FeedEntry from '../../components/feed-entry/component.vue'
-import PageCard from '../../components/page-card/component.vue'
 import NewBar from '../../components/new-bar/component.vue'
 import SignalChips from '../../components/signal-chips/component.vue'
 import Button from '../../components/button/component.vue'
@@ -101,11 +89,12 @@ export default {
     Button,
     FeedEntry,
     NewBar,
-    PageCard,
     SignalChips
   },
 
   props: ['app', 'identity'],
+
+  emits: ['play'],
 
   data () {
     return {

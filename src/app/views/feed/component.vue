@@ -79,6 +79,7 @@
       :identity="identity"
       :entry="entry"
       :feed="feed"
+      @play="$emit('play', $event)"
     />
   </div>
 </template>
@@ -96,6 +97,8 @@ export default {
   },
 
   props: ['app', 'identity'],
+
+  emits: ['play'],
 
   data () {
     return {
@@ -133,7 +136,7 @@ export default {
       return this.existingFeed ? this.app.queries.entriesForFeed(this.identity, this.existingFeed) : []
     },
 
-    entries () {
+    allEntries () {
       if (!this.existingFeed) {
         return this.remoteEntries
       }
@@ -142,6 +145,16 @@ export default {
         this.identity,
         this.existingEntries
       )
+    },
+
+    entries () {
+      const needle = this.filter.trim().toLowerCase()
+
+      if (!needle) return this.allEntries
+
+      return this.allEntries.filter((entry) => {
+        return `${this.app.queries.titleForEntry(entry)}`.toLowerCase().includes(needle)
+      })
     },
 
     unreadEntries () {

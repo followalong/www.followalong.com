@@ -51,8 +51,38 @@
       <router-view
         :app="app"
         :identity="identity"
+        @play="play"
       />
     </main>
+
+    <PipPlayer
+      v-if="playing"
+      :title="queries.titleForEntry(playing)"
+      :history="playHistory"
+      :now-playing-id="`${playing.id}`"
+      :progress="playProgress"
+      @close="playing = null"
+      @pause="togglePlayback"
+      @select="play(playingEntries[$event.id])"
+    >
+      <iframe
+        v-if="playingIsEmbed"
+        :src="playingSrc"
+        class="h-full w-full"
+        frameborder="0"
+        allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      />
+      <video
+        v-else
+        ref="pipVideo"
+        :src="playingSrc"
+        class="h-full w-full"
+        autoplay
+        playsinline
+        @timeupdate="onPlayProgress"
+      />
+    </PipPlayer>
 
     <NavTabs
       on="surface"
@@ -65,6 +95,7 @@
 import AppBar from './components/app-bar/component.vue'
 import NavTabs from './components/nav-tabs/component.vue'
 import SearchPanel from './components/search-panel/component.vue'
+import PipPlayer from './components/pip-player/component.vue'
 import Commands from '../commands/index.js'
 import MultiEventStore from '../state/multi-event-store.js'
 import VERSION from '../state/version.js'
@@ -91,7 +122,8 @@ export default {
   components: {
     AppBar,
     NavTabs,
-    SearchPanel
+    SearchPanel,
+    PipPlayer
   },
   props: {
     state: {
@@ -162,7 +194,11 @@ export default {
       isLoading: true,
       identity: null,
       pageTitle: '',
-      searching: false
+      searching: false,
+      playing: null,
+      playHistory: [],
+      playingEntries: {},
+      playProgress: 0
     }
   },
   computed: {
@@ -191,6 +227,13 @@ export default {
       }
 
       return 'Follow Along'
+    },
+    playingSrc () {
+      return this.playing ? this.queries.videoForEntry(this.playing) : ''
+    },
+    // Anything that is not a plain file has to go in an iframe.
+    playingIsEmbed () {
+      return !/mp4|ogg/.test(this.playingSrc)
     },
     back () {
       if (this.page.back) return this.page.back
@@ -229,6 +272,32 @@ export default {
         POLL_TIMEOUT = setTimeout(() => this.pollFeeds(), POLL_INTERVAL)
       })
     },
+    // The window outlives the page it was started from, so the entry and its
+    // history live on the shell rather than in any one view.
+    play (entry) {
+      this.playingEntries[entry.id] = entry
+      this.playProgress = 0
+      this.playing = entry
+      this.playHistory = [
+        { id: `${entry.id}`, title: this.queries.titleForEntry(entry), duration: '' },
+        ...this.playHistory.filter((item) => item.id !== `${entry.id}`)
+      ].slice(0, 6)
+    },
+
+    togglePlayback () {
+      const video = this.$refs.pipVideo
+
+      if (!video) return
+
+      video.paused ? video.play() : video.pause()
+    },
+
+    onPlayProgress (event) {
+      const { currentTime, duration } = event.target
+
+      this.playProgress = duration ? (currentTime / duration) * 100 : 0
+    },
+
     onSearch (q) {
       this.searching = false
       this.search(q)

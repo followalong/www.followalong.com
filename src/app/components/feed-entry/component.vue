@@ -1,126 +1,85 @@
 <template>
-  <PageCard
-    :has-padding="false"
-    :center-vertically="false"
-  >
-    <template #title>
-      <div class="flex space-x-3">
-        <router-link
-          v-if="app.queries.imageForFeed(entryFeed)"
-          :to="`/${app.queries.urlForFeed(entryFeed)}`"
-          class="block flex-shrink-0 mr-2"
-        >
-          <img
-            v-if="entryFeed"
-            class="h-10 w-10 rounded-full bg-gray-100"
-            :src="app.queries.imageForFeed(entryFeed)"
-            :alt="app.queries.titleForFeed(entryFeed)"
-          >
-        </router-link>
-        <div>
-          <router-link
-            v-if="app.queries.titleForEntry(entry)"
-            :to="`/${app.queries.urlForFeed(entryFeed)}`"
-            class="font-medium text-gray-900"
-            aria-label="Entry title"
-            v-html="app.queries.titleForEntry(entry)"
-          />
-          <div
-            v-if="entryFeed"
-            class="mt-1 text-sm text-gray-500"
-          >
-            <router-link
-              :to="`/${app.queries.urlForFeed(entryFeed)}`"
-              aria-label="Feed link"
-            >
-              {{ app.queries.titleForFeed(entryFeed) }}
-            </router-link>
-              &nbsp;
-            <span class="font-medium">·</span>
-              &nbsp;
-            <span :title="app.queries.dateForEntry(entry)">
-              {{ app.queries.niceDateForEntry(entry) }}
-            </span>
-            <span v-if="app.queries.linkForEntry(entry)">
-              &nbsp;
-              <span class="font-medium">·</span>
-                &nbsp;
-              <a
-                :href="app.queries.linkForEntry(entry)"
-                target="_blank"
-              >
-                Source
-              </a>
-            </span>
-          </div>
-        </div>
-      </div>
-      <a
-        v-if="feedFromIdentity"
-        href="javascript:;"
-        :class="`block float-right ${app.queries.isEntryRead(entry) ? 'text-green-500' : 'text-gray-300'}`"
-        :aria-label="`Mark as ${app.queries.isEntryRead(entry) ? 'un' : ''}read ${entry.id}`"
-        @click="toggleRead(entry)"
+  <div>
+    <EntryCard
+      :title="app.queries.titleForEntry(entry)"
+      :media="media"
+      :summary="summary"
+      :done="isRead"
+      :subject="`${entry.id}`"
+      :readable="!!content"
+      :poster="app.queries.imageForEntry(entry) || ''"
+      @done="toggleRead"
+      @read="reading = true"
+      @play="$emit('play', entry)"
+    >
+      <template
+        v-if="media === 'image'"
+        #lead
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          class="w-6 h-6"
+        <ImagePlayer
+          :app="app"
+          :identity="identity"
+          :entry="entry"
+        />
+      </template>
+
+      <template #meta>
+        <router-link
+          v-if="entryFeed"
+          :to="`/${app.queries.urlForFeed(entryFeed)}`"
+          aria-label="Feed link"
+          class="font-semibold"
         >
-          <path
-            fill-rule="evenodd"
-            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-            clip-rule="evenodd"
-          />
-        </svg>
-      </a>
-    </template>
-    <template #content>
-      <VideoPlayer
-        v-if="app.queries.videoForEntry(entry)"
-        :app="app"
-        :identity="identity"
-        :entry="entry"
-      />
-      <AudioPlayer
-        v-else-if="app.queries.audioForEntry(entry)"
-        :app="app"
-        :identity="identity"
-        :entry="entry"
-      />
-      <ImagePlayer
-        v-else-if="app.queries.imageForEntry(entry)"
-        :app="app"
-        :identity="identity"
-        :entry="entry"
-      />
-      <ContentPlayer
-        v-if="app.queries.contentForEntry(entry)"
-        :app="app"
-        :identity="identity"
-        :entry="entry"
-      />
-    </template>
-  </PageCard>
+          {{ app.queries.titleForFeed(entryFeed) }}
+        </router-link>
+        <span v-if="entryFeed"> · </span>
+        <span :title="app.queries.dateForEntry(entry)">
+          {{ app.queries.niceDateForEntry(entry) }}
+        </span>
+      </template>
+
+      <template
+        v-if="app.queries.audioForEntry(entry)"
+        #player
+      >
+        <AudioPlayer
+          :app="app"
+          :identity="identity"
+          :entry="entry"
+        />
+      </template>
+    </EntryCard>
+
+    <EntryReader
+      :open="reading"
+      :entry-id="`${entry.id}`"
+      :title="app.queries.titleForEntry(entry)"
+      :meta="readerMeta"
+      :content="html"
+      :link="app.queries.linkForEntry(entry) || ''"
+      @close="reading = false"
+      @skip="reading = false"
+      @done="finishReading"
+    />
+  </div>
 </template>
 
 <script>
-import PageCard from '../../components/page-card/component.vue'
-import AudioPlayer from '../../components/audio-player/component.vue'
-import ImagePlayer from '../../components/image-player/component.vue'
-import VideoPlayer from '../../components/video-player/component.vue'
-import ContentPlayer from '../../components/content-player/component.vue'
+import EntryCard from '../entry-card/component.vue'
+import EntryReader from '../entry-reader/component.vue'
+import AudioPlayer from '../audio-player/component.vue'
+import ImagePlayer from '../image-player/component.vue'
 
 export default {
   components: {
-    PageCard,
+    EntryCard,
+    EntryReader,
     AudioPlayer,
-    ContentPlayer,
-    ImagePlayer,
-    VideoPlayer
+    ImagePlayer
   },
   props: ['app', 'identity', 'entry', 'feed'],
+  emits: ['play'],
+  data: () => ({ reading: false }),
   computed: {
     entryFeed () {
       return this.feed || this.feedFromIdentity
@@ -128,16 +87,55 @@ export default {
 
     feedFromIdentity () {
       return this.app.queries.feedForIdentity(this.identity, this.entry.feedId)
+    },
+
+    media () {
+      if (this.app.queries.videoForEntry(this.entry)) return 'video'
+      if (this.app.queries.audioForEntry(this.entry)) return 'audio'
+      if (this.app.queries.imageForEntry(this.entry)) return 'image'
+
+      return 'text'
+    },
+
+    content () {
+      return this.app.queries.contentForEntry(this.entry)
+    },
+
+    html () {
+      return this.content ? this.app.queries.linkify(this.content) : ''
+    },
+
+    // What the Entry Summarizer add-on produced, if it is installed.
+    summary () {
+      return this.app.queries.metasForEntryForIdentity(this.identity, this.entry)
+        .map((meta) => meta.content)
+        .join(' ')
+    },
+
+    readerMeta () {
+      const feed = this.entryFeed ? `${this.app.queries.titleForFeed(this.entryFeed)} · ` : ''
+
+      return `${feed}${this.app.queries.niceDateForEntry(this.entry)}`
+    },
+
+    isRead () {
+      return !!this.app.queries.isEntryRead(this.entry)
     }
   },
   methods: {
-    toggleRead (entry) {
-      if (this.app.queries.isEntryRead(entry)) {
-        this.app.commands.markEntryAsUnreadForIdentity(this.identity, entry)
+    finishReading () {
+      this.reading = false
+
+      if (!this.isRead) this.toggleRead()
+    },
+
+    toggleRead () {
+      if (this.isRead) {
+        this.app.commands.markEntryAsUnreadForIdentity(this.identity, this.entry)
         return
       }
 
-      this.app.commands.markEntryAsReadForIdentity(this.identity, entry)
+      this.app.commands.markEntryAsReadForIdentity(this.identity, this.entry)
     }
   }
 }
