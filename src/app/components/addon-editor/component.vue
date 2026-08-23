@@ -14,7 +14,7 @@
     </div>
 
     <p class="text-chip text-ink-secondary mt-1.5 leading-snug">
-      {{ addon.id ? addon.preview : '' }}
+      {{ addon.preview }}
     </p>
 
     <div class="flex gap-2 mt-3">
@@ -90,6 +90,7 @@
         <Button
           v-if="addon.id"
           variant="destructive"
+          :aria-label="`Uninstall ${addonKey}`"
           @click="uninstall"
         >
           Uninstall
@@ -119,7 +120,7 @@ export default {
   },
   computed: {
     addonKey () {
-      return this.addon.id || this.addon.type
+      return this.addon.type
     },
     formId () {
       return `addon-form-${this.addonKey}`
@@ -141,10 +142,14 @@ export default {
     },
 
     uninstall () {
-      if (confirm('Are you sure you want to remove this addon?')) {
-        this.app.commands.removeAddonFromIdentity(this.identity, this.addon)
-        this.modalOpen = false
-      }
+      // The app's confirm, not the global one: it is injectable, and the raw
+      // window.confirm silently did nothing here.
+      this.app.confirm('Are you sure you want to remove this addon?')
+        .then(() => {
+          this.app.commands.removeAddonFromIdentity(this.identity, this.addon)
+          this.modalOpen = false
+        })
+        .catch(() => {})
     }
   }
 }

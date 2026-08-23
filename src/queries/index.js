@@ -503,9 +503,16 @@ class Queries {
     return this.addonAdaptersForActionForIdentity(identity, action)[0]
   }
 
+  // Every add-on there is, each carrying the identity's own record when it has
+  // one — that is what lets a listing show which are already installed.
   availableAddonAdaptersForIdentity (identity) {
-    return ADAPTERS
-      .map((Adapter) => new Adapter({}, {}))
+    const installed = this.addonsForIdentity(identity)
+
+    return ADAPTERS.map((Adapter) => {
+      const addon = installed.find((a) => a.type === Adapter.name)
+
+      return new Adapter({ fetch: this.fetch, awsS3: this.awsS3 }, addon || {})
+    })
   }
 
   isFunctionSupportedByAddon (addon, funcName) {

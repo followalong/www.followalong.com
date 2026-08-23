@@ -5,7 +5,6 @@ import Following from '../views/following/component.vue'
 import Help from '../views/help/component.vue'
 import Settings from '../views/settings/component.vue'
 import Signal from '../views/signal/component.vue'
-import Addons from '../views/addons/component.vue'
 import Marketplace from '../views/marketplace/component.vue'
 
 const routes = [
@@ -35,8 +34,9 @@ const routes = [
     props: true
   },
   {
+    // The same page as the marketplace, arriving with Installed already on.
     path: '/add-ons',
-    component: Addons,
+    component: Marketplace,
     props: true
   },
   {
