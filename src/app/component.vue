@@ -100,8 +100,9 @@ import runners from '../state/runners.js'
 import Queries from '../queries/index.js'
 import NoSleep from 'nosleep.js'
 import KeychainAdapter from '../adapters/keychain.js'
+import buildFetch from '../adapters/fetch.js'
 
-const POLL_INTERVAL = 30000
+const POLL_INTERVAL = 5 * 60 * 1000
 let POLL_TIMEOUT
 
 // Every page gets its title and, on a sub-page, its back target from here, so
@@ -130,7 +131,7 @@ export default {
     },
     fetch: {
       type: Function,
-      default: (url) => window.fetch(url).then((response) => response.text())
+      default: buildFetch((url, options) => window.fetch(url, options))
     },
     automaticFetch: {
       type: Boolean,

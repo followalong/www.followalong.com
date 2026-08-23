@@ -99,10 +99,14 @@ const flushPromisesAndTimers = () => {
   return flushPromises()
 }
 
+// A stubbed response is written as the feed body it returns; anything richer
+// (a 304, an error status) is given as the whole response object.
 const responses = (values) => {
   const fn = vi.fn()
 
-  values.forEach((val) => fn.mockResolvedValueOnce(val))
+  values.forEach((val) => {
+    fn.mockResolvedValueOnce(typeof val === 'string' ? { status: 200, body: val } : val)
+  })
 
   return fn
 }

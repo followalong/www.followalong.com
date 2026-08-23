@@ -5,7 +5,7 @@
 // Its own module because runners.js imports the event store and the event
 // store needs this — putting it in either one makes a cycle, and the list
 // then reads as undefined at the moment it is needed.
-const SUPERSEDING = ['feeds.fetched']
+const SUPERSEDING = ['feeds.fetched', 'feeds.fetchFailed']
 
 export default SUPERSEDING
 

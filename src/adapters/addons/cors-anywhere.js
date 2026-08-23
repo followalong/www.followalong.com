@@ -39,11 +39,11 @@ class CORSAnywhere extends Adapter {
     return false
   }
 
-  rss (url) {
+  rss (url, options) {
     return new Promise((resolve, reject) => {
       if (!url) return reject(new Error('No URL supplied.'))
 
-      this.fetch((this.data.url || '') + url)
+      this.fetch((this.data.url || '') + url, options)
         .then(resolve)
         .catch(reject)
     })

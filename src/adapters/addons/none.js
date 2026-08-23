@@ -21,8 +21,8 @@ class None extends Adapter {
     return Promise.resolve()
   }
 
-  rss (url) {
-    return this.fetch(url)
+  rss (url, options) {
+    return this.fetch(url, options)
   }
 
   search () {

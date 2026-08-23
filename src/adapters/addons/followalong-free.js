@@ -16,11 +16,11 @@ class FollowAlongFree extends Adapter {
     return true
   }
 
-  rss (url) {
+  rss (url, options) {
     return new Promise((resolve, reject) => {
       if (!url) return reject(new Error('No URL supplied.'))
 
-      this.fetch(URL + url)
+      this.fetch(URL + url, options)
         .then(resolve)
         .catch(reject)
     })

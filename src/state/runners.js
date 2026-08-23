@@ -24,6 +24,44 @@ const UNTIMESTAMP = (attr) => (store, event) => {
   delete existing[attr]
 }
 
+// A poll records what the feed answered with, so the next one can ask
+// conditionally. Absent validators are cleared rather than kept: a feed that
+// stops sending an ETag must not be asked with a stale one forever.
+const FETCHED = (store, event) => {
+  const existing = store.findByIdWithDeleted(event.collection, event.objectId)
+
+  if (!existing) {
+    return console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+  }
+
+  const { etag, lastModified } = event.data || {}
+
+  existing.updatedAt = event.time
+  existing.etag = etag
+  existing.lastModified = lastModified
+
+  delete existing.failedAt
+  delete existing.failureCount
+  delete existing.failureStatus
+}
+
+// The count rides in the event rather than being incremented here, because
+// this action supersedes: every earlier failure is dropped from the log, so
+// an incrementing runner would replay every time as the first failure.
+const FETCH_FAILED = (store, event) => {
+  const existing = store.findByIdWithDeleted(event.collection, event.objectId)
+
+  if (!existing) {
+    return console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+  }
+
+  const { count, status } = event.data || {}
+
+  existing.failedAt = event.time
+  existing.failureCount = count
+  existing.failureStatus = status
+}
+
 // Hints are dismissed one at a time and never come back, so the event only
 // has to append.
 const PUSH = (attr) => (store, event) => {
@@ -83,7 +121,8 @@ export default {
   'feeds.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because URL is outside of data; OK because URL is immutable for now
   'feeds.update': EventStore.RUNNERS.UPDATE,
   'feeds.delete': EventStore.RUNNERS.DELETE,
-  'feeds.fetched': TIMESTAMP('updatedAt'),
+  'feeds.fetched': FETCHED,
+  'feeds.fetchFailed': FETCH_FAILED,
   'feeds.pause': TIMESTAMP('pausedAt'),
   'feeds.unpause': UNTIMESTAMP('pausedAt'),
   'entries.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because feedId is outside of data; OK because feedId is immutable for now

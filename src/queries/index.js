@@ -7,6 +7,12 @@ import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
 import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
 import sanitizeContent from './presenters/sanitize-content.js'
 
+// How long a feed is considered fresh. The poll ticks more often than this
+// so a feed that just came out of backoff is picked up promptly.
+const OUTDATED_MINUTES = 15
+const BACKOFF_BASE_MINUTES = 15
+const BACKOFF_MAX_MINUTES = 24 * 60
+
 const VIDEO_TYPES = /\.(mp4)/
 const AUDIO_TYPES = /\.(mp3|wav)/
 const IMAGE_TYPES = /\.(png|jpeg|jpg|gif)/
@@ -17,6 +23,14 @@ const parser = new XMLParser({
     return ['entry', 'item'].indexOf(name) !== -1
   }
 })
+
+const hostFor = (url) => {
+  try {
+    return new URL(url).host
+  } catch (e) {
+    return url
+  }
+}
 
 const stripHTML = (html) => {
   const doc = new DOMParser().parseFromString(html, 'text/html')
@@ -335,6 +349,49 @@ class Queries {
   feedsToFetchForIdentity (identity) {
     return this.unpausedFeedsForIdentity(identity)
       .filter((feed) => this.urlForFeed(feed))
+      .filter((feed) => !this.isFeedInBackoff(feed))
+  }
+
+  validatorsForFeed (feed) {
+    const validators = {}
+
+    if (feed.etag) validators.etag = feed.etag
+    if (feed.lastModified) validators.lastModified = feed.lastModified
+
+    return validators
+  }
+
+  // What to tell the reader when a feed stops answering. Kept as a query so
+  // the message survives a reload rather than living in a view's state.
+  fetchErrorForFeed (feed) {
+    if (!feed || !feed.failedAt) return null
+
+    const host = hostFor(this.urlForFeed(feed))
+
+    if (!feed.failureStatus) return `${host} could not be reached`
+
+    return `${host} refused the request (${feed.failureStatus})`
+  }
+
+  failureCountForFeed (feed) {
+    return feed.failureCount || 0
+  }
+
+  // A feed that keeps refusing is asked less and less often, up to a day. One
+  // unreachable feed polled every cycle is what gets a shared proxy blocked.
+  backoffUntilForFeed (feed) {
+    if (!feed.failedAt) return 0
+
+    const backoff = Math.min(
+      BACKOFF_BASE_MINUTES * Math.pow(2, this.failureCountForFeed(feed) - 1),
+      BACKOFF_MAX_MINUTES
+    )
+
+    return feed.failedAt + (backoff * 60 * 1000)
+  }
+
+  isFeedInBackoff (feed) {
+    return this.backoffUntilForFeed(feed) > Date.now()
   }
 
   feedsWithoutUrlForIdentity (identity) {
@@ -347,10 +404,9 @@ class Queries {
   }
 
   findOutdatedFeedsForIdentity (identity) {
-    const OUTDATED_MINUTES = 15
     const outdatedDate = Date.now() - (OUTDATED_MINUTES * (60 * 1000))
 
-    return this.unpausedFeedsForIdentity(identity)
+    return this.feedsToFetchForIdentity(identity)
       .filter((feed) => this.lastUpdatedForFeed(feed) < outdatedDate)
       .sort(SORT_BY_NEED_TO_UPDATE(this))
   }

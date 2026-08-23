@@ -3,6 +3,7 @@ import { encrypt, decrypt } from '../queries/crypt.js'
 import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT_SIGNALS, SAVED_SIGNAL } from './seed.js'
 
 const MAX_OLD_ITEMS_PER_FEED = 15
+const NOT_MODIFIED = 304
 const SYNC_DEBOUNCE = 1500
 
 class Commands {
@@ -118,33 +119,59 @@ class Commands {
     )
   }
 
-  fetchUrl (identity, action, url) {
+  fetchUrl (identity, action, url, options = {}) {
     const adapter = this.queries.addonAdapterForActionForIdentity(identity, action)
 
-    return adapter[action](url)
-      .then(this.queries.jsonFromXml)
+    return adapter[action](url, options)
+      .then((response) => {
+        return Object.assign({}, response, { data: this.queries.jsonFromXml(response.body) })
+      })
   }
 
   fetchFeed (identity, feed) {
     const url = this.queries.urlForFeed(feed)
 
-    return this.fetchUrl(identity, 'rss', url)
-      .then((data) => {
+    return this.fetchUrl(identity, 'rss', url, this.queries.validatorsForFeed(feed))
+      .then((response) => {
+        // The feed told us it has not changed, so there is no body to read and
+        // nothing to compare. Keep the validators we asked with.
+        if (response.status === NOT_MODIFIED) {
+          return this.trackFetchedForIdentity(identity, feed, this.queries.validatorsForFeed(feed))
+        }
+
+        const data = response.data
         const entries = data.entry || data.item || []
 
         delete data.entry
         delete data.item
 
-        this.upsertFeedForIdentity(identity, feed, data)
+        this.upsertFeedForIdentity(identity, feed, data, response)
 
         entries.forEach((e) => this.upsertEntryForIdentity(identity, feed, e, this.queries.lastReadDateForFeed(identity, feed)))
       })
+      .catch((e) => {
+        this.trackFetchFailedForIdentity(identity, feed, e)
+        throw e
+      })
   }
 
-  upsertFeedForIdentity (identity, feed, data) {
+  trackFetchedForIdentity (identity, feed, { etag, lastModified } = {}) {
+    this.track(identity, 'feeds', feed.id, 'fetched', { etag, lastModified })
+  }
+
+  trackFetchFailedForIdentity (identity, feed, error) {
+    this.track(identity, 'feeds', feed.id, 'fetchFailed', {
+      count: this.queries.failureCountForFeed(feed) + 1,
+      status: error && error.status
+    })
+  }
+
+  upsertFeedForIdentity (identity, feed, data, response = {}) {
+    // Recorded on every poll, changed or not: it carries the validators that
+    // make the next poll conditional, and clears any failure backoff.
+    this.trackFetchedForIdentity(identity, feed, response)
+
     if (!this.queries.feedChanged(feed, data)) {
-      // Nothing came back that we did not have. Record only that we looked.
-      this.track(identity, 'feeds', feed.id, 'fetched')
       return
     }
 
@@ -172,9 +199,7 @@ class Commands {
   }
 
   fetchOutdatedFeeds (identity) {
-    // TODO: We can use the outdated feeds once we have a "last fetched at" mechanism
-    // const feeds = this.queries.findOutdatedFeedsForIdentity(identity)
-    const feeds = this.queries.feedsToFetchForIdentity(identity)
+    const feeds = this.queries.findOutdatedFeedsForIdentity(identity)
 
     return this._fetchFeedsInSeries(identity, feeds)
   }

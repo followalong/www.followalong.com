@@ -110,7 +110,15 @@ class EntrySummarizer extends Adapter {
     const content = new DOMParser().parseFromString(input, 'text/html').documentElement.textContent
     const tokens = content.split(SPACE).map(normalizeWord).filter((w) => w.length > 5)
     const tokenWeights = sumTokenWeights(tokens)
-    const sentences = content.match(/[^.!?\n]+[.!?\n]/g).filter((s) => s.length > 5)
+    // A /g match yields null, not [], so content past the guard above but
+    // written without terminators (a title, a URL, one run-on line) lands
+    // here with nothing to rank.
+    const sentences = (content.match(/[^.!?\n]+[.!?\n]/g) || []).filter((s) => s.length > 5)
+
+    if (!sentences.length) {
+      return
+    }
+
     const potentSentences = findPotentSentences(sentences, tokenWeights)
     const mostImportant = potentSentences.shift()
     const importantSentences = findImportantSentences(sentences, tokenWeights).filter((s) => s !== mostImportant)

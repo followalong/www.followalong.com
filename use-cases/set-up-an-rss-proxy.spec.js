@@ -32,7 +32,7 @@ describe('Set up an RSS proxy', () => {
   story('uses the proxy', async () => {
     await app.vm.commands.fetchFeed(app.vm.identity, app.vm.state.feeds[0])
 
-    expect(fetch).toHaveBeenCalledWith('https://foo.bar/https://foo.bar/rss.xml')
+    expect(fetch).toHaveBeenCalledWith('https://foo.bar/https://foo.bar/rss.xml', {})
   })
 
   event('addons.configure', {

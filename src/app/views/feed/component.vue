@@ -25,7 +25,7 @@
               class="text-meta text-primary truncate"
             >
               {{ app.queries.linkForFeed(feed) }} &rarr;
-              <span v-if="!remoteFeed">Loading...</span>
+              <span v-if="!remoteFeed && !fetchError">Loading...</span>
             </a>
             <button
               type="button"
@@ -38,6 +38,14 @@
           </div>
         </div>
       </div>
+
+      <p
+        v-if="fetchError"
+        role="status"
+        class="mt-3 rounded-card border border-danger-border bg-danger-bg px-3 py-2 text-meta text-danger"
+      >
+        {{ fetchError }}
+      </p>
 
       <div class="flex items-center gap-2 mt-3">
         <button
@@ -115,12 +123,19 @@ export default {
   data () {
     return {
       remoteFeed: null,
+      liveFetchError: null,
       filter: '',
       copiedUrl: false
     }
   },
 
   computed: {
+    // A followed feed keeps its last failure in the store, so the reason it is
+    // empty survives a reload; an unfollowed one has only this visit to go on.
+    fetchError () {
+      return this.liveFetchError || this.app.queries.fetchErrorForFeed(this.existingFeed)
+    },
+
     existingFeed () {
       return this.app.queries.feedForIdentityByUrl(this.identity, this.url)
     },
@@ -241,16 +256,20 @@ export default {
 
     fetchFeed () {
       this.remoteFeed = null
+      this.liveFetchError = null
 
       if (this.feed) {
         return this.app.commands.fetchFeed(this.identity, this.feed)
           .then((a) => {
             this.remoteFeed = true
           })
+          .catch((e) => {
+            this.liveFetchError = e.message
+          })
       }
 
       this.app.commands.fetchUrl(this.identity, 'rss', this.url)
-        .then((data) => {
+        .then(({ data }) => {
           const entries = (data.entry || data.item) || []
 
           delete data.entry
@@ -261,6 +280,9 @@ export default {
             data,
             entries: entries.map((data) => { return { id: data.id, data } })
           })
+        })
+        .catch((e) => {
+          this.liveFetchError = e.message
         })
     }
   }

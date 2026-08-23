@@ -23,7 +23,7 @@ describe('Fetch in background', () => {
     app.vm.commands.fetchOutdatedFeeds(app.vm.identity)
     await app.wait()
 
-    expect(app.vm.state.events.length).toEqual(originalEventsLength + 2) // one for entry, one for feed
+    expect(app.vm.state.events.length).toEqual(originalEventsLength + 3) // one for the entry, one for the feed, one recording the fetch
   })
 })
 
@@ -59,7 +59,7 @@ describe('Fetch in background: feeds that cannot be fetched', () => {
     const fetch = vi.fn((url) => {
       return `${url}`.indexOf('broken.example') !== -1
         ? Promise.reject(new Error('network is down'))
-        : Promise.resolve('<feed><title>Fine</title></feed>')
+        : Promise.resolve({ status: 200, body: '<feed><title>Fine</title></feed>' })
     })
 
     const app = await mountApp({
