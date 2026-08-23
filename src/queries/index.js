@@ -17,6 +17,32 @@ const VIDEO_TYPES = /\.(mp4)/
 const AUDIO_TYPES = /\.(mp3|wav)/
 const IMAGE_TYPES = /\.(png|jpeg|jpg|gif)/
 
+// Elements whose whole job is to name the picture. Take what they say: plenty
+// of feeds serve thumbnails from an extensionless CDN path, and asking those
+// for a .jpg threw away the only image they had. getAttr falls back to the
+// element's text when it carries no attribute, so both spellings work.
+const NAMED_IMAGE_ATTRS = [
+  'itunes:image.@_href',
+  'media:group.media:thumbnail.@_url',
+  'media:group.media:thumbnail.url',
+  'media:thumbnail.@_url',
+  'media:thumbnail.url',
+  'media:content.image.@_url',
+  'media:content.image.url',
+  'enclosure.image.@_url',
+  'enclosure.image.url'
+]
+
+// Anything else a picture might be hiding in. These carry pages, videos and
+// audio just as often, so they still have to look like an image.
+const MAYBE_IMAGE_ATTRS = [
+  'link',
+  'media:content.@_url',
+  'media:content.url',
+  'enclosure.@_url',
+  'enclosure.url'
+]
+
 const parser = new XMLParser({
   ignoreAttributes: false,
   isArray: (name, jpath, isLeafNode, isAttribute) => {
@@ -644,23 +670,16 @@ class Queries {
   }
 
   imageForEntry (entry) {
-    const attrs = [
-      'link',
-      'media:group.media:thumbnail.@_url',
-      'media:group.media:thumbnail.url',
-      'media:content.image.@_url',
-      'media:content.image.url',
-      'media:content.@_url',
-      'media:content.url',
-      'enclosure.image.@_url',
-      'enclosure.image.url',
-      'enclosure.@_url',
-      'enclosure.url',
-      'itunes.image'
-    ]
+    for (var n = 0; n < NAMED_IMAGE_ATTRS.length; n++) {
+      const named = getAttr(entry, NAMED_IMAGE_ATTRS[n])
 
-    for (var i = 0; i < attrs.length; i++) {
-      const val = getAttr(entry, attrs[i])
+      if (named) {
+        return named
+      }
+    }
+
+    for (var i = 0; i < MAYBE_IMAGE_ATTRS.length; i++) {
+      const val = getAttr(entry, MAYBE_IMAGE_ATTRS[i])
 
       if (IMAGE_TYPES.test(val)) {
         return val
