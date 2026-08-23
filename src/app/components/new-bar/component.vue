@@ -21,7 +21,7 @@ export default {
 
   computed: {
     newEntriesLength () {
-      return this.app.queries.filterNewEntries(this.entries).length
+      return this.app.queries.filterNewEntries(this.identity, this.entries).length
     }
   }
 }

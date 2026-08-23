@@ -324,15 +324,23 @@ class Queries {
     return feed.pausedAt
   }
 
-  filterNewEntries (entries) {
-    return entries
-      .filter((e) => !this.isEntryRead(e))
-      .filter((e) => e.createdAt > this.lastBackgroundFetch)
+  lastBackgroundFetchForIdentity (identity) {
+    return this.state.getConfig(identity.id).lastBackgroundFetch || this.state.startedAt
   }
 
-  filterNonNewEntries (entries) {
+  filterNewEntries (identity, entries) {
+    const since = this.lastBackgroundFetchForIdentity(identity)
+
     return entries
-      .filter((e) => e.createdAt <= this.lastBackgroundFetch)
+      .filter((e) => !this.isEntryRead(e))
+      .filter((e) => e.createdAt > since)
+  }
+
+  filterNonNewEntries (identity, entries) {
+    const since = this.lastBackgroundFetchForIdentity(identity)
+
+    return entries
+      .filter((e) => e.createdAt <= since)
   }
 
   videoForEntry (entry) {

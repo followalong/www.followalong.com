@@ -116,3 +116,48 @@ describe('MultiEventStore collections', () => {
     expect(store.feeds).toEqual([])
   })
 })
+
+describe('MultiEventStore config', () => {
+  let store
+
+  beforeEach(async () => {
+    store = new MultiEventStore(`test-${Math.random()}`, 'v1', RUNNERS)
+    await store.clear()
+  })
+
+  test('keeps the config createDB was given', () => {
+    const dbId = store.createDB(null, { lastBackgroundFetch: 99 })
+
+    expect(store.getConfig(dbId)).toEqual({ lastBackgroundFetch: 99 })
+  })
+
+  test('merges updates into the existing config', async () => {
+    const dbId = store.createDB(null, { lastBackgroundFetch: 99 })
+
+    await store.updateConfig(dbId, { somethingElse: true })
+
+    expect(store.getConfig(dbId)).toEqual({ lastBackgroundFetch: 99, somethingElse: true })
+  })
+
+  test('restores config from the root db', async () => {
+    const name = `test-${Math.random()}`
+    const seed = new MultiEventStore(name, 'v1', RUNNERS)
+
+    await seed.clear()
+
+    const dbId = seed.createDB(null, { lastBackgroundFetch: 99 })
+
+    const restored = new MultiEventStore(name, 'v1', RUNNERS)
+    await restored.restore()
+
+    expect(restored.getConfig(dbId).lastBackgroundFetch).toEqual(99)
+  })
+
+  test('forgets config for a deleted db', async () => {
+    const dbId = store.createDB(null, { lastBackgroundFetch: 99 })
+
+    await store.deleteDB(dbId)
+
+    expect(store.getConfig(dbId)).toEqual({})
+  })
+})

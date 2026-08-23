@@ -123,6 +123,7 @@ export default {
       }
 
       return this.app.queries.filterNonNewEntries(
+        this.identity,
         this.existingEntries
       )
     },
@@ -149,7 +150,7 @@ export default {
   },
 
   mounted () {
-    this.app.commands.showNewEntries()
+    this.app.commands.showNewEntries(this.identity)
     this.fetchFeed()
   },
 
@@ -162,7 +163,7 @@ export default {
       }
 
       this.app.commands.addFeedToIdentity(this.identity, this.remoteFeed.url, this.remoteFeed.data, this.remoteFeed.entries.map((e) => e.data))
-      this.app.commands.showNewEntries()
+      this.app.commands.showNewEntries(this.identity)
     },
 
     togglePause () {

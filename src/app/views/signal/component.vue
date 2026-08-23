@@ -133,7 +133,7 @@ export default {
     },
 
     shownEntries () {
-      return this.app.queries.filterNonNewEntries(this.entries).slice(0, this.limit)
+      return this.app.queries.filterNonNewEntries(this.identity, this.entries).slice(0, this.limit)
     },
 
     unreadEntries () {
@@ -152,12 +152,12 @@ export default {
   watch: {
     signal () {
       this.limit = LIMIT
-      this.app.commands.showNewEntries()
+      this.app.commands.showNewEntries(this.identity)
     }
   },
 
   mounted () {
-    this.app.commands.showNewEntries()
+    this.app.commands.showNewEntries(this.identity)
     window.addEventListener('scroll', this.infiniteScrollListener)
     this.startPullToRefresh()
   },
@@ -207,7 +207,7 @@ export default {
       this.catchUpEntries.reverse().forEach((entry) => {
         this.app.commands.markEntryAsReadForIdentity(this.identity, entry)
       })
-      this.app.commands.showNewEntries()
+      this.app.commands.showNewEntries(this.identity)
     }
   }
 }

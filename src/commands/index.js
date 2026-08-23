@@ -293,8 +293,8 @@ class Commands {
     this.track(identity, 'entries', entry.id, 'unread')
   }
 
-  showNewEntries () {
-    this.queries.lastBackgroundFetch = Date.now()
+  showNewEntries (identity) {
+    this.state.updateConfig(identity.id, { lastBackgroundFetch: Date.now() })
     this.scrollToTop()
   }
 

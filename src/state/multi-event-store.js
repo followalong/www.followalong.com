@@ -5,7 +5,9 @@ class MultipleEventStore extends EventStore {
   constructor (name, version, runners = {}) {
     super(name, version, runners)
     this._config = this._db
+    this._configs = {}
     this._dbs = {}
+    this.startedAt = Date.now()
 
     Object.defineProperty(this, 'events', {
       get: () => {
@@ -32,10 +34,10 @@ class MultipleEventStore extends EventStore {
     }
   }
 
-  createDB (dbId) {
+  createDB (dbId, config = {}) {
     dbId = dbId || uuidv4()
 
-    this._setConfig(dbId, {})
+    this.setConfig(dbId, config)
     this._initDB(dbId)
 
     return dbId
@@ -45,6 +47,8 @@ class MultipleEventStore extends EventStore {
     const db = this._dbs[dbId]
 
     delete this._dbs[dbId]
+
+    delete this._configs[dbId]
 
     return Promise.all([
       db ? db.teardown() : Promise.resolve(),
@@ -62,8 +66,18 @@ class MultipleEventStore extends EventStore {
     return Promise.all(promises)
   }
 
-  _setConfig (dbId, config) {
+  getConfig (dbId) {
+    return this._configs[dbId] || {}
+  }
+
+  setConfig (dbId, config) {
+    this._configs[dbId] = config
+
     return this._config.setItem(dbId, config)
+  }
+
+  updateConfig (dbId, updates) {
+    return this.setConfig(dbId, Object.assign({}, this.getConfig(dbId), updates))
   }
 
   track (dbId, ...args) {
@@ -130,6 +144,7 @@ class MultipleEventStore extends EventStore {
   restore (...args) {
     return this._config
       .iterate((value, dbId) => {
+        this._configs[dbId] = value || {}
         this._initDB(dbId)
       })
       .then(() => {

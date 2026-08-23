@@ -49,6 +49,7 @@ import SideBar from './components/side-bar/component.vue'
 import TopBar from './components/top-bar/component.vue'
 import Commands from '../commands/index.js'
 import MultiEventStore from '../state/multi-event-store.js'
+import VERSION from '../state/version.js'
 import runners from '../state/runners.js'
 import Queries from '../queries/index.js'
 import NoSleep from 'nosleep.js'
@@ -64,7 +65,7 @@ export default {
   props: {
     state: {
       type: Object,
-      default: () => new MultiEventStore('follow-along', 'v2.2', runners)
+      default: () => new MultiEventStore('follow-along', VERSION, runners)
     },
     fetch: {
       type: Function,
@@ -95,8 +96,7 @@ export default {
     window.followAlong = this
     const queries = new Queries({
       fetch: this.fetch,
-      state: this.state,
-      lastBackgroundFetch: Date.now()
+      state: this.state
     })
     const commands = new Commands({
       fetch: this.fetch,

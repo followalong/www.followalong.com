@@ -1,5 +1,6 @@
 import EventStore from './event-store'
 import EventStoreEvent from './event-store-event.js'
+import VERSION from './version.js'
 
 const ROLLUP = (store, event) => {
   const identities = [event.data.identity]
@@ -99,7 +100,7 @@ export default {
   'addons.delete': EventStore.RUNNERS.DELETE,
   'v2.1': {
     'identities.setProxy': (store, event) => {
-      const addonEvent = new EventStoreEvent('addons', event.data.addonType, 'configure', event.data.data, event.time, 'v2.2')
+      const addonEvent = new EventStoreEvent('addons', event.data.addonType, 'configure', event.data.data, event.time, VERSION)
 
       EventStore.RUNNERS.UPDATE(store, addonEvent)
     },
@@ -115,7 +116,7 @@ export default {
 
       event.data.addons = addons
 
-      const rollupEvent = new EventStoreEvent(event.collection, event.objectId, event.action, event.data, event.time, 'v2.2')
+      const rollupEvent = new EventStoreEvent(event.collection, event.objectId, event.action, event.data, event.time, VERSION)
       ROLLUP(store, rollupEvent)
     }
   }
