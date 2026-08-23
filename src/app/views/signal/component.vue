@@ -61,7 +61,7 @@
     >
       <article
         v-for="card in signalCards"
-        :key="`signal-${signal.id}-card-${card.title}`"
+        :key="`card-${card.title}`"
         class="bg-white border-y md:border border-hairline md:rounded-card p-4 md:p-5"
       >
         <h2 class="text-card md:text-card-lg font-bold text-ink">
@@ -87,7 +87,7 @@
     >
       <FeedEntry
         v-for="entry in shownEntries"
-        :key="`signal-${signal.id}-entry-${entry.id}`"
+        :key="`entry-${entry.id}`"
         :app="app"
         :identity="identity"
         :entry="entry"

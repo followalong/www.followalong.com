@@ -2,7 +2,7 @@
   <div
     v-if="open"
     data-sheet-scrim
-    class="fixed inset-0 z-50 bg-chrome/70 flex flex-col justify-end"
+    class="fixed inset-0 z-50 bg-chrome/70 flex flex-col justify-end items-center"
     tabindex="-1"
     @click.self="$emit('close')"
     @keydown.esc="$emit('close')"
@@ -12,7 +12,7 @@
       role="dialog"
       aria-modal="true"
       :aria-label="title"
-      class="bg-surface-sheet rounded-t-sheet max-h-[92vh] flex flex-col px-5 pt-3.5"
+      class="bg-surface-sheet rounded-t-sheet max-h-[92vh] w-full max-w-app flex flex-col px-5 pt-3.5"
     >
       <div
         data-sheet-grabber

@@ -61,11 +61,35 @@ class Commands {
   }
 
   syncIdentity (identity) {
-    const adapter = this.queries.addonAdapterForActionForIdentity(identity, 'save')
+    const remote = this.queries.remoteAdapterForIdentity(identity)
+
+    // Nothing to sync to is a state worth reporting, not a silent success.
+    if (!remote) {
+      this.state.updateConfig(identity.id, { syncStatus: 'off', syncError: '' })
+
+      return Promise.resolve(this.queries.syncStatusForIdentity(identity))
+    }
+
+    this.state.updateConfig(identity.id, { syncStatus: 'syncing', syncError: '' })
 
     return this.keyForIdentity(identity)
-      .then((key) => adapter.save(this.queries.eventsToFile(identity), encrypt(key)))
-      .catch((e) => console.warn('Could not sync identity', e))
+      .then((key) => remote.save(this.queries.eventsToFile(identity), encrypt(key)))
+      .then(() => {
+        this.state.updateConfig(identity.id, {
+          syncStatus: 'saved',
+          syncedAt: Date.now(),
+          syncError: ''
+        })
+      })
+      .catch((e) => {
+        // Recorded rather than rethrown: this runs on a debounce from every
+        // tracked event, and a rejection there has nobody to catch it.
+        this.state.updateConfig(identity.id, {
+          syncStatus: 'failed',
+          syncError: (e && e.message) || 'Could not save'
+        })
+      })
+      .then(() => this.queries.syncStatusForIdentity(identity))
   }
 
   restoreIdentityFromRemote (identity) {

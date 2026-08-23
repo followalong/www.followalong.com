@@ -345,6 +345,38 @@ class Queries {
     return entries.slice(0).sort(SORT_BY_TIME(this))
   }
 
+  // The None adapter answers save() by resolving and doing nothing, so an
+  // identity with no add-on would otherwise look permanently backed up.
+  remoteAdapterForIdentity (identity) {
+    const adapter = this.addonAdapterForActionForIdentity(identity, 'save')
+
+    return adapter && adapter.adapter !== 'none' ? adapter : null
+  }
+
+  syncStatusForIdentity (identity) {
+    if (!identity) return { status: 'off', at: 0, error: '', target: '' }
+
+    const config = this.state.getConfig(identity.id) || {}
+    const remote = this.remoteAdapterForIdentity(identity)
+
+    if (!remote) return { status: 'off', at: 0, error: '', target: '' }
+
+    return {
+      status: config.syncStatus || 'idle',
+      at: config.syncedAt || 0,
+      error: config.syncError || '',
+      target: remote.title || remote.type
+    }
+  }
+
+  backupContentsForIdentity (identity) {
+    return {
+      feeds: this.feedsForIdentity(identity).length,
+      entries: this.entriesForIdentity(identity).length,
+      events: this.findAllEvents(identity).length
+    }
+  }
+
   lastBackgroundFetchForIdentity (identity) {
     return this.state.getConfig(identity.id).lastBackgroundFetch || this.state.startedAt
   }

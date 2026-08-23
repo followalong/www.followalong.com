@@ -31,9 +31,14 @@
 
       <h1
         aria-label="Page title"
-        class="text-title font-extrabold text-white flex-1 truncate"
+        class="text-title font-extrabold text-white flex-1 min-w-0 truncate"
       >
-        {{ title }}
+        <router-link
+          to="/"
+          class="block truncate"
+        >
+          {{ title }}
+        </router-link>
       </h1>
 
       <slot name="nav" />

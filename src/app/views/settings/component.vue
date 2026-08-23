@@ -1,8 +1,68 @@
 <template>
   <div class="p-4 md:p-6 flex flex-col gap-4 md:gap-[18px] max-w-[560px]">
-    <p class="text-meta text-ink-muted">
-      Your identity lives only on this device
-    </p>
+    <section
+      :class="`rounded-xl border p-4 md:p-5 ${
+        sync.status === 'failed'
+          ? 'bg-danger-bg border-danger-border'
+          : sync.status === 'off'
+            ? 'bg-white border-hairline-strong'
+            : 'bg-following-bg border-following-border'
+      }`"
+    >
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <h2
+            :class="`text-[14px] font-bold ${
+              sync.status === 'failed'
+                ? 'text-danger'
+                : sync.status === 'off' ? 'text-ink' : 'text-following'
+            }`"
+          >
+            {{ SYNC_TITLES[sync.status] }}
+          </h2>
+          <p class="text-meta text-ink-secondary mt-1">
+            <span v-if="sync.status === 'off'">
+              This device is the only copy. If you lose it, you lose everything.
+            </span>
+            <span v-else-if="sync.status === 'failed'">{{ sync.error }}</span>
+            <span v-else-if="sync.at">Last saved to {{ sync.target }} {{ syncedAgo }}</span>
+            <span v-else>Saving to {{ sync.target }}…</span>
+          </p>
+          <p class="text-meta text-ink-muted mt-1.5">
+            {{ contents.feeds }} feeds · {{ contents.entries }} entries ·
+            {{ contents.events }} events in the log
+          </p>
+        </div>
+      </div>
+
+      <div class="flex gap-2 mt-3">
+        <Button
+          v-if="sync.status === 'off'"
+          aria-label="Set up backups"
+          class="!py-1.5 !px-3 !text-chip"
+          @click="$router.push('/marketplace')"
+        >
+          Set up backups
+        </Button>
+        <Button
+          v-else
+          :variant="sync.status === 'failed' ? 'destructive' : 'secondary'"
+          aria-label="Back up now"
+          class="!py-1.5 !px-3 !text-chip"
+          @click="backUpNow"
+        >
+          {{ sync.status === 'syncing' ? 'Backing up…' : 'Back up now' }}
+        </Button>
+        <Button
+          variant="secondary"
+          aria-label="Export identity"
+          class="!py-1.5 !px-3 !text-chip"
+          @click="app.commands.downloadIdentity(identity)"
+        >
+          Download a copy
+        </Button>
+      </div>
+    </section>
 
     <div class="bg-white border border-hairline-strong rounded-xl overflow-hidden">
       <ListRow
@@ -35,17 +95,6 @@
         to="/add-ons"
         aria-label="Add-ons"
       />
-      <ListRow
-        title="Back up this identity"
-        meta="download the whole log"
-        action
-        aria-label="Export identity"
-        @click="app.commands.downloadIdentity(identity)"
-      >
-        <template #trailing>
-          <span class="text-meta font-semibold text-primary flex-none">Export</span>
-        </template>
-      </ListRow>
       <ListRow
         title="Copy this identity"
         meta="to paste on another device"
@@ -241,6 +290,14 @@ import Button from '../../components/button/component.vue'
 
 const CHANGELOG_PATH = '/https://changelog.followalong.com/feed.xml'
 
+const SYNC_TITLES = {
+  off: 'Not backed up',
+  idle: 'Backup configured',
+  syncing: 'Backing up…',
+  saved: 'Backed up',
+  failed: 'Backup failed'
+}
+
 const STRATEGY_LABELS = {
   none: 'Not encrypted',
   ask: 'Ask for a password',
@@ -268,6 +325,8 @@ export default {
     encryptionOpen: false,
     strategy: 'none',
     STRATEGY_LABELS,
+    SYNC_TITLES,
+    now: Date.now(),
     STRATEGY_HINTS,
     renameOpen: false,
     switchOpen: false,
@@ -278,6 +337,23 @@ export default {
   }),
 
   computed: {
+    sync () {
+      return this.app.queries.syncStatusForIdentity(this.identity)
+    },
+
+    contents () {
+      return this.app.queries.backupContentsForIdentity(this.identity)
+    },
+
+    syncedAgo () {
+      const seconds = Math.max(0, Math.round((this.now - this.sync.at) / 1000))
+
+      if (seconds < 60) return 'just now'
+      if (seconds < 3600) return `${Math.round(seconds / 60)} min ago`
+
+      return new Date(this.sync.at).toLocaleString()
+    },
+
     identities () {
       return this.app.queries.allIdentities()
     },
@@ -292,6 +368,13 @@ export default {
   },
 
   methods: {
+    backUpNow () {
+      this.now = Date.now()
+
+      return this.app.commands.syncIdentity(this.identity)
+        .then(() => { this.now = Date.now() })
+    },
+
     readStrategy () {
       return this.app.commands.keychain.getStrategy(this.identity.id)
         .then((strategy) => { this.strategy = strategy })
