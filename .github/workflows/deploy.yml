@@ -1,0 +1,61 @@
+name: Deploy
+
+# Publishing happens here rather than from someone's laptop, so it always
+# builds from main, always runs the specs first, and never depends on whose
+# machine it was.
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Only ever one deploy in flight, and a newer commit wins.
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: Build and publish
+    runs-on: ubuntu-20.04
+    timeout-minutes: 10
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v3
+
+      - name: Install Node
+        uses: actions/setup-node@v3
+        with:
+          node-version-file: '.tool-versions'
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      # A broken build should never reach the site, and neither should a
+      # broken app.
+      - name: Run the specs
+        run: yarn test:unit
+        env:
+          CI: true
+
+      # Builds dist/, adds the 404.html deep links need, and refuses to
+      # continue if the result is not publishable.
+      - name: Build
+        run: yarn deploy
+
+      - name: Publish to gh-pages
+        run: |
+          cd dist
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Deploy ${GITHUB_SHA}"
+          git push -q --force \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            HEAD:gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,46 +1,112 @@
 /* eslint-disable no-console */
 
-const execa = require('execa')
+// Builds a publishable copy of the app and checks it is actually publishable.
+//
+// It does not push anywhere. The previous version force-pushed the working
+// tree to a gh-pages branch, which meant deploying was the same action as
+// publishing, from whatever branch happened to be checked out, with no way to
+// look at the result first. This produces the directory and leaves putting it
+// somewhere to you.
+
+const { execFileSync } = require('child_process')
 const fs = require('fs')
-const deployBranch = 'gh-pages'
-const masterBranch = 'main'
-const target = 'dist'
+const path = require('path')
 
-const refresh = async () => {
-  console.log('🌱 Creating fresh branch...')
+const root = path.resolve(__dirname, '..')
+const target = path.join(root, 'dist')
 
-  await execa('git', ['checkout', '--orphan', deployBranch])
+const run = (command, args) => {
+  execFileSync(command, args, { cwd: root, stdio: 'inherit' })
 }
 
-const build = async () => {
-  console.log('🔨 Building...')
+const build = () => {
+  console.log('🔨 Building…')
 
-  await execa('yarn', ['build'])
-  await execa('cp', [`${target}/index.html`, `${target}/404.html`])
-  await execa('git', ['--work-tree', target, 'add', '--all'])
-  await execa('git', ['--work-tree', target, 'commit', '-m', deployBranch, '--no-verify'])
+  fs.rmSync(target, { recursive: true, force: true })
+  run('npx', ['vite', 'build'])
 }
 
-const push = async () => {
-  console.log('🌏 Deploying...')
-
-  await execa('git', ['push', 'origin', `HEAD:${deployBranch}`, '--force'])
-  await execa('rm', ['-r', target])
-  await execa('rm', ['-rf', '.git/gc.log'])
-  await execa('git', ['checkout', '-f', masterBranch])
-  await execa('git', ['branch', '-D', deployBranch])
+// Deep links are real URLs here — a feed lives at /https://example.com/feed.xml
+// — so any host has to answer unknown paths with the app itself. Most static
+// hosts do that from a 404.html; the ones that do not need a rewrite rule,
+// which is what the notes below are for.
+const addFallback = () => {
+  fs.copyFileSync(path.join(target, 'index.html'), path.join(target, '404.html'))
 }
 
-const done = () => {
-  console.log('✅ Deployed!')
+const verify = () => {
+  console.log('🔍 Checking the build…')
+
+  const problems = []
+  const indexPath = path.join(target, 'index.html')
+
+  if (!fs.existsSync(indexPath)) {
+    problems.push('dist/index.html is missing — the build produced nothing')
+    return problems
+  }
+
+  // Commented-out tags are not references; index.html carries a few.
+  const html = fs.readFileSync(indexPath, 'utf8').replace(/<!--[\s\S]*?-->/g, '')
+  const referenced = [...html.matchAll(/(?:src|href)="(\/[^"]+)"/g)].map((m) => m[1])
+
+  referenced.forEach((ref) => {
+    if (!fs.existsSync(path.join(target, ref))) {
+      problems.push(`index.html points at ${ref}, which is not in dist`)
+    }
+  })
+
+  if (!referenced.some((ref) => ref.endsWith('.js'))) {
+    problems.push('index.html loads no JavaScript bundle')
+  }
+
+  if (!referenced.some((ref) => ref.endsWith('.css'))) {
+    problems.push('index.html loads no stylesheet')
+  }
+
+  if (!fs.existsSync(path.join(target, '404.html'))) {
+    problems.push('404.html is missing — deep links would not resolve')
+  }
+
+  return problems
+}
+
+const summarise = () => {
+  const bytes = (dir) => fs.readdirSync(dir, { withFileTypes: true })
+    .reduce((total, entry) => {
+      const full = path.join(dir, entry.name)
+
+      return total + (entry.isDirectory() ? bytes(full) : fs.statSync(full).size)
+    }, 0)
+
+  const mb = (bytes(target) / 1024 / 1024).toFixed(2)
+
+  console.log('')
+  console.log(`✅ dist/ is ready — ${mb} MB`)
+  console.log('')
+  console.log('   Look at it first:   yarn preview')
+  console.log('   Then publish dist/ to any static host.')
+  console.log('')
+  console.log('   Whatever you use must serve index.html for unknown paths,')
+  console.log('   because a feed URL is part of the path. A 404.html fallback')
+  console.log('   is included for hosts that use one.')
+  console.log('')
 }
 
 Promise.resolve()
-  .then(refresh)
   .then(build)
-  .then(push)
-  .then(done)
+  .then(addFallback)
+  .then(verify)
+  .then((problems) => {
+    if (problems.length) {
+      console.error('')
+      console.error('❌ Not publishable:')
+      problems.forEach((problem) => console.error(`   • ${problem}`))
+      process.exit(1)
+    }
+
+    summarise()
+  })
   .catch((e) => {
-    console.log(e.message)
+    console.error(e.message)
     process.exit(1)
   })
