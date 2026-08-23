@@ -3,6 +3,7 @@ import Home from '../views/home/component.vue'
 import Feed from '../views/feed/component.vue'
 import Following from '../views/following/component.vue'
 import Help from '../views/help/component.vue'
+import About from '../views/about/component.vue'
 import Settings from '../views/settings/component.vue'
 import Signal from '../views/signal/component.vue'
 import Marketplace from '../views/marketplace/component.vue'
@@ -11,6 +12,11 @@ const routes = [
   {
     path: '/settings',
     component: Settings,
+    props: true
+  },
+  {
+    path: '/about',
+    component: About,
     props: true
   },
   {

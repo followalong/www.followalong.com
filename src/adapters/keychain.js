@@ -75,6 +75,16 @@ class KeychainAdapter {
     })
   }
 
+  // 'none' and 'ask' are stored as themselves; anything else stored is the
+  // key itself, which is the 'store' strategy.
+  getStrategy (id) {
+    return this.db.getItem(id).then((key) => {
+      if (key === 'none' || key === 'ask') return key
+
+      return typeof key === 'string' ? 'store' : 'none'
+    })
+  }
+
   getKeys () {
     return this.db.keys()
   }

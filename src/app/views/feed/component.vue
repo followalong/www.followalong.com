@@ -18,14 +18,24 @@
           <h2 class="text-lg font-bold text-ink truncate">
             {{ title }}
           </h2>
-          <a
-            :href="app.queries.linkForFeed(feed)"
-            target="_blank"
-            class="text-meta text-primary"
-          >
-            {{ app.queries.linkForFeed(feed) }} &rarr;
-            <span v-if="!remoteFeed">Loading...</span>
-          </a>
+          <div class="flex items-center gap-2 min-w-0">
+            <a
+              :href="app.queries.linkForFeed(feed)"
+              target="_blank"
+              class="text-meta text-primary truncate"
+            >
+              {{ app.queries.linkForFeed(feed) }} &rarr;
+              <span v-if="!remoteFeed">Loading...</span>
+            </a>
+            <button
+              type="button"
+              aria-label="Copy feed URL"
+              class="flex-none text-meta font-semibold text-ink-subtle"
+              @click="copyUrl"
+            >
+              {{ copiedUrl ? 'Copied' : 'Copy' }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -103,7 +113,8 @@ export default {
   data () {
     return {
       remoteFeed: null,
-      filter: ''
+      filter: '',
+      copiedUrl: false
     }
   },
 
@@ -194,6 +205,12 @@ export default {
   },
 
   methods: {
+    copyUrl () {
+      return Promise.resolve(this.app.commands.copyToClipboard(this.url || this.app.queries.urlForFeed(this.feed)))
+        .then(() => { this.copiedUrl = true })
+        .catch(() => {})
+    },
+
     toggleFollow () {
       if (this.existingFeed) {
         this.app.commands.removeFeedFromIdentity(this.identity, this.existingFeed)

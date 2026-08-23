@@ -3,7 +3,7 @@
     data-search-panel
     class="fixed inset-0 z-50 bg-chrome flex flex-col"
   >
-    <div class="flex items-center gap-3 px-4 py-3 md:px-6">
+    <div class="max-w-app w-full flex items-center gap-3 px-4 py-3 md:px-6">
       <button
         type="button"
         aria-label="Close search"
@@ -27,63 +27,65 @@
     </div>
 
     <div class="flex-1 bg-page overflow-y-auto">
-      <p
-        v-if="!q.trim()"
-        class="px-4 py-5 text-body text-ink-secondary md:px-6"
-      >
-        Paste an RSS URL to follow something new, or type to search the feeds
-        and entries you already have.
-      </p>
-
-      <template v-else>
-        <template v-if="looksLikeUrl">
-          <h2 :class="HEADING">
-            Feed found at this URL
-          </h2>
-          <ListRow
-            :title="q.trim()"
-            meta="Open this feed"
-            :to="`/${q.trim()}`"
-            @click="$emit('close')"
-          />
-        </template>
-
-        <template v-if="matchingFeeds.length">
-          <h2 :class="HEADING">
-            Your feeds
-          </h2>
-          <ListRow
-            v-for="feed in matchingFeeds"
-            :key="`search-feed-${feed.id}`"
-            :title="app.queries.titleForFeed(feed)"
-            :meta="`${app.queries.entriesForFeed(identity, feed).length} items`"
-            :to="`/${app.queries.urlForFeed(feed)}`"
-            @click="$emit('close')"
-          />
-        </template>
-
-        <template v-if="matchingEntries.length">
-          <h2 :class="HEADING">
-            In your entries
-          </h2>
-          <ListRow
-            v-for="entry in matchingEntries"
-            :key="`search-entry-${entry.id}`"
-            :title="app.queries.titleForEntry(entry)"
-            :meta="metaFor(entry)"
-            :to="feedPathFor(entry)"
-            @click="$emit('close')"
-          />
-        </template>
-
+      <div class="max-w-app">
         <p
-          v-if="!looksLikeUrl && !matchingFeeds.length && !matchingEntries.length"
+          v-if="!q.trim()"
           class="px-4 py-5 text-body text-ink-secondary md:px-6"
         >
-          Nothing matches “{{ q.trim() }}”. Paste an RSS URL to follow something
-          new.
+          Paste an RSS URL to follow something new, or type to search the feeds
+          and entries you already have.
         </p>
-      </template>
+
+        <template v-else>
+          <template v-if="looksLikeUrl">
+            <h2 :class="HEADING">
+              Feed found at this URL
+            </h2>
+            <ListRow
+              :title="q.trim()"
+              meta="Open this feed"
+              :to="`/${q.trim()}`"
+              @click="$emit('close')"
+            />
+          </template>
+
+          <template v-if="matchingFeeds.length">
+            <h2 :class="HEADING">
+              Your feeds
+            </h2>
+            <ListRow
+              v-for="feed in matchingFeeds"
+              :key="`search-feed-${feed.id}`"
+              :title="app.queries.titleForFeed(feed)"
+              :meta="`${app.queries.entriesForFeed(identity, feed).length} items`"
+              :to="`/${app.queries.urlForFeed(feed)}`"
+              @click="$emit('close')"
+            />
+          </template>
+
+          <template v-if="matchingEntries.length">
+            <h2 :class="HEADING">
+              In your entries
+            </h2>
+            <ListRow
+              v-for="entry in matchingEntries"
+              :key="`search-entry-${entry.id}`"
+              :title="app.queries.titleForEntry(entry)"
+              :meta="metaFor(entry)"
+              :to="feedPathFor(entry)"
+              @click="$emit('close')"
+            />
+          </template>
+
+          <p
+            v-if="!looksLikeUrl && !matchingFeeds.length && !matchingEntries.length"
+            class="px-4 py-5 text-body text-ink-secondary md:px-6"
+          >
+            Nothing matches “{{ q.trim() }}”. Paste an RSS URL to follow something
+            new.
+          </p>
+        </template>
+      </div>
     </div>
   </div>
 </template>

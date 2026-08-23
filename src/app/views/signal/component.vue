@@ -23,6 +23,38 @@
       </template>
     </SignalChips>
 
+    <section
+      v-if="showIntro"
+      class="md:px-6 md:pt-5 max-w-river md:mx-auto"
+    >
+      <div class="bg-white border-y md:border border-hairline md:rounded-card p-4 md:p-5">
+        <div class="flex items-start justify-between gap-3">
+          <h2 class="text-card md:text-card-lg font-bold text-ink">
+            What is Follow Along?
+          </h2>
+          <button
+            type="button"
+            aria-label="Dismiss intro"
+            class="h-7 w-7 -mt-1 -mr-1 flex-none text-ink-subtle"
+            @click="dismissIntro"
+          >
+            ✕
+          </button>
+        </div>
+        <p class="text-body md:text-[14px] text-ink-secondary mt-1.5">
+          A place to follow the things you care about directly, with nothing in
+          between. Everything stays on this device.
+        </p>
+        <router-link
+          to="/about"
+          aria-label="About Follow Along"
+          class="inline-block mt-3 text-body font-semibold text-primary"
+        >
+          Read more &raquo;
+        </router-link>
+      </div>
+    </section>
+
     <div
       v-if="app.queries.signalHasCards(signal)"
       class="md:px-6 md:py-5 flex flex-col gap-0 md:gap-3.5 max-w-river md:mx-auto"
@@ -122,6 +154,10 @@ export default {
       return this.app.queries.unreadEntries(this.entries)
     },
 
+    showIntro () {
+      return this.app.queries.hintIsShown(this.identity, 'intro')
+    },
+
     signalCards () {
       return this.app.queries.cardsForIdentityForSignal(this.identity, this.signal)
     }
@@ -179,6 +215,10 @@ export default {
           }, 100)
         }
       }
+    },
+
+    dismissIntro () {
+      this.app.commands.hideHintForIdentity(this.identity, 'intro')
     },
 
     catchUpOnSignal () {

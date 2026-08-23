@@ -15,7 +15,7 @@ describe('Roll up an identity', () => {
   })
 
   test('redirects back to the home page', () => {
-    expect(app.find('[aria-label="Page title"]').text()).toEqual('Home')
+    expect(app.find('[aria-label="Page title"]').text()).toEqual('Follow Along')
   })
 
   test('preserves the entries', async () => {

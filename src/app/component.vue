@@ -112,11 +112,12 @@ let POLL_TIMEOUT
 // Every page gets its title and, on a sub-page, its back target from here, so
 // the bar stays pixel-identical instead of each view rolling its own header.
 const PAGES = {
-  '/': { title: 'Home' },
+  '/': { title: 'Follow Along' },
   '/following': { title: 'Feeds you follow' },
   '/marketplace': { title: 'Marketplace' },
   '/settings': { title: 'You' },
   '/help': { title: 'Help', back: '/settings' },
+  '/about': { title: 'About', back: '/settings' },
   '/add-ons': { title: 'Add-ons', back: '/settings' }
 }
 
@@ -237,8 +238,13 @@ export default {
 
       if (signal) {
         const found = this.queries.signalForIdentity(this.identity, signal)
+        const title = found && this.queries.titleForSignal(found)
 
-        return (found && this.queries.titleForSignal(found)) || 'Home'
+        // "Home" beside a house-shaped logo says nothing, so the default
+        // river carries the app's name. A signal someone renamed keeps theirs.
+        if (!title || title === 'Home') return 'Follow Along'
+
+        return title
       }
 
       if (feedUrl) {

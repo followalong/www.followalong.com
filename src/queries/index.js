@@ -81,6 +81,10 @@ class Queries {
     return this.state.findAll(null, 'identities')
   }
 
+  hintIsShown (identity, hint) {
+    return ((identity || {}).hints || []).indexOf(hint) === -1
+  }
+
   nameForIdentity (identity) {
     return (identity && identity.name) || 'My Account'
   }

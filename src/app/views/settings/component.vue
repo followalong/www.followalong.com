@@ -13,6 +13,13 @@
         @click="openRename"
       />
       <ListRow
+        title="Encryption"
+        :meta="STRATEGY_LABELS[strategy]"
+        action
+        aria-label="Change encryption"
+        @click="encryptionOpen = true"
+      />
+      <ListRow
         title="Switch identity"
         :meta="`${identities.length} on this device`"
         action
@@ -74,6 +81,12 @@
         aria-label="Help"
       />
       <ListRow
+        title="About Follow Along"
+        meta="what this is, and why"
+        to="/about"
+        aria-label="About Follow Along"
+      />
+      <ListRow
         title="Changelog"
         meta="a feed you follow"
         :to="CHANGELOG_PATH"
@@ -93,6 +106,29 @@
       </span>
       <span class="text-meta font-semibold text-danger flex-none">Forget me</span>
     </button>
+
+    <Sheet
+      :open="encryptionOpen"
+      title="Encryption"
+      @close="encryptionOpen = false"
+    >
+      <p class="text-body text-ink-secondary">
+        This protects the copy of your log that add-ons sync off this device.
+        What is stored locally is always readable by this browser.
+      </p>
+
+      <div class="mt-3 border border-hairline-strong rounded-xl overflow-hidden">
+        <ListRow
+          v-for="(label, key) in STRATEGY_LABELS"
+          :key="key"
+          :title="label"
+          :meta="key === strategy ? 'in use' : STRATEGY_HINTS[key]"
+          action
+          :aria-label="`Encrypt with ${key}`"
+          @click="changeEncryption(key)"
+        />
+      </div>
+    </Sheet>
 
     <Sheet
       :open="renameOpen"
@@ -205,6 +241,18 @@ import Button from '../../components/button/component.vue'
 
 const CHANGELOG_PATH = '/https://changelog.followalong.com/feed.xml'
 
+const STRATEGY_LABELS = {
+  none: 'Not encrypted',
+  ask: 'Ask for a password',
+  store: 'Remember a password'
+}
+
+const STRATEGY_HINTS = {
+  none: 'synced in the clear',
+  ask: 'asked for each session',
+  store: 'kept on this device'
+}
+
 export default {
   components: {
     ListRow,
@@ -217,6 +265,10 @@ export default {
   data: () => ({
     CHANGELOG_PATH,
     importOpen: false,
+    encryptionOpen: false,
+    strategy: 'none',
+    STRATEGY_LABELS,
+    STRATEGY_HINTS,
     renameOpen: false,
     switchOpen: false,
     name: '',
@@ -235,7 +287,24 @@ export default {
     }
   },
 
+  mounted () {
+    this.readStrategy()
+  },
+
   methods: {
+    readStrategy () {
+      return this.app.commands.keychain.getStrategy(this.identity.id)
+        .then((strategy) => { this.strategy = strategy })
+        .catch(() => {})
+    },
+
+    changeEncryption (strategy) {
+      return this.app.commands.changeEncryptionForIdentity(this.identity, strategy)
+        .then(() => this.readStrategy())
+        .then(() => { this.encryptionOpen = false })
+        .catch(() => {})
+    },
+
     openRename () {
       this.name = this.app.queries.nameForIdentity(this.identity)
       this.renameOpen = true

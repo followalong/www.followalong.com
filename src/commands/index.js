@@ -255,6 +255,18 @@ class Commands {
     }
   }
 
+  // The keychain has always known all three strategies; nothing until now
+  // let anyone pick between them.
+  changeEncryptionForIdentity (identity, strategy) {
+    return this.keychain.remove(identity.id)
+      .then(() => this.keychain.add(strategy, identity.id))
+      .then(() => this.syncIdentity(identity))
+  }
+
+  hideHintForIdentity (identity, hint) {
+    this.track(identity, 'identities', identity.id, 'hideHint', { hint })
+  }
+
   renameIdentity (identity, name) {
     this.track(identity, 'identities', identity.id, 'update', { name })
   }

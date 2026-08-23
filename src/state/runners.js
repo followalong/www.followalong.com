@@ -24,6 +24,24 @@ const UNTIMESTAMP = (attr) => (store, event) => {
   delete existing[attr]
 }
 
+// Hints are dismissed one at a time and never come back, so the event only
+// has to append.
+const PUSH = (attr) => (store, event) => {
+  const existing = store[event.collection].find((item) => item.id === event.objectId)
+
+  if (!existing) {
+    return console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+  }
+
+  const value = (event.data || {}).hint
+
+  existing[attr] = existing[attr] || []
+
+  if (existing[attr].indexOf(value) === -1) {
+    existing[attr].push(value)
+  }
+}
+
 const ROLLUP = (store, event) => {
   const identities = [event.data.identity]
   identities.forEach((identity) => {
@@ -79,6 +97,7 @@ export default {
   'entries.unread': UNTIMESTAMP('readAt'),
   'identities.create': EventStore.RUNNERS.CREATE,
   'identities.update': EventStore.RUNNERS.UPDATE,
+  'identities.hideHint': PUSH('hints'),
   'identities.delete': EventStore.RUNNERS.DELETE,
   'identities.rollup': ROLLUP,
   'signals.create': EventStore.RUNNERS.CREATE,
