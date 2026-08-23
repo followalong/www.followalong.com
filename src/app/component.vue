@@ -53,6 +53,7 @@ import VERSION from '../state/version.js'
 import runners from '../state/runners.js'
 import Queries from '../queries/index.js'
 import NoSleep from 'nosleep.js'
+import KeychainAdapter from '../adapters/keychain.js'
 
 const POLL_INTERVAL = 30000
 let POLL_TIMEOUT
@@ -90,18 +91,35 @@ export default {
     noSleep: {
       type: Object,
       default: () => new NoSleep()
+    },
+    prompt: {
+      type: Function,
+      default: (question) => window.prompt(question)
+    },
+    keychainName: {
+      type: String,
+      default: KeychainAdapter.DEFAULT_NAME
+    },
+    // Loaded on demand: the SDK is far larger than the rest of the app, and
+    // only identities syncing to a bucket ever need it.
+    awsS3: {
+      type: Function,
+      default: (config) => import('aws-sdk').then((mod) => new (mod.default || mod).S3(config))
     }
   },
   data () {
     window.followAlong = this
+    const keychain = new KeychainAdapter({ prompt: this.prompt, name: this.keychainName })
     const queries = new Queries({
       fetch: this.fetch,
-      state: this.state
+      state: this.state,
+      awsS3: this.awsS3
     })
     const commands = new Commands({
       fetch: this.fetch,
       state: this.state,
       queries,
+      keychain,
       scrollTo: this.scrollTo,
       noSleep: this.noSleep
     })
@@ -123,14 +141,16 @@ export default {
     }
   },
   mounted () {
-    return this.commands.restoreFromLocal().then(() => {
-      if (!this.queries.allIdentities().length) {
-        this.commands.addIdentity({})
-      }
+    return this.commands.restoreFromLocal()
+      .then(() => this.commands.restoreFromRemote())
+      .then(() => {
+        if (!this.queries.allIdentities().length) {
+          this.commands.addIdentity({})
+        }
 
-      this.isLoading = false
-      this.setIdentity(this.queries.allIdentities()[0])
-    })
+        this.isLoading = false
+        this.setIdentity(this.queries.allIdentities()[0])
+      })
   },
   methods: {
     pollFeeds () {

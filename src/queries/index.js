@@ -491,7 +491,7 @@ class Queries {
 
   adapterForAddonForIdentity (identity, addon) {
     const Adapter = ADAPTERS.find((Adapter) => Adapter.name === addon.type) || None
-    const adapter = new Adapter({ fetch: this.fetch }, addon)
+    const adapter = new Adapter({ fetch: this.fetch, awsS3: this.awsS3 }, addon)
 
     return adapter
   }
@@ -540,6 +540,14 @@ class Queries {
 
   findAllEvents (identity) {
     return this.state.findAllEvents(identity.id)
+  }
+
+  // The synced payload: the event log itself, in the same shape importRaw
+  // reads back, so syncing is append-and-merge rather than last-writer-wins.
+  eventsToFile (identity) {
+    return this.findAllEvents(identity)
+      .map((event) => `${event.key} ${event.toLocal() || ''}`.trim())
+      .join('\n')
   }
 
   metasForEntryForIdentity (identity, entry) {

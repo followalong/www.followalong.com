@@ -1,13 +1,14 @@
 import localForage from 'localforage'
 
 class KeychainAdapter {
-  constructor (options) {
-    this.db = localForage.createInstance({ name: 'followalong-keychain-v1' })
+  constructor (options = {}) {
     this.keys = {}
 
     for (const key in options) {
       this[key] = options[key]
     }
+
+    this.db = localForage.createInstance({ name: this.name || KeychainAdapter.DEFAULT_NAME })
   }
 
   add (encryptionStrategy, id) {
@@ -121,5 +122,7 @@ class KeychainAdapter {
     delete this.keys[id]
   }
 }
+
+KeychainAdapter.DEFAULT_NAME = 'followalong-keychain-v1'
 
 export default KeychainAdapter

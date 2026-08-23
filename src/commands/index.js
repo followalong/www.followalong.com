@@ -1,6 +1,8 @@
+import { encrypt, decrypt } from '../queries/crypt.js'
 import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT_SIGNALS } from './seed.js'
 
 const MAX_OLD_ITEMS_PER_FEED = 15
+const SYNC_DEBOUNCE = 1500
 
 class Commands {
   constructor (options) {
@@ -12,6 +14,8 @@ class Commands {
   addIdentity (identity) {
     identity.name = identity.name || 'My Account'
     identity.id = this.state.createDB(null, {})
+
+    this.keychain.addNone(identity.id)
 
     this.track(identity, 'identities', identity.id, 'create', identity)
 
@@ -39,11 +43,54 @@ class Commands {
   }
 
   track (identity, collectionName, objectId, action, data) {
-    return this.state.track(identity.id, collectionName, objectId, action, data)
+    const event = this.state.track(identity.id, collectionName, objectId, action, data)
+
+    this.debouncedSyncIdentity(identity)
+
+    return event
+  }
+
+  debouncedSyncIdentity (identity) {
+    this._syncTimeouts = this._syncTimeouts || {}
+
+    clearTimeout(this._syncTimeouts[identity.id])
+
+    this._syncTimeouts[identity.id] = setTimeout(() => {
+      this.syncIdentity(identity)
+    }, SYNC_DEBOUNCE)
+  }
+
+  syncIdentity (identity) {
+    const adapter = this.queries.addonAdapterForActionForIdentity(identity, 'save')
+
+    return this.keyForIdentity(identity)
+      .then((key) => adapter.save(this.queries.eventsToFile(identity), encrypt(key)))
+      .catch((e) => console.warn('Could not sync identity', e))
+  }
+
+  restoreIdentityFromRemote (identity) {
+    const adapter = this.queries.addonAdapterForActionForIdentity(identity, 'get')
+
+    return this.keyForIdentity(identity)
+      .then((key) => adapter.get(identity, decrypt(key)))
+      .then((data) => this.state.importRaw(identity.id, data))
+      .catch((e) => console.warn('Could not restore identity from remote', e))
+  }
+
+  // An identity with no keychain entry syncs unencrypted, which is what
+  // every identity created before the keychain existed expects.
+  keyForIdentity (identity) {
+    return this.keychain.getKey(identity.id).catch(() => '')
   }
 
   restoreFromLocal () {
     return this.state.restore()
+  }
+
+  restoreFromRemote () {
+    return Promise.all(
+      this.queries.allIdentities().map((identity) => this.restoreIdentityFromRemote(identity))
+    )
   }
 
   fetchUrl (identity, action, url) {
@@ -127,7 +174,8 @@ class Commands {
   }
 
   forgetIdentity (identity) {
-    return this.state.deleteDB(identity.id)
+    return this.keychain.remove(identity.id)
+      .then(() => this.state.deleteDB(identity.id))
       .then(() => {
         if (!this.queries.allIdentities().length) {
           this.addIdentity({})
