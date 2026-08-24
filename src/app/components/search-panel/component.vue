@@ -126,14 +126,22 @@ export default {
       })
     },
 
+    // Stops at the twentieth match rather than titling all of them first: a
+    // keystroke used to read every entry title in the identity to throw all
+    // but twenty away.
     matchingEntries () {
       if (!this.app || !this.identity) return []
 
       const entries = this.app.queries.entriesForIdentity(this.identity) || []
+      const found = []
 
-      return entries
-        .filter((entry) => `${this.app.queries.titleForEntry(entry)}`.toLowerCase().includes(this.needle))
-        .slice(0, LIMIT)
+      for (let i = 0; i < entries.length && found.length < LIMIT; i++) {
+        const title = `${this.app.queries.titleForEntry(entries[i])}`.toLowerCase()
+
+        if (title.includes(this.needle)) found.push(entries[i])
+      }
+
+      return found
     }
   },
   methods: {

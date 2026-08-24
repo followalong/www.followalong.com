@@ -136,10 +136,17 @@ export default {
       return !!this.$route.params.signal && !this.signal
     },
 
-    shownEntries () {
+    // Filtering the whole river is the expensive part of a river render, and
+    // it costs the same whether four cards are on screen or four hundred. Kept
+    // apart from the slice so scrolling only re-slices.
+    riverEntries () {
       if (this.missingSignal) return []
 
-      return this.app.queries.filterNonNewEntries(this.identity, this.entries).slice(0, this.limit)
+      return this.app.queries.filterNonNewEntries(this.identity, this.entries)
+    },
+
+    shownEntries () {
+      return this.riverEntries.slice(0, this.limit)
     },
 
     showIntro () {
@@ -183,11 +190,15 @@ export default {
       PullToRefresh.destroyAll()
     },
 
+    // Scroll fires once a frame, and each bump re-renders the river, so the
+    // guard has to actually close. It never did: LOADING was only ever set
+    // back to false, which let one flick queue a render per frame and add
+    // hundreds of cards.
     infiniteScroll () {
-      let LOADING
+      let loading = false
 
       return () => {
-        if (LOADING) {
+        if (loading || this.limit >= this.riverEntries.length) {
           return
         }
 
@@ -196,10 +207,11 @@ export default {
         const windowScrolled = Math.max(window.pageYOffset || 0, document.documentElement.scrollTop)
 
         if (documentHeight - windowScrolled - windowHeight < DISTANCE_FROM_BOTTOM) {
+          loading = true
           this.limit += LIMIT
 
-          setTimeout(function () {
-            LOADING = false
+          setTimeout(() => {
+            loading = false
           }, 100)
         }
       }

@@ -1,7 +1,7 @@
 <template>
   <div>
     <EntryCard
-      :title="app.queries.titleForEntry(entry)"
+      :title="title"
       :media="media"
       :summary="summary"
       :summary-label="summaryLabel"
@@ -10,7 +10,7 @@
       :saved="isSaved"
       :subject="`${entry.id}`"
       :readable="!!content"
-      :poster="app.queries.imageForEntry(entry) || ''"
+      :poster="poster"
       @done="toggleRead"
       @save="toggleSave"
       @read="reading = true"
@@ -44,7 +44,7 @@
       </template>
 
       <template
-        v-if="app.queries.audioForEntry(entry)"
+        v-if="audio"
         #player
       >
         <AudioPlayer
@@ -58,9 +58,9 @@
     <EntryReader
       :open="reading"
       :entry-id="`${entry.id}`"
-      :title="app.queries.titleForEntry(entry)"
+      :title="title"
       :meta="readerMeta"
-      :content="html"
+      :content="reading ? html : ''"
       :link="app.queries.linkForEntry(entry) || ''"
       @close="reading = false"
       @skip="reading = false"
@@ -113,10 +113,29 @@ export default {
       return this.app.queries.feedForIdentity(this.identity, this.entry.feedId)
     },
 
+    title () {
+      return this.app.queries.titleForEntry(this.entry)
+    },
+
+    video () {
+      return this.app.queries.videoForEntry(this.entry)
+    },
+
+    audio () {
+      return this.app.queries.audioForEntry(this.entry)
+    },
+
+    poster () {
+      return this.app.queries.imageForEntry(this.entry) || ''
+    },
+
+    // Asked once each, not once per render: the card asks what kind of thing
+    // it is, the template asks again for the poster and the audio player, and
+    // a river re-renders far more often than an entry changes.
     media () {
-      if (this.app.queries.videoForEntry(this.entry)) return 'video'
-      if (this.app.queries.audioForEntry(this.entry)) return 'audio'
-      if (this.app.queries.imageForEntry(this.entry)) return 'image'
+      if (this.video) return 'video'
+      if (this.audio) return 'audio'
+      if (this.poster) return 'image'
 
       return 'text'
     },
