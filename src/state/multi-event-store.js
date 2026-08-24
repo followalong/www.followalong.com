@@ -109,8 +109,6 @@ class MultipleEventStore extends EventStore {
     return Promise.all(promises)
   }
 
-  // Sum of the per-store revisions: any applied event changes it, which is
-  // all a reader needs to know its cached work is stale.
   rawCollection (dbId, collectionName) {
     const db = this._findDBs(dbId ? [dbId] : undefined)[0]
 
@@ -122,9 +120,12 @@ class MultipleEventStore extends EventStore {
       .reduce((total, db) => total + db.generation, 0)
   }
 
-  revisionFor (dbId) {
+  // Sum of the per-store revisions, over the named collections or all of
+  // them: it only rises, so a reader that sees the same number knows nothing
+  // it depends on has been folded since.
+  revisionFor (dbId, collections) {
     return this._findDBs(dbId ? [dbId] : undefined)
-      .reduce((total, db) => total + db.revision, 0)
+      .reduce((total, db) => total + db.revisionFor(collections), 0)
   }
 
   findAllEvents (dbId, ...args) {

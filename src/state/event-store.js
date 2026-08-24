@@ -15,9 +15,25 @@ class EventStore {
     // without it, and every lookup rescans the collection.
     this._byId = {}
 
+    // Every key currently in _events. importRaw asks it once per line, and
+    // asking the array instead made a merge quadratic: 25k lines against 25k
+    // events is 300M comparisons before a single new event is folded.
+    this._keys = new Set()
+
+    // Keys of the superseding events in _events, bucketed by what they
+    // supersede, so tracking one knows whether there is anything to drop and
+    // can stop looking once it has found it.
+    this._supersedable = new Map()
+
     // Bumped on every applied event so readers can cache derived work and
     // know when to throw it away.
     this.revision = 0
+
+    // The same, per collection. A poll writes a feeds.fetched event per feed,
+    // and the whole revision counts those, so a reader caching anything about
+    // entries threw it away hundreds of times a cycle for changes that could
+    // not touch an entry.
+    this._revisions = {}
 
     // Bumped whenever the log is re-folded, which replaces every projection
     // object. Readers holding references to them have to start over, and the
@@ -28,6 +44,32 @@ class EventStore {
     this.eachCollectionName((collectionName) => {
       this[collectionName] = this[collectionName] || []
       this._byId[collectionName] = this._byId[collectionName] || new Map()
+      this._revisions[collectionName] = this._revisions[collectionName] || 0
+    })
+  }
+
+  // Naming the collections a reader cares about answers for those alone. The
+  // sum only ever rises, so a change to any of them changes the answer.
+  revisionFor (collections) {
+    if (!collections) {
+      return this.revision
+    }
+
+    let total = 0
+
+    for (let i = 0; i < collections.length; i++) {
+      total += this._revisions[collections[i]] || 0
+    }
+
+    return total
+  }
+
+  // For a runner that folds into collections other than its event's own.
+  // Over-reporting only costs a reader its cache; under-reporting hands it
+  // stale answers, so anything unsure says everything.
+  bumpEveryRevision () {
+    this.eachCollectionName((collectionName) => {
+      this._revisions[collectionName] = (this._revisions[collectionName] || 0) + 1
     })
   }
 
@@ -45,26 +87,48 @@ class EventStore {
   // is a timestamp: the newest carries the whole meaning, so the ones before
   // it cannot change the folded result.
   _supersede (event) {
-    if (SUPERSEDING.indexOf(`${event.collection}.${event.action}`) === -1) {
+    const doomed = this._supersededBy(event)
+
+    if (!doomed || !doomed.size) {
       return
     }
 
-    for (let i = this._events.length - 1; i >= 0; i--) {
-      const old = this._events[i]
+    let remaining = doomed.size
 
+    // Backwards, because what this drops was written on the last poll and so
+    // sits near the end. Walking the whole log for each of 200 feeds is a scan
+    // of the entire history two hundred times a cycle.
+    for (let i = this._events.length - 1; i >= 0 && remaining; i--) {
       // By key, not by identity: the store is reactive in the app, so what
       // comes back out of _events is a proxy and never === the event we just
       // pushed. Comparing by identity made this delete its own event.
-      if (old.key === event.key ||
-        old.collection !== event.collection ||
-        old.objectId !== event.objectId ||
-        old.action !== event.action) {
+      const key = this._events[i].key
+
+      if (!doomed.has(key)) {
         continue
       }
 
       this._events.splice(i, 1)
-      this._db.removeItem(old.key)
+      this._keys.delete(key)
+      this._db.removeItem(key)
+      remaining--
     }
+  }
+
+  // The keys this event replaces, and the bucket left holding only this one.
+  _supersededBy (event) {
+    if (SUPERSEDING.indexOf(`${event.collection}.${event.action}`) === -1) {
+      return null
+    }
+
+    const id = `${event.collection}/${event.objectId}/${event.action}`
+    const bucket = this._supersedable.get(id) || new Set()
+
+    this._supersedable.set(id, new Set([event.key]))
+
+    bucket.delete(event.key)
+
+    return bucket
   }
 
   eachCollectionName (func) {
@@ -89,9 +153,17 @@ class EventStore {
 
     lines.forEach((line) => {
       const splat = line.split(' ')
-      const event = EventStoreEvent.from(splat.shift(), splat.join(' '))
+      const key = splat.shift()
 
-      if (!event || this._events.find((e) => e.key === event.key)) {
+      // Nearly every line of a merge is one we already hold, and parsing its
+      // payload to find that out is most of the work a merge does.
+      if (this._keys.has(key)) {
+        return
+      }
+
+      const event = EventStoreEvent.from(key, splat.join(' '))
+
+      if (!event || this._keys.has(event.key)) {
         return
       }
 
@@ -110,6 +182,8 @@ class EventStore {
 
     this._resetCollections()
     this._events.splice(0)
+    this._keys.clear()
+    this._supersedable.clear()
 
     events.forEach((event) => this._runEvent(event))
   }
@@ -172,12 +246,17 @@ class EventStore {
   reset () {
     this._resetCollections()
     this._events.splice(0)
+    this._keys.clear()
+    this._supersedable.clear()
 
     return this._db.clear()
   }
 
   _resetCollections () {
     this.generation++
+    this.revision++
+
+    this.bumpEveryRevision()
 
     this.eachCollectionName((collectionName) => {
       this[collectionName].splice(0)
@@ -203,7 +282,18 @@ class EventStore {
     runner(this, event)
 
     this._events.push(event)
+    this._keys.add(event.key)
+
+    if (SUPERSEDING.indexOf(`${event.collection}.${event.action}`) !== -1) {
+      const id = `${event.collection}/${event.objectId}/${event.action}`
+      const bucket = this._supersedable.get(id) || new Set()
+
+      bucket.add(event.key)
+      this._supersedable.set(id, bucket)
+    }
+
     this.revision++
+    this._revisions[event.collection] = (this._revisions[event.collection] || 0) + 1
   }
 }
 

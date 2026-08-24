@@ -81,6 +81,10 @@ const PUSH = (attr) => (store, event) => {
 }
 
 const ROLLUP = (store, event) => {
+  // The one event that folds into every collection. Its own collection is
+  // identities, so nothing else would tell a reader its entries had moved.
+  store.bumpEveryRevision()
+
   const identities = [event.data.identity]
   identities.forEach((identity) => {
     const identityEvent = new EventStoreEvent('identities', identity.id, 'create', identity, identity.createdAt, event.version)
@@ -123,6 +127,10 @@ export default {
   'feeds.delete': EventStore.RUNNERS.DELETE,
   'feeds.fetched': FETCHED,
   'feeds.fetchFailed': FETCH_FAILED,
+  // Forgiving a failure without claiming a fetch: the feed keeps its
+  // validators, its last-polled time and its failure count, so it is polled
+  // once more and, if it fails again, resumes the backoff it had earned.
+  'feeds.clearFailure': UNTIMESTAMP('failedAt'),
   'feeds.pause': TIMESTAMP('pausedAt'),
   'feeds.unpause': UNTIMESTAMP('pausedAt'),
   'entries.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because feedId is outside of data; OK because feedId is immutable for now
@@ -148,6 +156,8 @@ export default {
   'v2.1': {
     'identities.setProxy': (store, event) => {
       const addonEvent = new EventStoreEvent('addons', event.data.addonType, 'configure', event.data.data, event.time, VERSION)
+
+      store.bumpEveryRevision()
 
       EventStore.RUNNERS.UPDATE(store, addonEvent)
     },

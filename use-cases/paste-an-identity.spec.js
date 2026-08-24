@@ -53,6 +53,29 @@ describe('Paste an identity', () => {
     expect(app.vm.queries.allIdentities()).toHaveLength(1)
   })
 
+  // Rolling up replaces the whole log with a single rollup event, so there is
+  // no create event left for the copy to carry. It is still an identity.
+  story('takes a copy of an identity that has been rolled up', async () => {
+    const copyToClipboard = vi.fn()
+
+    const other = await mountApp({
+      copyToClipboard,
+      state: { rolledup: { config: {}, data: COPY.replace('imported9', 'rolledup') } }
+    })
+
+    await other.click('[aria-label="You"]')
+    await other.click('[aria-label="Roll up identity"]')
+    await other.click('[aria-label="You"]')
+    await other.click('[aria-label="Copy identity"]')
+
+    await paste(copyToClipboard.mock.calls[0][0])
+
+    const imported = app.vm.queries.allIdentities().find((i) => i.id === 'rolledup')
+
+    expect(imported).toBeTruthy()
+    expect(app.vm.queries.feedsForIdentity(imported).map((f) => f.data.title)).toContain('Imported feed')
+  })
+
   story('round-trips what Copy this identity produced', async () => {
     const copyToClipboard = vi.fn()
 

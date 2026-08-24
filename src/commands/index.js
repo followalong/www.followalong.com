@@ -132,6 +132,33 @@ class Commands {
 
   restoreFromLocal () {
     return this.state.restore()
+      .then(() => {
+        this.queries.allIdentities().forEach((identity) => {
+          this.releaseUnrefusedFailuresForIdentity(identity)
+        })
+      })
+  }
+
+  // A stored failure with no HTTP status behind it never carried a refusal
+  // from a server: it is either an error of ours, back when one of those was
+  // recorded against the feed, or a host that could not be reached at all.
+  // Neither is worth a day of silence without one more attempt, and neither
+  // is the case backoff exists to protect — that one is a server refusing us,
+  // and it keeps every minute it earned.
+  //
+  // Once per device. The count is left alone deliberately, so a feed that is
+  // genuinely unreachable fails again and returns to the backoff it had
+  // rather than starting its climb over each time this runs.
+  releaseUnrefusedFailuresForIdentity (identity) {
+    if (this.state.getConfig(identity.id).releasedUnrefusedFailures) {
+      return
+    }
+
+    this.state.updateConfig(identity.id, { releasedUnrefusedFailures: true })
+
+    this.queries.feedsWithUnrefusedFailureForIdentity(identity).forEach((feed) => {
+      this.track(identity, 'feeds', feed.id, 'clearFailure')
+    })
   }
 
   restoreFromRemote () {
@@ -153,6 +180,14 @@ class Commands {
     const url = this.queries.urlForFeed(feed)
 
     return this.fetchUrl(identity, 'rss', url, this.queries.validatorsForFeed(feed))
+      // Only the request itself counts as the feed refusing us. An error
+      // thrown further down is ours, and recording it here would put the feed
+      // into a backoff that doubles to a day, so our own bug would read as
+      // the feed having gone quiet.
+      .catch((e) => {
+        this.trackFetchFailedForIdentity(identity, feed, e)
+        throw e
+      })
       .then((response) => {
         // The feed told us it has not changed, so there is no body to read and
         // nothing to compare. Keep the validators we asked with.
@@ -169,10 +204,6 @@ class Commands {
         this.upsertFeedForIdentity(identity, feed, data, response)
 
         entries.forEach((e) => this.upsertEntryForIdentity(identity, feed, e, this.queries.lastReadDateForFeed(identity, feed)))
-      })
-      .catch((e) => {
-        this.trackFetchFailedForIdentity(identity, feed, e)
-        throw e
       })
   }
 
@@ -417,7 +448,10 @@ class Commands {
 
   importIdentity (raw) {
     const data = `${raw || ''}`.trim()
-    const found = data.match(/\/identities\/([^/\s]+)\/create/)
+    // Either event introduces the identity. A roll up replaces the whole log
+    // with one rollup event, so a rolled-up copy has no create left to find
+    // and looking only for that one rejected a perfectly good backup.
+    const found = data.match(/\/identities\/([^/\s]+)\/(?:create|rollup)/)
 
     if (!found) {
       return Promise.reject(new Error('That does not look like a Follow Along backup.'))

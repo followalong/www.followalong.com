@@ -84,6 +84,41 @@ describe('Queries caching', () => {
     expect(queries.entriesForSignal(identity, all).length).toEqual(2)
   })
 
+  // A poll writes a feeds.fetched event per feed. None of them can change an
+  // entry, and throwing the entry list away for each was most of what a poll
+  // over 200 feeds cost.
+  test('keeps the entry list across an event that only touches feeds', () => {
+    const before = queries.entriesForIdentity(identity)
+
+    state.track(identity.id, 'feeds', 'f1', 'fetched', { etag: 'W/"1"' })
+
+    expect(queries.entriesForIdentity(identity)).toBe(before)
+  })
+
+  test('throws the entry list away when an entry changes', () => {
+    const before = queries.entriesForIdentity(identity)
+
+    state.track(identity.id, 'entries', 'e1', 'markRead')
+
+    expect(queries.entriesForIdentity(identity)).not.toBe(before)
+  })
+
+  // Roll up is the one event that folds into every collection while naming
+  // only its own, so it has to say so itself.
+  test('sees the entries a roll up brought, having read the old ones first', () => {
+    expect(queries.entriesForIdentity(identity).length).toEqual(1)
+
+    state.track(identity.id, 'identities', identity.id, 'rollup', {
+      identity: { id: identity.id, name: 'Rolled' },
+      feeds: [{ id: 'f9', url: 'https://c.example', data: { title: 'C' } }],
+      entries: [Object.assign({ id: 'e7' }, entry('f9', 'g7', 'Seven'))],
+      signals: []
+    })
+
+    expect(queries.entriesForIdentity(identity).map((e) => e.id)).toContain('e7')
+    expect(queries.feedsForIdentity(identity).map((f) => f.id)).toContain('f9')
+  })
+
   test('a signal with its own sort never reorders the shared list', () => {
     state.track(identity.id, 'entries', 'e2', 'create', entry('f1', 'g2', 'Two'))
 

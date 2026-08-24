@@ -64,6 +64,13 @@ const stripHTML = (html) => {
 }
 
 const objHasNewData = (existingObj, newData) => {
+  // Nothing stored under this branch at all, which is not the same as nothing
+  // new: every value below it is arriving for the first time and the scalar
+  // comparison below says so. Recursing into the undefined instead threw, and
+  // the throw happened inside a poll, so a YouTube entry that had never
+  // carried a media:group killed its whole feed.
+  existingObj = existingObj || {}
+
   for (const key in newData) {
     if (typeof newData[key] === 'object') {
       if (
@@ -118,24 +125,27 @@ class Queries {
 
   // Derived reads are recomputed per render and each one walks every entry.
   // Everything here is a pure function of the folded state, so it is cached
-  // against the store's revision and thrown away the moment an event lands.
-  _memo (identity, key, build) {
-    const revision = this.state.revisionFor(identity.id)
+  // against the revision of the collections it reads and thrown away when one
+  // of those changes. Naming none of them means every event invalidates it,
+  // which is what a poll writing a feeds.fetched event per feed used to do to
+  // work that only ever looked at entries.
+  _memo (identity, key, build, collections) {
+    const revision = this.state.revisionFor(identity.id, collections)
 
     this._cache = this._cache || {}
 
-    const slot = this._cache[identity.id] = this._cache[identity.id] || { revision: -1, values: {} }
+    const slot = this._cache[identity.id] = this._cache[identity.id] || {}
+    const cached = slot[key]
 
-    if (slot.revision !== revision) {
-      slot.revision = revision
-      slot.values = {}
+    if (cached && cached.revision === revision) {
+      return cached.value
     }
 
-    if (!(key in slot.values)) {
-      slot.values[key] = build()
-    }
+    const value = build()
 
-    return slot.values[key]
+    slot[key] = { revision, value }
+
+    return value
   }
 
   allIdentities () {
@@ -153,19 +163,23 @@ class Queries {
   entriesForIdentity (identity, maxOldItems = null) {
     let entries = this._memo(identity, 'entries', () => {
       return this.sortEntries(this.state.findAll(identity.id, 'entries'))
-    })
+    }, ['entries'])
 
     if (maxOldItems) {
-      let oldItems = 0
+      // Per feed, because a cap shared across the whole list is spent on
+      // whichever feeds sort first and leaves every other one with nothing
+      // behind it. Saved entries are never counted against it: saving is the
+      // one place a reader says to keep something.
+      const oldItems = {}
 
       entries = entries.filter((entry) => {
-        if (this.isEntryRead(entry)) {
-          oldItems++
-
-          return oldItems <= maxOldItems
+        if (!this.isEntryRead(entry) || this.isEntrySaved(entry)) {
+          return true
         }
 
-        return true
+        oldItems[entry.feedId] = (oldItems[entry.feedId] || 0) + 1
+
+        return oldItems[entry.feedId] <= maxOldItems
       })
     }
 
@@ -190,7 +204,7 @@ class Queries {
       }
 
       return entries
-    })
+    }, ['entries', 'signals'])
   }
 
   keyForSignal (signal) {
@@ -247,7 +261,7 @@ class Queries {
       })
 
       return count
-    })
+    }, ['entries', 'signals'])
   }
 
   entriesForFeed (identity, feed) {
@@ -255,7 +269,7 @@ class Queries {
       // The index is built off the raw collection, so deleted entries are
       // filtered here rather than by the state layer.
       return this.sortEntries(this.rawEntriesForFeed(identity, feed).filter((entry) => !entry._deleted))
-    })
+    }, ['entries'])
   }
 
   // Unsorted and including deleted, straight off the incremental index.
@@ -361,8 +375,10 @@ class Queries {
   }
 
   feedsForIdentity (identity) {
-    return this.state.findAll(identity.id, 'feeds')
-      .sort(SORT_BY_FEED_TITLE(this))
+    return this._memo(identity, 'feeds', () => {
+      return this.state.findAll(identity.id, 'feeds')
+        .sort(SORT_BY_FEED_TITLE(this))
+    }, ['feeds'])
   }
 
   unpausedFeedsForIdentity (identity) {
@@ -420,6 +436,13 @@ class Queries {
     return this.backoffUntilForFeed(feed) > Date.now()
   }
 
+  // Failed, but not because anything answered: no status means no HTTP
+  // response ever came back.
+  feedsWithUnrefusedFailureForIdentity (identity) {
+    return this.feedsForIdentity(identity)
+      .filter((feed) => feed.failedAt && !feed.failureStatus)
+  }
+
   feedsWithoutUrlForIdentity (identity) {
     return this.feedsForIdentity(identity)
       .filter((feed) => !this.urlForFeed(feed))
@@ -438,8 +461,7 @@ class Queries {
   }
 
   feedForIdentity (identity, feedId) {
-    return this.feedsForIdentity(identity)
-      .find((f) => f.id === feedId)
+    return this.state.findById(identity.id, 'feeds', feedId)
   }
 
   feedForIdentityByUrl (identity, feedUrl) {
@@ -528,7 +550,7 @@ class Queries {
     return this._memo(identity, 'saved', () => {
       return this.entriesForIdentity(identity)
         .filter((entry) => this.isEntrySaved(entry))
-    })
+    }, ['entries'])
   }
 
   isEntrySaved (entry) {
@@ -697,7 +719,7 @@ class Queries {
       return addonAdaptersWithSignals
         .reduce((arr, addon) => arr.concat(addon.signals()), signals.slice(0))
         .sort(SORT_BY_ORDER)
-    })
+    }, ['signals', 'addons'])
   }
 
   signalsForIdentityForProjection (identity) {
@@ -753,7 +775,7 @@ class Queries {
     return this._memo(identity, 'addonAdapters', () => {
       return this.state.findAll(identity.id, 'addons')
         .map((addon) => this.adapterForAddonForIdentity(identity, addon))
-    })
+    }, ['addons'])
   }
 
   addonAdaptersForActionForIdentity (identity, action) {

@@ -125,6 +125,21 @@ describe('Sync to S3', () => {
       expect(app.findAll('[aria-label="Mark as unread 6363"]').length).toEqual(1)
     })
 
+    // The whole point of reading first: what is already in the bucket has to
+    // survive. A read that fails has to stop the write, or a device that
+    // cannot see the copy overwrites it with its own.
+    test('does not write over a copy it could not read', async () => {
+      app = await mount()
+
+      getObject = vi.fn((params, cb) => cb(new Error('AccessDenied'), null))
+      putObject.mockClear()
+
+      await app.click('[aria-label="Mark as read 6363"]')
+
+      expect(putObject).not.toHaveBeenCalled()
+      expect(app.vm.queries.syncStatusForIdentity(app.vm.identity).status).toEqual('failed')
+    })
+
     test('does not duplicate events it already has', async () => {
       app = await mount({
         remote: '3/entries/6363/create/v2.1 {"feedId":"543","data":{"guid":"987","title":"Entry title"}}'
