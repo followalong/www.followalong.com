@@ -1,6 +1,7 @@
 import Adapter from './adapter.js'
 
 const STRIP_BEGINNING_AND_END_SLASHES = /^\/|\/$/g
+const NOT_MODIFIED = 304
 
 class S3Adapter extends Adapter {
   constructor (adapterOptions, addonData) {
@@ -12,6 +13,8 @@ class S3Adapter extends Adapter {
     this.fields = S3Adapter.FIELDS
   }
 
+  // Answers with the version it just wrote, so the next read can ask for
+  // anything but that and be told there is nothing to fetch.
   save (data, encrypt) {
     return Promise.all([this._buildS3(), encrypt(data)]).then(([s3, body]) => {
       return new Promise((resolve, reject) => {
@@ -19,23 +22,52 @@ class S3Adapter extends Adapter {
           Body: body,
           Bucket: this.data.bucket,
           Key: this._key()
-        }, (err) => err ? reject(err) : resolve())
+        }, (err, written) => err ? reject(err) : resolve({ etag: written && written.ETag }))
       })
     })
   }
 
-  get (identity, decrypt) {
+  // Conditional on the version the caller already holds: the log is the whole
+  // corpus in one object, so a device that is up to date should be told so
+  // rather than sent a megabyte it will fold into itself and discard.
+  get (identity, decrypt, { etag } = {}) {
+    return this._read(etag)
+      // The condition is an optimisation and never a requirement, so a bucket
+      // that will not take it is asked again without it: a policy naming the
+      // headers it allows refuses the preflight for If-None-Match, and a
+      // request we did not have to make must not be what stops the sync.
+      .catch((e) => etag ? this._read() : Promise.reject(e))
+      .then((response) => {
+        if (response.status === NOT_MODIFIED) {
+          return response
+        }
+
+        return Promise.resolve(decrypt(`${response.body}`))
+          .then((body) => Object.assign({}, response, { body }))
+      })
+  }
+
+  _read (etag) {
     return this._buildS3().then((s3) => {
+      const params = { Bucket: this.data.bucket, Key: this._key() }
+
+      if (etag) {
+        params.IfNoneMatch = etag
+      }
+
       return new Promise((resolve, reject) => {
-        s3.getObject({
-          Bucket: this.data.bucket,
-          Key: this._key()
-        }, (err, data) => {
+        s3.getObject(params, (err, data) => {
+          // A match comes back through the error argument in this SDK, and it
+          // is the opposite of a failure: what we hold is what is there.
+          if (err && (err.statusCode === NOT_MODIFIED || err.code === 'NotModified')) {
+            return resolve({ status: NOT_MODIFIED, body: '', etag })
+          }
+
           if (!data) {
             return reject(new Error(err || 'No data returned'))
           }
 
-          resolve(Promise.resolve(decrypt(`${data.Body}`)))
+          resolve({ status: 200, body: data.Body, etag: data.ETag })
         })
       })
     })

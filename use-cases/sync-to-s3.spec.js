@@ -13,9 +13,13 @@ const ADDON = JSON.stringify({
   }
 })
 
-const seed = (extra = '') => ({
+// The bucket answers a conditional read that matches through the error
+// argument, which is the opposite of a failure.
+const notModified = () => Object.assign(new Error('NotModified'), { statusCode: 304, code: 'NotModified' })
+
+const seed = (extra = '', config = {}) => ({
   abc123: {
-    config: {},
+    config,
     data: `
       0/identities/abc123/create/v2.1
       1/signals/134/create/v2.1 {"data":{"title":"Home","permalink":"home","order":"0"}}
@@ -33,12 +37,14 @@ describe('Sync to S3', () => {
   let getObject
 
   const mount = (options = {}) => {
-    putObject = vi.fn((params, cb) => cb(null, {}))
-    getObject = vi.fn((params, cb) => cb(null, { Body: options.remote || '' }))
+    putObject = vi.fn((params, cb) => cb(null, { ETag: '"written"' }))
+    getObject = vi.fn((params, cb) => {
+      return options.getError ? cb(options.getError, null) : cb(null, { Body: options.remote || '', ETag: options.etag || '"remote"' })
+    })
 
     return mountApp({
       awsS3: () => Promise.resolve({ putObject, getObject }),
-      state: seed(options.extra),
+      state: seed(options.extra, options.config),
       ...options
     })
   }
@@ -148,6 +154,76 @@ describe('Sync to S3', () => {
       const titles = app.findAll('[aria-label="Entry title"]').map((el) => el.text())
 
       expect(titles.filter((t) => t === 'Entry title').length).toEqual(1)
+    })
+  })
+
+  // The log is the whole corpus in one object, read on every boot and again
+  // before every save. Downloading it to discover it has not changed is the
+  // most expensive thing the app does.
+  describe('when the bucket holds a copy this device has already read', () => {
+    story('asks for anything but that copy', async () => {
+      app = await mount({ config: { remoteEtag: '"held"' } })
+
+      expect(getObject.mock.calls[0][0].IfNoneMatch).toEqual('"held"')
+    })
+
+    test('asks unconditionally when it has never read one', async () => {
+      app = await mount()
+
+      expect(getObject.mock.calls[0][0].IfNoneMatch).toBeUndefined()
+    })
+
+    test('does not fold a copy it is told it already holds', async () => {
+      app = await mount({
+        config: { remoteEtag: '"held"' },
+        getError: notModified(),
+        remote: '9/entries/7777/create/v2.1 {"feedId":"543","data":{"guid":"999","title":"From the bucket"}}'
+      })
+
+      const titles = app.findAll('[aria-label="Entry title"]').map((el) => el.text())
+
+      expect(titles).not.toContain('From the bucket')
+    })
+
+    // Not the same case as an empty bucket, and nothing like a read that
+    // failed: the copy is there, we have it, and the write must still happen.
+    test('still writes its own events over it', async () => {
+      app = await mount({ config: { remoteEtag: '"held"' }, getError: notModified() })
+
+      putObject.mockClear()
+
+      await app.click('[aria-label="Mark as read 6363"]')
+
+      expect(putObject).toHaveBeenCalled()
+      expect(app.vm.queries.syncStatusForIdentity(app.vm.identity).status).toEqual('saved')
+    })
+
+    test('remembers the copy it read, so the next read is conditional on it', async () => {
+      app = await mount()
+
+      await app.click('[aria-label="Mark as read 6363"]')
+
+      expect(getObject.mock.calls[1][0].IfNoneMatch).toEqual('"remote"')
+    })
+
+    test('remembers the copy it wrote, rather than fetching it back to find out', async () => {
+      app = await mount()
+
+      await app.click('[aria-label="Mark as read 6363"]')
+      await app.click('[aria-label="Mark as unread 6363"]')
+
+      expect(getObject.mock.calls[2][0].IfNoneMatch).toEqual('"written"')
+    })
+
+    // It describes what this browser last saw in one bucket. Another device
+    // reading it out of the log would skip a read it has never done.
+    test('keeps the version it saw out of the log', async () => {
+      app = await mount()
+
+      await app.click('[aria-label="Mark as read 6363"]')
+
+      expect(app.vm.queries.eventsToFile(app.vm.identity)).not.toContain('remoteEtag')
+      expect(app.vm.state.getConfig('abc123').remoteEtag).toEqual('"written"')
     })
   })
 })

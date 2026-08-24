@@ -8,7 +8,27 @@ const CONFIGURED = {
   secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
 }
 
-const adapter = (data) => new S3Adapter({}, { id: 'x', data: Object.assign({}, data) })
+const adapter = (data, awsS3) => new S3Adapter({ awsS3 }, { id: 'x', data: Object.assign({}, data) })
+
+const bucket = (responses = {}) => {
+  const calls = { getObject: [], putObject: [] }
+  const s3 = {
+    getObject (params, cb) {
+      calls.getObject.push(params)
+      const { err, data } = responses.get || { data: { Body: 'the log', ETag: '"current"' } }
+      cb(err || null, data || null)
+    },
+    putObject (params, cb) {
+      calls.putObject.push(params)
+      const { err, data } = responses.put || { data: { ETag: '"written"' } }
+      cb(err || null, data || null)
+    }
+  }
+
+  return { calls, awsS3: () => Promise.resolve(s3) }
+}
+
+const plain = (data) => Promise.resolve(data)
 
 describe('S3Adapter', () => {
   test('fills in the key and endpoint it was not given', () => {
@@ -31,6 +51,76 @@ describe('S3Adapter', () => {
     new S3Adapter({}, addon) // eslint-disable-line no-new
 
     expect(addon.data.key).toBeUndefined()
+  })
+
+  describe('#get', () => {
+    test('asks unconditionally when it has not seen a copy', async () => {
+      const { calls, awsS3 } = bucket()
+
+      await adapter(CONFIGURED, awsS3).get(null, plain, {})
+
+      expect(calls.getObject[0].IfNoneMatch).toBeUndefined()
+    })
+
+    test('asks for the copy it has not seen, and reports the one it got', async () => {
+      const { calls, awsS3 } = bucket()
+
+      const response = await adapter(CONFIGURED, awsS3).get(null, plain, { etag: '"held"' })
+
+      expect(calls.getObject[0].IfNoneMatch).toEqual('"held"')
+      expect(response.status).toEqual(200)
+      expect(response.body).toEqual('the log')
+      expect(response.etag).toEqual('"current"')
+    })
+
+    // This SDK hands a conditional match to the callback as an error, and a
+    // caller that read it as one would abort the sync it was about to do.
+    test('reads a conditional match as no change, not as a failure', async () => {
+      const { awsS3 } = bucket({ get: { err: Object.assign(new Error('NotModified'), { statusCode: 304, code: 'NotModified' }) } })
+
+      const response = await adapter(CONFIGURED, awsS3).get(null, plain, { etag: '"held"' })
+
+      expect(response.status).toEqual(304)
+      expect(response.body).toEqual('')
+      expect(response.etag).toEqual('"held"')
+    })
+
+    // A bucket whose CORS policy names the headers it allows rather than
+    // allowing all of them refuses the preflight for If-None-Match, and a
+    // request we did not have to make must not be what stops the sync.
+    test('reads unconditionally when the bucket refuses the condition', async () => {
+      const calls = []
+      const awsS3 = () => Promise.resolve({
+        getObject (params, cb) {
+          calls.push(params)
+
+          return params.IfNoneMatch ? cb(new Error('Network Failure'), null) : cb(null, { Body: 'the log', ETag: '"current"' })
+        }
+      })
+
+      const response = await adapter(CONFIGURED, awsS3).get(null, plain, { etag: '"held"' })
+
+      expect(calls.length).toEqual(2)
+      expect(calls[1].IfNoneMatch).toBeUndefined()
+      expect(response.body).toEqual('the log')
+      expect(response.etag).toEqual('"current"')
+    })
+
+    test('still fails on anything else', async () => {
+      const { awsS3 } = bucket({ get: { err: new Error('AccessDenied') } })
+
+      await expect(adapter(CONFIGURED, awsS3).get(null, plain, {})).rejects.toThrow(/AccessDenied/)
+    })
+  })
+
+  describe('#save', () => {
+    test('reports the copy it just wrote', async () => {
+      const { awsS3 } = bucket()
+
+      const response = await adapter(CONFIGURED, awsS3).save('the log', plain)
+
+      expect(response.etag).toEqual('"written"')
+    })
   })
 
   describe('#portableData', () => {

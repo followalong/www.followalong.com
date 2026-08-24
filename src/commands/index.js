@@ -86,7 +86,10 @@ class Commands {
       // at boot, so whichever one tracked an event last won, and the other's
       // events were gone until it happened to restart.
       .then((key) => this.mergeRemoteInto(identity, remote, key)
-        .then(() => remote.save(this.queries.eventsToFile(identity), encrypt(key))))
+        .then(() => remote.save(this.queries.eventsToFile(identity), encrypt(key)))
+        // The copy we just wrote is one we obviously already hold, so the
+        // next read asks for anything but it instead of fetching it back.
+        .then((written) => this.rememberRemoteVersion(identity, written && written.etag)))
       .then(() => {
         this.state.updateConfig(identity.id, {
           syncStatus: 'saved',
@@ -106,8 +109,8 @@ class Commands {
   }
 
   mergeRemoteInto (identity, remote, key) {
-    return Promise.resolve(remote.get(identity, decrypt(key)))
-      .then((data) => this.state.importRaw(identity.id, data))
+    return Promise.resolve(remote.get(identity, decrypt(key), this.remoteVersionForIdentity(identity)))
+      .then((response) => this.importRemoteResponse(identity, response))
       .catch((e) => {
         if (NOTHING_THERE.test((e && e.message) || '')) return
 
@@ -119,9 +122,40 @@ class Commands {
     const adapter = this.queries.addonAdapterForActionForIdentity(identity, 'get')
 
     return this.keyForIdentity(identity)
-      .then((key) => adapter.get(identity, decrypt(key)))
-      .then((data) => this.state.importRaw(identity.id, data))
+      .then((key) => adapter.get(identity, decrypt(key), this.remoteVersionForIdentity(identity)))
+      .then((response) => this.importRemoteResponse(identity, response))
       .catch((e) => console.warn('Could not restore identity from remote', e))
+  }
+
+  // Which copy of the log this browser last folded in. Device-local, like the
+  // sync status beside it and never in the log itself: it describes one
+  // bucket read by one device, and another device inheriting it would skip a
+  // read it has never done.
+  remoteVersionForIdentity (identity) {
+    return { etag: this.state.getConfig(identity.id).remoteEtag }
+  }
+
+  // A conditional read that matched carries no body, and it is not an empty
+  // bucket: the copy is there and it is the one already folded in. Importing
+  // the empty string it comes with would be a merge of nothing, and treating
+  // it as a failed read would abort the save that follows.
+  importRemoteResponse (identity, response) {
+    if (!response || response.status === NOT_MODIFIED) {
+      return
+    }
+
+    return Promise.resolve(this.state.importRaw(identity.id, response.body))
+      .then(() => this.rememberRemoteVersion(identity, response.etag))
+  }
+
+  // Only ever recorded for a copy that is now folded in, so the read it
+  // skips next time is a read of something this device already has.
+  rememberRemoteVersion (identity, etag) {
+    if (!etag) {
+      return
+    }
+
+    return this.state.updateConfig(identity.id, { remoteEtag: etag })
   }
 
   // An identity with no keychain entry syncs unencrypted, which is what
@@ -441,8 +475,13 @@ class Commands {
 
     const adapter = this.queries.adapterForAddonForIdentity(null, { type: payload.t, data: payload.d })
 
-    return Promise.resolve(adapter.get({}, decrypt(payload.k)))
-      .then((data) => this.importIdentity(data))
+    return Promise.resolve(adapter.get({}, decrypt(payload.k), {}))
+      .then((response) => {
+        return this.importIdentity(response && response.body)
+          // This device has just folded in that exact copy, so its first sync
+          // has nothing to fetch back.
+          .then((identity) => Promise.resolve(this.rememberRemoteVersion(identity, response && response.etag)).then(() => identity))
+      })
       .then((identity) => this.keychain.addKnown(identity.id, payload.k).then(() => identity))
   }
 
