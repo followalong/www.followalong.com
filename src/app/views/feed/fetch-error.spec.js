@@ -28,12 +28,12 @@ describe('the feed view when a feed refuses', () => {
     app = { queries, commands }
   })
 
-  const render = () => mount(Feed, {
+  const render = (feedUrl = URL) => mount(Feed, {
     props: { app, identity },
     global: {
       stubs: { NewBar: true, SearchBox: true, FeedEntry: true, RouterLink: true },
       mocks: {
-        $route: { params: { feedUrl: URL }, fullPath: `/${URL}` }
+        $route: { params: { feedUrl }, fullPath: `/${feedUrl}` }
       }
     }
   })
@@ -47,6 +47,17 @@ describe('the feed view when a feed refuses', () => {
     expect(wrapper.text()).toContain('403')
     expect(wrapper.text()).toContain('world.hey.com')
     expect(wrapper.text()).not.toContain('Loading...')
+  })
+
+  test('says so on a feed nobody follows, which is what a shared link opens', async () => {
+    const stranger = 'https://example.com/nothing-here.xml'
+    const wrapper = render(stranger)
+
+    await flush()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.text()).toContain('403')
+    expect(wrapper.text()).toContain(stranger)
   })
 
   test('still says so after a reload, from the recorded failure', async () => {

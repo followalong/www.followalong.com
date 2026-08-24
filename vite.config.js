@@ -1,3 +1,5 @@
+import fs from 'fs'
+import path from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -5,9 +7,66 @@ import tailwind from './tailwind.config.js'
 
 const CHROME = tailwind.theme.extend.colors.chrome.DEFAULT
 
+// A feed link carries the feed's URL in the path — /https://example.com/feed.xml
+// — so its last segment usually ends in .xml, .rss or .json. Vite's own SPA
+// fallback refuses to rewrite any path with a dot in the last segment, on the
+// assumption that it must name a file, so opening a feed link cold answered 404
+// and the browser showed nothing. Published hosts answer unknown paths with the
+// app (that is what dist/404.html is for); dev and preview have to do the same
+// or they are not serving the same app.
+const wantsThePage = (req) => {
+  return (req.method === 'GET' || req.method === 'HEAD') &&
+    `${req.headers.accept || ''}`.includes('text/html')
+}
+
+const serveAppForDeepLinks = () => {
+  let distDir
+
+  const onDisk = (url) => {
+    try {
+      const file = path.resolve(distDir, `.${decodeURI(`${url}`.split('?')[0])}`)
+
+      return file.startsWith(distDir) && fs.existsSync(file) && fs.statSync(file).isFile()
+    } catch (e) {
+      return false
+    }
+  }
+
+  return {
+    name: 'serve-app-for-deep-links',
+
+    configResolved (config) {
+      distDir = path.resolve(config.root, config.build.outDir)
+    },
+
+    // Returning a function defers this until after everything that serves a
+    // real file has passed, and still ahead of the one that renders index.html.
+    configureServer (server) {
+      return () => {
+        server.middlewares.use((req, res, next) => {
+          if (wantsThePage(req)) req.url = '/index.html'
+
+          next()
+        })
+      }
+    },
+
+    // Preview serves dist/ straight off disk and this runs first, so it has to
+    // decide for itself whether there is a file to serve.
+    configurePreviewServer (server) {
+      server.middlewares.use((req, res, next) => {
+        if (wantsThePage(req) && !onDisk(req.url)) req.url = '/index.html'
+
+        next()
+      })
+    }
+  }
+}
+
 export default defineConfig({
   plugins: [
     vue(),
+    serveAppForDeepLinks(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['img/icons/**/*'],

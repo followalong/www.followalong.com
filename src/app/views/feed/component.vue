@@ -1,5 +1,5 @@
 <template>
-  <div v-if="feed || remoteFeed">
+  <div>
     <NewBar
       :app="app"
       :identity="identity"
@@ -15,11 +15,11 @@
           alt=""
         >
         <a
-          :href="app.queries.linkForFeed(feed)"
+          :href="link"
           target="_blank"
           class="min-w-0 flex-1 text-meta text-primary truncate"
         >
-          {{ app.queries.linkForFeed(feed) }} &rarr;
+          {{ link }} &rarr;
           <span v-if="!remoteFeed && !fetchError">Loading...</span>
         </a>
         <button
@@ -40,7 +40,10 @@
         {{ fetchError }}
       </p>
 
-      <div class="flex items-center gap-2">
+      <div
+        v-if="feed || remoteFeed"
+        class="flex items-center gap-2"
+      >
         <button
           type="button"
           :aria-label="`${existingFeed ? 'Unf' : 'F'}ollow ${app.queries.titleForFeed(feed)}`"
@@ -76,6 +79,7 @@
       </div>
 
       <SearchBox
+        v-if="feed || remoteFeed"
         v-model="filter"
         scope="scoped"
         :hint="`${entries.length} items`"
@@ -142,6 +146,12 @@ export default {
       if (!this.$route.params.feedUrl) return ''
 
       return this.$route.fullPath.replace(/^\//, '')
+    },
+
+    // Before the fetch answers there is no feed to name, and a link someone
+    // shared may never produce one, so the address itself is the fallback.
+    link () {
+      return this.app.queries.linkForFeed(this.feed) || this.url
     },
 
     remoteEntries () {
