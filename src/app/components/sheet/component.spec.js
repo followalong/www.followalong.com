@@ -77,6 +77,76 @@ describe('Sheet', () => {
     expect(wrapper.emitted('close')).toHaveLength(1)
   })
 
+  describe('swiping the handle down', () => {
+    const drag = async (wrapper, distance) => {
+      const handle = wrapper.get('[data-sheet-handle]')
+
+      await handle.trigger('pointerdown', { clientY: 0, pointerId: 1 })
+      await handle.trigger('pointermove', { clientY: distance })
+      await handle.trigger('pointerup', { clientY: distance })
+    }
+
+    const offset = (wrapper) => wrapper.get('[data-sheet]').attributes('style') || ''
+
+    test('follows the finger down', async () => {
+      const wrapper = sheet()
+
+      await wrapper.get('[data-sheet-handle]').trigger('pointerdown', { clientY: 0, pointerId: 1 })
+      await wrapper.get('[data-sheet-handle]').trigger('pointermove', { clientY: 90 })
+
+      expect(offset(wrapper)).toContain('translateY(90px)')
+    })
+
+    // Dragging up would lift the sheet off the bottom of the screen and show
+    // the page through the gap.
+    test('does not follow it up', async () => {
+      const wrapper = sheet()
+
+      await wrapper.get('[data-sheet-handle]').trigger('pointerdown', { clientY: 0, pointerId: 1 })
+      await wrapper.get('[data-sheet-handle]').trigger('pointermove', { clientY: -90 })
+
+      expect(offset(wrapper)).toContain('translateY(0px)')
+    })
+
+    test('closes when dragged far enough', async () => {
+      const wrapper = sheet()
+
+      await drag(wrapper, 120)
+
+      expect(wrapper.emitted('close')).toHaveLength(1)
+    })
+
+    test('snaps back from a drag too short to mean it', async () => {
+      const wrapper = sheet()
+
+      await drag(wrapper, 20)
+
+      expect(wrapper.emitted('close')).toBeUndefined()
+      expect(offset(wrapper)).toContain('translateY(0px)')
+    })
+
+    test('ignores a move that no press started', async () => {
+      const wrapper = sheet()
+
+      await wrapper.get('[data-sheet-handle]').trigger('pointermove', { clientY: 200 })
+
+      expect(offset(wrapper)).not.toContain('translateY(200px)')
+    })
+
+    // A drag the browser takes over — a system gesture, a lost pointer — has
+    // to put the sheet back rather than leave it stranded mid-screen.
+    test('puts it back when the drag is cancelled', async () => {
+      const wrapper = sheet()
+
+      await wrapper.get('[data-sheet-handle]').trigger('pointerdown', { clientY: 0, pointerId: 1 })
+      await wrapper.get('[data-sheet-handle]').trigger('pointermove', { clientY: 150 })
+      await wrapper.get('[data-sheet-handle]').trigger('pointercancel')
+
+      expect(wrapper.emitted('close')).toBeUndefined()
+      expect(offset(wrapper)).toContain('translateY(0px)')
+    })
+  })
+
   test('gives focus back to whatever opened it', async () => {
     const opener = document.createElement('button')
     document.body.appendChild(opener)
