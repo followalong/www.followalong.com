@@ -23,11 +23,14 @@ describe('AppBar', () => {
     expect(wrapper.text()).toContain('Home')
   })
 
+  // A minimum rather than a fixed width: a page that contributes its own
+  // control puts two in here, and the reservation still holds the title's
+  // starting point for the pages that do not.
   test('keeps the action slot open so the title never shifts', () => {
     const slot = bar().get('[data-bar-slot]')
 
     expect(slot.classes()).toContain('h-slot')
-    expect(slot.classes()).toContain('w-slot')
+    expect(slot.classes()).toContain('min-w-slot')
   })
 
   test('makes the logo and title one target, the height of the bar', () => {

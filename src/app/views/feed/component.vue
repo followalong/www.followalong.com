@@ -7,41 +7,6 @@
     />
 
     <header class="flex flex-col gap-4 px-4 py-4 border-b border-hairline-strong">
-      <div class="flex items-center gap-3">
-        <img
-          v-if="app.queries.imageForFeed(feed)"
-          :src="app.queries.imageForFeed(feed)"
-          class="h-11 w-11 rounded-avatar flex-none"
-          alt=""
-        >
-        <a
-          :href="link"
-          target="_blank"
-          class="min-w-0 flex-1 text-meta text-primary truncate"
-        >
-          {{ link }} &rarr;
-          <span v-if="!remoteFeed && !fetchError">Loading...</span>
-        </a>
-        <button
-          type="button"
-          aria-label="Feed menu"
-          class="flex-none h-slot w-slot rounded-pill border border-hairline-outline flex items-center justify-center text-ink-body"
-          @click="menuOpen = true"
-        >
-          <svg
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.8"
-            stroke-linecap="round"
-            class="h-4 w-4"
-            aria-hidden="true"
-          >
-            <path d="M3 6h14M3 10h14M3 14h14" />
-          </svg>
-        </button>
-      </div>
-
       <p
         v-if="fetchError"
         role="status"
@@ -249,8 +214,11 @@ export default {
       return this.app.queries.unreadEntries(this.existingEntries)
     },
 
+    // The address is the fallback name, because a link someone shared may
+    // never produce a feed to name and the bar is the only thing left saying
+    // which one failed.
     title () {
-      if (!this.feed) return ''
+      if (!this.feed) return this.url
 
       let title = this.app.queries.titleForFeed(this.feed)
 
@@ -277,11 +245,22 @@ export default {
   },
 
   mounted () {
+    this.app.pageMenu = this.openMenu
     this.app.commands.showNewEntries(this.identity)
     this.fetchFeed()
   },
 
+  // The bar belongs to the shell and outlives this page, so a menu left
+  // behind would open a sheet for a feed nobody is looking at.
+  unmounted () {
+    this.app.pageMenu = null
+  },
+
   methods: {
+    openMenu () {
+      this.menuOpen = true
+    },
+
     copyUrl () {
       return Promise.resolve(this.app.commands.copyToClipboard(this.url || this.app.queries.urlForFeed(this.feed)))
         .then(() => { this.copiedUrl = true })

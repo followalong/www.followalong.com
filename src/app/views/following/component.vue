@@ -1,5 +1,13 @@
 <template>
   <PageBody>
+    <SearchBox
+      v-if="allFeeds.length"
+      v-model="filter"
+      scope="feeds"
+      aria-label="Filter feeds"
+      :hint="`${feeds.length} feeds`"
+    />
+
     <Card :padded="false">
       <ListRow
         v-for="feed in feeds"
@@ -27,6 +35,11 @@
 
         <template #trailing>
           <span
+            v-if="app.queries.isFeedPaused(feed)"
+            data-paused-badge
+            class="flex-none rounded-pill bg-surface-sunken px-2 py-0.5 text-tiny font-bold text-ink-muted"
+          >Paused</span>
+          <span
             v-if="unreadFor(feed)"
             class="flex-none rounded-pill bg-accent px-2 py-0.5 text-tiny font-bold text-ink"
           >{{ unreadFor(feed) }} new</span>
@@ -34,8 +47,12 @@
       </ListRow>
     </Card>
 
-    <EmptyState v-if="!feeds.length">
+    <EmptyState v-if="!allFeeds.length">
       You are not following any feeds yet. Use search to paste an RSS URL.
+    </EmptyState>
+
+    <EmptyState v-else-if="!feeds.length">
+      No feeds match “{{ filter }}”.
     </EmptyState>
   </PageBody>
 </template>
@@ -45,24 +62,38 @@ import ListRow from '../../components/list-row/component.vue'
 import PageBody from '../../components/page-body/component.vue'
 import Card from '../../components/card/component.vue'
 import EmptyState from '../../components/empty-state/component.vue'
+import SearchBox from '../../components/search-box/component.vue'
 
 export default {
   components: {
     ListRow,
     PageBody,
     Card,
-    EmptyState
+    EmptyState,
+    SearchBox
   },
 
   props: ['app', 'identity'],
 
+  data: () => ({ filter: '' }),
+
   computed: {
     // Feeds with something waiting come first: the question this page answers
     // is"what should I open?", not"what am I subscribed to?".
-    feeds () {
+    allFeeds () {
       return this.app.queries.feedsForIdentity(this.identity)
         .slice()
         .sort((a, b) => this.unreadFor(b) - this.unreadFor(a))
+    },
+
+    feeds () {
+      const filter = this.filter.trim().toLowerCase()
+
+      if (!filter) return this.allFeeds
+
+      return this.allFeeds.filter((feed) => {
+        return this.app.queries.titleForFeed(feed).toLowerCase().includes(filter)
+      })
     }
   },
 
@@ -71,9 +102,9 @@ export default {
       return this.app.queries.unreadEntriesForFeedLength(this.identity, feed)
     },
 
+    // Paused has its own badge on the row, so this line is free to say the same
+    // thing it says about every other feed: when something last arrived.
     metaFor (feed) {
-      if (this.app.queries.isFeedPaused(feed)) return 'Paused'
-
       if (!this.unreadFor(feed)) {
         const last = this.app.queries.niceDateForEntry(
           this.app.queries.lastEntryForFeed(this.identity, feed)

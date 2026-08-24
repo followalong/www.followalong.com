@@ -49,6 +49,8 @@ describe('the feed view when a feed refuses', () => {
     expect(wrapper.text()).not.toContain('Loading...')
   })
 
+  // The address is no longer on the page, so the bar's title is the only
+  // thing left that can say which feed the error belongs to.
   test('says so on a feed nobody follows, which is what a shared link opens', async () => {
     const stranger = 'https://example.com/nothing-here.xml'
     const wrapper = render(stranger)
@@ -57,7 +59,7 @@ describe('the feed view when a feed refuses', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.text()).toContain('403')
-    expect(wrapper.text()).toContain(stranger)
+    expect(app.pageTitle).toContain(stranger)
   })
 
   test('still says so after a reload, from the recorded failure', async () => {

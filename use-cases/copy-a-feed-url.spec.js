@@ -25,7 +25,9 @@ describe('Copy a feed URL', () => {
     })
   })
 
-  story('shows the feed URL', () => {
+  story('shows the feed URL in the menu', async () => {
+    await app.click('[aria-label="Feed menu"]')
+
     expect(app.text()).toContain(feedUrl)
   })
 

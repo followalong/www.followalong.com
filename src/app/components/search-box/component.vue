@@ -44,10 +44,12 @@
 </template>
 
 <script>
-// Two placeholders, no more: global finds feeds, scoped narrows a visible list.
+// Finding is one thing and narrowing what is already on screen is another, and
+// the two lists you can narrow are worth naming so the box says what it filters.
 const PLACEHOLDERS = {
   global: 'Search or RSS URL…',
-  scoped: 'Filter these entries…'
+  scoped: 'Filter these entries…',
+  feeds: 'Filter these feeds…'
 }
 
 export default {

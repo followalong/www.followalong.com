@@ -8,6 +8,30 @@
       :back="back"
     >
       <template #action>
+        <!-- A page that has actions of its own hands the shell a way to open
+ them; the bar outlives the page, so the page takes it back on the way out. -->
+        <button
+          v-if="pageMenu"
+          type="button"
+          aria-label="Feed menu"
+          class="h-touch w-touch flex items-center justify-center text-chrome-icon"
+          @click="pageMenu()"
+        >
+          <span class="h-slot w-slot rounded-full bg-white/10 flex items-center justify-center">
+            <svg
+              class="h-4 w-4"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M3 6h14M3 10h14M3 14h14" />
+            </svg>
+          </span>
+        </button>
+
         <button
           type="button"
           aria-label="Open search"
@@ -239,6 +263,7 @@ export default {
       isLoading: true,
       identity: null,
       pageTitle: '',
+      pageMenu: null,
       searching: false,
       handoff: decodeHandoff(this.handoffHash),
       handoffError: '',

@@ -91,6 +91,11 @@ module.exports = {
         sheet: '18px',
         pill: '999px'
       },
+      minWidth: {
+        // The bar's action slot reserves this much whether it holds one
+        // control or two, so the title starts in the same place on every page.
+        slot: '34px'
+      },
       maxWidth: {
         // The whole app, at every size. There is no wider layout to fall into.
         app: '640px',

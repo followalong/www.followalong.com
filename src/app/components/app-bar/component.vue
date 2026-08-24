@@ -39,7 +39,7 @@
 
       <div
         data-bar-slot
-        class="h-slot w-slot flex-none self-center flex items-center justify-end"
+        class="h-slot min-w-slot flex-none self-center flex items-center justify-end gap-2"
       >
         <slot name="action" />
       </div>
