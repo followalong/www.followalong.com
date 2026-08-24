@@ -160,12 +160,6 @@ export default {
       return this.$route.fullPath.replace(/^\//, '')
     },
 
-    // Before the fetch answers there is no feed to name, and a link someone
-    // shared may never produce one, so the address itself is the fallback.
-    link () {
-      return this.app.queries.linkForFeed(this.feed) || this.url
-    },
-
     remoteEntries () {
       if (!this.remoteFeed) {
         return []

@@ -477,11 +477,6 @@ class Queries {
     return (feed || {}).url
   }
 
-  linkForFeed (feed) {
-    return getAttr(feed, 'link.href') ||
-      this.urlForFeed(feed)
-  }
-
   linkForEntry (entry) {
     return getAttr(entry, 'link.href') ||
       getAttr(entry, 'url.href') ||
