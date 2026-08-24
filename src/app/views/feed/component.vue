@@ -15,6 +15,18 @@
         {{ fetchError }}
       </p>
 
+      <!-- A shared link lands here on a feed nobody follows, and following it
+ is the reason for the visit, so it is a tap rather than two. -->
+      <button
+        v-if="(feed || remoteFeed) && !existingFeed"
+        type="button"
+        :aria-label="`Follow ${app.queries.titleForFeed(feed)}`"
+        class="w-full rounded-field bg-primary px-3 py-2 text-field font-bold text-white min-h-touch"
+        @click="toggleFollow"
+      >
+        Follow
+      </button>
+
       <SearchBox
         v-if="feed || remoteFeed"
         v-model="filter"
@@ -30,11 +42,11 @@
     >
       <Card :padded="false">
         <ListRow
-          v-if="feed || remoteFeed"
-          :title="existingFeed ? 'Following' : 'Follow'"
-          :meta="existingFeed ? 'tap to unfollow' : 'add it to your feeds'"
+          v-if="existingFeed"
+          title="Following"
+          meta="tap to unfollow"
           action
-          :aria-label="`${existingFeed ? 'Unf' : 'F'}ollow ${app.queries.titleForFeed(feed)}`"
+          :aria-label="`Unfollow ${app.queries.titleForFeed(feed)}`"
           @click="toggleFollow"
         >
           <template #trailing>

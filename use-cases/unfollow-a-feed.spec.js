@@ -36,6 +36,8 @@ describe('Unfollow a feed', () => {
     await app.click(`[aria-label="Unfollow ${expectedFeed.title}"]`)
   })
 
+  // Unfollowing puts the feed back to a stranger, so the page offers to
+  // follow it again without the menu, exactly as a shared link would.
   story('unfollows the feed', () => {
     expect(app.find(`[aria-label="Follow ${expectedFeed.title}"]`).text()).toContain('Follow')
   })
