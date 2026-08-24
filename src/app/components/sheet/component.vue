@@ -83,10 +83,12 @@
 
 <script>
 // Distance alone decides, with no velocity rule. Reading a clock would mean
-// mocking one in a spec, and mocking Date.now stops Vue delivering events at
-// all: it stamps every handler with the time it was attached and drops any
-// event whose timeStamp predates that, so a frozen clock makes every event
-// look stale. A swipe worth calling a swipe clears this anyway.
+// mocking one in a spec, and a clock mocked after the component is mounted
+// stops its events arriving: vue-test-utils stamps every triggered event
+// _vts = Date.now() + 1, Vue drops any event whose _vts is at or behind the
+// time the handler was attached, and a mock installed after mount puts each
+// one decades behind it. Nothing throws — the handler simply never runs. A
+// swipe worth calling a swipe clears 72px anyway.
 const CLOSE_DISTANCE = 72
 const SETTLE_MS = 160
 
