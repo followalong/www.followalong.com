@@ -330,9 +330,11 @@ export default {
       }
     }
   },
+  // The device already holds everything, so the bucket is asked behind the
+  // painted app rather than in front of it. Waiting on the network to confirm
+  // a copy that is already here bought nothing and cost the whole load.
   mounted () {
     return this.commands.restoreFromLocal()
-      .then(() => this.commands.restoreFromRemote())
       .then(() => {
         if (!this.queries.allIdentities().length) {
           this.commands.addIdentity({})
@@ -340,6 +342,11 @@ export default {
 
         this.isLoading = false
         this.setIdentity(this.queries.allIdentities()[0])
+
+        // Merging re-folds the log, which replaces every projection object,
+        // and the identity held here is one of them.
+        return this.commands.restoreFromRemote()
+          .then(() => this.setIdentity(this.queries.allIdentities()[0]))
       })
   },
   methods: {
