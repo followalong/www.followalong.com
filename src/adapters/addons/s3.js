@@ -9,8 +9,6 @@ class S3Adapter extends Adapter {
     this.title = 'S3 Storage'
     this.description = 'Sync your event log to any S3-compatible bucket. The log is encrypted before it leaves the browser whenever the identity has a key, so the bucket only ever holds ciphertext.'
     this.preview = `Syncs to ${this.data.bucket || 'an S3 bucket'}`
-    this.data.key = this.data.key || '/identities/followalong.log'
-    this.data.endpoint = this.data.endpoint || 's3.us-east-1.amazonaws.com'
     this.fields = S3Adapter.FIELDS
   }
 
@@ -63,6 +61,13 @@ class S3Adapter extends Adapter {
   }
 }
 
+// Filled in by the constructor when they are absent, which is also what lets
+// a setup code leave them out.
+S3Adapter.DEFAULTS = {
+  key: '/identities/followalong.log',
+  endpoint: 's3.us-east-1.amazonaws.com'
+}
+
 S3Adapter.FIELDS = {
   bucket: {
     type: 'text',
@@ -73,7 +78,7 @@ S3Adapter.FIELDS = {
     type: 'text',
     label: 'Key',
     required: true,
-    placeholder: '/identities/followalong.log'
+    placeholder: S3Adapter.DEFAULTS.key
   },
   region: {
     type: 'text',
@@ -85,7 +90,7 @@ S3Adapter.FIELDS = {
     type: 'text',
     label: 'Endpoint',
     required: true,
-    placeholder: 's3.us-east-1.amazonaws.com'
+    placeholder: S3Adapter.DEFAULTS.endpoint
   },
   accessKeyId: {
     type: 'text',

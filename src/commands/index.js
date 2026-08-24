@@ -397,7 +397,7 @@ class Commands {
     if (!remote) return Promise.resolve('')
 
     return this.keyForIdentity(identity)
-      .then((key) => encodeHandoff({ t: remote.type, d: remote.data, k: key || '' }))
+      .then((key) => encodeHandoff({ t: remote.type, d: remote.portableData(), k: key || '' }))
   }
 
   // The other half: read the bucket the code points at and import what is in
