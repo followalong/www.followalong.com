@@ -161,6 +161,7 @@ import loadAwsSdk from '../adapters/aws-sdk.js'
 
 const POLL_INTERVAL = 5 * 60 * 1000
 let POLL_TIMEOUT
+let POLL_IN_FLIGHT = null
 
 // Every page gets its title and, on a sub-page, its back target from here, so
 // the bar stays pixel-identical instead of each view rolling its own header.
@@ -367,12 +368,29 @@ export default {
         .then(() => { this.settingUp = false })
     },
 
+    // A sweep works through the feeds in series, so one over a long list is
+    // still running when anything asks for another. Every feed it has not
+    // reached yet still looks outdated, so a second sweep would ask for all of
+    // them again: the copy from the bucket landing is enough to start one.
     pollFeeds () {
+      const id = (this.identity || {}).id
+
+      if (POLL_IN_FLIGHT && POLL_IN_FLIGHT.id === id) {
+        return POLL_IN_FLIGHT.promise
+      }
+
       clearTimeout(POLL_TIMEOUT)
 
-      return this.commands.fetchOutdatedFeeds(this.identity).then(() => {
+      const done = () => {
+        POLL_IN_FLIGHT = null
         POLL_TIMEOUT = setTimeout(() => this.pollFeeds(), POLL_INTERVAL)
-      })
+      }
+
+      const promise = this.commands.fetchOutdatedFeeds(this.identity).then(done, done)
+
+      POLL_IN_FLIGHT = { id, promise }
+
+      return promise
     },
     // The window outlives the page it was started from, so the entry and its
     // history live on the shell rather than in any one view.
