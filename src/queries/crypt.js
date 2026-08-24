@@ -16,7 +16,22 @@ const subtle = () => {
   return globalThis.crypto.subtle
 }
 
-const toBase64 = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes)))
+// In chunks, because spreading the bytes into fromCharCode passes one
+// argument per byte: a rolled up identity's log is megabytes, and the call
+// blows the stack somewhere above 128KB, so encrypting one threw rather than
+// backing it up.
+const CHUNK_BYTES = 8192
+
+const toBase64 = (bytes) => {
+  const all = new Uint8Array(bytes)
+  let text = ''
+
+  for (let i = 0; i < all.length; i += CHUNK_BYTES) {
+    text += String.fromCharCode.apply(null, all.subarray(i, i + CHUNK_BYTES))
+  }
+
+  return btoa(text)
+}
 
 const fromBase64 = (text) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0))
 
