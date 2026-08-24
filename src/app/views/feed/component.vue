@@ -24,11 +24,21 @@
         </a>
         <button
           type="button"
-          aria-label="Copy feed URL"
-          class="flex-none h-slot rounded-pill border border-hairline-outline px-3 text-chip font-semibold text-ink-body"
-          @click="copyUrl"
+          aria-label="Feed menu"
+          class="flex-none h-slot w-slot rounded-pill border border-hairline-outline flex items-center justify-center text-ink-body"
+          @click="menuOpen = true"
         >
-          {{ copiedUrl ? 'Copied' : 'Copy' }}
+          <svg
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            class="h-4 w-4"
+            aria-hidden="true"
+          >
+            <path d="M3 6h14M3 10h14M3 14h14" />
+          </svg>
         </button>
       </div>
 
@@ -40,44 +50,6 @@
         {{ fetchError }}
       </p>
 
-      <div
-        v-if="feed || remoteFeed"
-        class="flex items-center gap-2"
-      >
-        <button
-          type="button"
-          :aria-label="`${existingFeed ? 'Unf' : 'F'}ollow ${app.queries.titleForFeed(feed)}`"
-          :class="`h-slot rounded-pill px-4 text-chip font-semibold ${
-            existingFeed
-              ? 'bg-following-bg text-following'
-              : 'bg-primary text-white'
-          }`"
-          @click="toggleFollow"
-        >
-          Follow<span v-if="existingFeed">ing</span>
-        </button>
-
-        <button
-          v-if="existingFeed && unreadEntries.length"
-          type="button"
-          aria-label="Catch up on feed"
-          class="h-slot rounded-pill border border-hairline-outline px-4 text-chip font-semibold text-ink-body"
-          @click="catchUpOnFeed"
-        >
-          Catch me up
-        </button>
-
-        <button
-          v-if="existingFeed"
-          type="button"
-          :aria-label="`${app.queries.isFeedPaused(existingFeed) ? 'Unp' : 'P'}ause feed`"
-          class="h-slot rounded-pill border border-hairline-outline px-4 text-chip font-semibold text-ink-body"
-          @click="togglePause"
-        >
-          {{ app.queries.isFeedPaused(existingFeed) ? 'Unp' : 'P' }}ause
-        </button>
-      </div>
-
       <SearchBox
         v-if="feed || remoteFeed"
         v-model="filter"
@@ -85,6 +57,73 @@
         :hint="`${entries.length} items`"
       />
     </header>
+
+    <Sheet
+      :open="menuOpen"
+      :title="menuTitle"
+      @close="menuOpen = false"
+    >
+      <Card :padded="false">
+        <ListRow
+          v-if="feed || remoteFeed"
+          :title="existingFeed ? 'Following' : 'Follow'"
+          :meta="existingFeed ? 'tap to unfollow' : 'add it to your feeds'"
+          action
+          :aria-label="`${existingFeed ? 'Unf' : 'F'}ollow ${app.queries.titleForFeed(feed)}`"
+          @click="toggleFollow"
+        >
+          <template #trailing>
+            <span />
+          </template>
+        </ListRow>
+        <ListRow
+          title="Fetch now"
+          :meta="fetchMeta"
+          action
+          aria-label="Fetch feed"
+          @click="fetchNow"
+        >
+          <template #trailing>
+            <span />
+          </template>
+        </ListRow>
+        <ListRow
+          v-if="existingFeed && unreadEntries.length"
+          title="Catch me up"
+          :meta="`${unreadEntries.length} unread`"
+          action
+          aria-label="Catch up on feed"
+          @click="catchUpOnFeed"
+        >
+          <template #trailing>
+            <span />
+          </template>
+        </ListRow>
+        <ListRow
+          v-if="existingFeed"
+          :title="`${app.queries.isFeedPaused(existingFeed) ? 'Unp' : 'P'}ause`"
+          :meta="app.queries.isFeedPaused(existingFeed) ? 'not being checked' : 'stop checking it'"
+          action
+          :aria-label="`${app.queries.isFeedPaused(existingFeed) ? 'Unp' : 'P'}ause feed`"
+          @click="togglePause"
+        >
+          <template #trailing>
+            <span />
+          </template>
+        </ListRow>
+        <ListRow
+          title="Copy URL"
+          :meta="copiedUrl ? 'Copied' : url"
+          action
+          aria-label="Copy feed URL"
+          @click="copyUrl"
+        >
+          <template #trailing>
+            <span />
+          </template>
+        </ListRow>
+      </Card>
+    </Sheet>
 
     <div class="flex flex-col gap-0">
       <FeedEntry
@@ -104,12 +143,18 @@
 import FeedEntry from '../../components/feed-entry/component.vue'
 import NewBar from '../../components/new-bar/component.vue'
 import SearchBox from '../../components/search-box/component.vue'
+import Sheet from '../../components/sheet/component.vue'
+import Card from '../../components/card/component.vue'
+import ListRow from '../../components/list-row/component.vue'
 
 export default {
   components: {
     FeedEntry,
     NewBar,
-    SearchBox
+    SearchBox,
+    Sheet,
+    Card,
+    ListRow
   },
 
   props: ['app', 'identity'],
@@ -121,7 +166,9 @@ export default {
       remoteFeed: null,
       liveFetchError: null,
       filter: '',
-      copiedUrl: false
+      copiedUrl: false,
+      menuOpen: false,
+      fetching: false
     }
   },
 
@@ -187,6 +234,17 @@ export default {
       })
     },
 
+    menuTitle () {
+      return this.feed ? this.app.queries.titleForFeed(this.feed) : 'This feed'
+    },
+
+    fetchMeta () {
+      if (this.fetching) return 'checking...'
+      if (this.fetchError) return 'last try failed'
+
+      return this.checkedAgo()
+    },
+
     unreadEntries () {
       return this.app.queries.unreadEntries(this.existingEntries)
     },
@@ -230,6 +288,19 @@ export default {
         .catch(() => {})
     },
 
+    checkedAgo () {
+      const at = this.existingFeed && this.app.queries.lastUpdatedForFeed(this.existingFeed)
+
+      if (!at) return 'never checked'
+
+      const seconds = Math.max(0, Math.round((Date.now() - at) / 1000))
+
+      if (seconds < 60) return 'checked just now'
+      if (seconds < 3600) return `checked ${Math.round(seconds / 60)} min ago`
+
+      return `checked ${new Date(at).toLocaleString()}`
+    },
+
     toggleFollow () {
       if (this.existingFeed) {
         this.app.commands.removeFeedFromIdentity(this.identity, this.existingFeed)
@@ -256,18 +327,28 @@ export default {
       })
     },
 
+    // Whatever arrives is shown rather than held behind the new-items bar. The
+    // bar exists so a background poll cannot move the page under someone who
+    // is reading it; a reader who just asked for the new items is the one case
+    // where that protection reads as the button having done nothing.
+    fetchNow () {
+      return Promise.resolve(this.fetchFeed())
+        .then(() => this.app.commands.showNewEntries(this.identity))
+    },
+
+    // Deliberately never consults the backoff that the poll respects: asking
+    // by hand is what a reader does about a feed that has stopped answering,
+    // and a feed that has stopped answering is the one in backoff.
     fetchFeed () {
       this.remoteFeed = null
       this.liveFetchError = null
+      this.fetching = true
 
       if (this.feed) {
         return this.app.commands.fetchFeed(this.identity, this.feed)
-          .then((a) => {
-            this.remoteFeed = true
-          })
-          .catch((e) => {
-            this.liveFetchError = e.message
-          })
+          .then(() => { this.remoteFeed = true })
+          .catch((e) => { this.liveFetchError = e.message })
+          .then(() => { this.fetching = false })
       }
 
       this.app.commands.fetchUrl(this.identity, 'rss', this.url)
@@ -286,6 +367,7 @@ export default {
         .catch((e) => {
           this.liveFetchError = e.message
         })
+        .then(() => { this.fetching = false })
     }
   }
 }

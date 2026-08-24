@@ -32,11 +32,12 @@ describe('Unfollow a feed', () => {
       }
     })
 
+    await app.click('[aria-label="Feed menu"]')
     await app.click(`[aria-label="Unfollow ${expectedFeed.title}"]`)
   })
 
   story('unfollows the feed', () => {
-    expect(app.find(`[aria-label="Follow ${expectedFeed.title}"]`).text()).toEqual('Follow')
+    expect(app.find(`[aria-label="Follow ${expectedFeed.title}"]`).text()).toContain('Follow')
   })
 
   event('feeds.delete', {

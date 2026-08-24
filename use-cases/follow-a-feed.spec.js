@@ -17,11 +17,12 @@ describe('Follow a feed', () => {
       fetch: responses([`<feed><title>${expectedFeed.title}</title><entry><id>123</id><title>${expectedFeed.entries[0].title}</title></entry></feed>`])
     })
 
+    await app.click('[aria-label="Feed menu"]')
     await app.click(`[aria-label="Follow ${expectedFeed.title}"]`)
   })
 
   story('follows the feed', async () => {
-    expect(app.find(`[aria-label="Unfollow ${expectedFeed.title}"]`).text()).toEqual('Following')
+    expect(app.find(`[aria-label="Unfollow ${expectedFeed.title}"]`).text()).toContain('Following')
   })
 
   event('feeds.create', {

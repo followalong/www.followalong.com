@@ -30,6 +30,7 @@ describe('Copy a feed URL', () => {
   })
 
   story('copies it on demand', async () => {
+    await app.click('[aria-label="Feed menu"]')
     await app.click('[aria-label="Copy feed URL"]')
 
     expect(copyToClipboard).toHaveBeenCalledWith(feedUrl)
