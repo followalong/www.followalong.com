@@ -10,6 +10,48 @@ const seed = `
   6/entries/keep/save/v2.1
 `
 
+const S3 = JSON.stringify({
+  type: 'S3Adapter',
+  data: {
+    bucket: 'my-bucket',
+    key: '/identities/abc123.log',
+    region: 'us-east-1',
+    endpoint: 's3.us-east-1.amazonaws.com',
+    accessKeyId: 'AKIAEXAMPLE',
+    secretAccessKey: 'secret'
+  }
+})
+
+describe('Copy an identity that backs up', () => {
+  let app
+  let copyToClipboard
+
+  beforeEach(async () => {
+    copyToClipboard = vi.fn()
+
+    app = await mountApp({
+      copyToClipboard,
+      awsS3: () => Promise.resolve({ getObject: (params, cb) => cb(null, { Body: '' }) }),
+      state: { abc123: { config: {}, data: `${seed}\n  7/addons/s3addon/configure/v2.1 ${S3}` } }
+    })
+
+    await app.click('[aria-label="You"]')
+    await app.click('[aria-label="Copy identity"]')
+  })
+
+  story('says the copy carries the keys to the backup before it happens', () => {
+    expect(copyToClipboard).not.toHaveBeenCalled()
+    expect(app.text()).toContain('my-bucket')
+    expect(app.text()).toContain('clipboard')
+  })
+
+  story('copies once that is understood, keys and all', async () => {
+    await app.click('[aria-label="Copy it"]')
+
+    expect(copyToClipboard.mock.calls[0][0]).toContain('AKIAEXAMPLE')
+  })
+})
+
 describe('Copy an identity', () => {
   let app
   let copyToClipboard

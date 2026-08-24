@@ -88,10 +88,11 @@
       />
       <ListRow
         title="Copy this identity"
-        meta="feeds, saved items and settings"
+        :meta="backupName ? 'everything, backup keys included' : 'feeds, saved items and settings'"
+        :warn="!!backupName"
         action
         aria-label="Copy identity"
-        @click="copyIdentity"
+        @click="askToCopy"
       >
         <template #trailing>
           <span class="text-meta font-semibold text-primary flex-none">{{ copied ? 'Copied' : 'Copy' }}</span>
@@ -154,6 +155,35 @@
       </span>
       <span class="text-meta font-semibold text-danger flex-none">Forget me</span>
     </button>
+
+    <Sheet
+      :open="copyOpen"
+      title="Copy this identity"
+      @close="copyOpen = false"
+    >
+      <p class="text-body text-ink-secondary">
+        This copies everything the identity has: its feeds, its saved items,
+        and the keys to your backup at {{ backupName }}. The keys travel on
+        purpose — without them the device you paste it into would look complete
+        and quietly never back anything up.
+      </p>
+
+      <p class="mt-3 text-body text-danger">
+        The clipboard is not private. Other apps can read it and clipboard
+        managers keep a history, so paste this into the other device and then
+        copy something else over it.
+      </p>
+
+      <template #footer>
+        <Button
+          class="flex-1"
+          aria-label="Copy it"
+          @click="copyIdentity"
+        >
+          Copy it
+        </Button>
+      </template>
+    </Sheet>
 
     <Sheet
       :open="encryptionOpen"
@@ -397,6 +427,7 @@ export default {
     STRATEGY_HINTS,
     renameOpen: false,
     switchOpen: false,
+    copyOpen: false,
     name: '',
     copied: false
   }),
@@ -408,6 +439,16 @@ export default {
 
     contents () {
       return this.app.queries.backupContentsForIdentity(this.identity)
+    },
+
+    // The copy carries the remote's configuration, credentials and all, so
+    // where it goes decides whether the clipboard is holding secrets. An
+    // identity with nowhere to back up to has none, and saying otherwise would
+    // teach people to ignore the warning that matters.
+    backupName () {
+      const remote = this.app.queries.remoteAdapterForIdentity(this.identity)
+
+      return (remote && (remote.data.bucket || remote.title)) || ''
     },
 
     // A password with nothing to protect yet should say so, rather than
@@ -496,7 +537,18 @@ export default {
       this.useIdentity(identities[identities.length - 1])
     },
 
+    askToCopy () {
+      if (this.backupName) {
+        this.copyOpen = true
+        return
+      }
+
+      return this.copyIdentity()
+    },
+
     copyIdentity () {
+      this.copyOpen = false
+
       return Promise.resolve(this.app.commands.copyIdentityToClipboard(this.identity))
         .then(() => { this.copied = true })
         .catch(() => {})
