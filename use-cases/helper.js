@@ -48,6 +48,7 @@ const mountApp = (options) => {
         keychainName: `keychain-${Math.random()}`,
         copyToClipboard: options.copyToClipboard || vi.fn(),
         handoffHash: options.handoffHash || '',
+        wakeLock: options.wakeLock || { hold: vi.fn(), release: vi.fn() },
         awsClient: options.awsClient || (() => ({ fetch: () => Promise.resolve(s3Response({ status: 404, body: '<Error><Code>NoSuchKey</Code></Error>' })) }))
       }
     })

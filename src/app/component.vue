@@ -101,6 +101,9 @@
         autoplay
         playsinline
         @timeupdate="onPlayProgress"
+        @play="commands.keepScreenAwake()"
+        @pause="commands.letScreenSleep()"
+        @ended="commands.letScreenSleep()"
       />
     </PipPlayer>
 
@@ -154,7 +157,7 @@ import MultiEventStore from '../state/multi-event-store.js'
 import VERSION from '../state/version.js'
 import runners from '../state/runners.js'
 import Queries from '../queries/index.js'
-import NoSleep from 'nosleep.js'
+import WakeLock from '../adapters/wake-lock.js'
 import KeychainAdapter from '../adapters/keychain.js'
 import buildFetch from '../adapters/fetch.js'
 import { AwsClient } from 'aws4fetch'
@@ -209,9 +212,9 @@ export default {
       type: Function,
       default: (...args) => window.scrollTo(...args)
     },
-    noSleep: {
+    wakeLock: {
       type: Object,
-      default: () => new NoSleep()
+      default: () => new WakeLock({ navigator: window.navigator, document: window.document })
     },
     prompt: {
       type: Function,
@@ -252,7 +255,7 @@ export default {
       queries,
       keychain,
       scrollTo: this.scrollTo,
-      noSleep: this.noSleep,
+      wakeLock: this.wakeLock,
       copyToClipboard: this.copyToClipboard
     })
 
@@ -329,6 +332,14 @@ export default {
       if (val && this.automaticFetch) {
         setTimeout(() => this.pollFeeds(), 10)
       }
+    },
+
+    // A file player says when it starts and stops, so it takes the screen for
+    // itself. An embed is another origin and says nothing at all, so its
+    // window being open is the only signal there is.
+    playing (val) {
+      if (!val) return this.commands.letScreenSleep()
+      if (this.playingIsEmbed) this.commands.keepScreenAwake()
     }
   },
   // The device already holds everything, so the bucket is asked behind the

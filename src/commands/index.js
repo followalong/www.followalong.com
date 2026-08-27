@@ -387,18 +387,12 @@ class Commands {
     this.track(identity, 'addons', addon.id, 'delete')
   }
 
-  disableSleep ($audio) {
-    if (this.noSleep) {
-      $audio.currentTime = 0
-      $audio.play()
-      this.noSleep.enable()
-    }
+  keepScreenAwake () {
+    return this.wakeLock.hold()
   }
 
-  enableSleep ($audio) {
-    if (this.noSleep) {
-      this.noSleep.disable()
-    }
+  letScreenSleep () {
+    return this.wakeLock.release()
   }
 
   // The keychain has always known all three strategies; nothing until now

@@ -8,10 +8,12 @@
  sight, which turns opening a podcast into as many downloads as it has
  episodes; nothing is asked for until someone presses play. -->
     <audio
-      ref="audio"
       controls
       preload="none"
       class="w-full"
+      @play="onPlay"
+      @pause="onStop"
+      @ended="onStop"
     >
       <source :src="src">
     </audio>
@@ -21,18 +23,30 @@
 <script>
 export default {
   props: ['app', 'identity', 'entry'],
+  data: () => ({ playing: false }),
   computed: {
     src () {
       return this.app.queries.audioForEntry(this.entry)
     }
   },
-  watch: {
-    src () {
-      this.app.commands.disableSleep(this.$refs.audio)
-    }
-  },
   unmounted () {
-    this.app.commands.enableSleep(this.$refs.audio)
+    this.onStop()
+  },
+  methods: {
+    onPlay () {
+      this.playing = true
+      this.app.commands.keepScreenAwake()
+    },
+
+    // Only the player that took the screen gives it back. A feed page mounts
+    // one of these per episode, and the other thirty-nine leaving the page
+    // must not turn the screen off under the one that is playing.
+    onStop () {
+      if (!this.playing) return
+
+      this.playing = false
+      this.app.commands.letScreenSleep()
+    }
   }
 }
 </script>
