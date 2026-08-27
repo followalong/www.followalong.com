@@ -4,6 +4,7 @@ import runners from '../state/runners.js'
 import Queries from '../queries/index.js'
 import Commands from './index.js'
 import FetchError from '../adapters/fetch-error.js'
+import TimeoutError from '../adapters/timeout-error.js'
 
 const FEED_XML = (title) => `<rss><channel><title>${title}</title><item><guid>g1</guid><title>One</title></item></channel></rss>`
 
@@ -134,6 +135,17 @@ describe('failure backoff', () => {
     expect(reload().failureCount).toBeFalsy()
     expect(reload().failedAt).toBeFalsy()
     expect(queries.feedsToFetchForIdentity(identity).map((f) => f.id)).toContain('f1')
+  })
+
+  // A host that never answered is not a host that refused us, and the pass
+  // that forgives the ones we could not reach has to see it that way.
+  test('records a request that timed out as a host it could not reach', async () => {
+    respond = () => Promise.reject(new TimeoutError('https://a.example/feed', 20000))
+
+    await expect(commands.fetchFeed(identity, reload())).rejects.toThrow(TimeoutError)
+
+    expect(reload().failureStatus).toBeUndefined()
+    expect(queries.feedsWithUnrefusedFailureForIdentity(identity).map((f) => f.id)).toContain('f1')
   })
 })
 

@@ -19,4 +19,5 @@ class FetchError extends Error {
   }
 }
 
+export { hostFor }
 export default FetchError
