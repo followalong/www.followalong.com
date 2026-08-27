@@ -20,11 +20,17 @@
       >
         <template #leading>
           <span class="h-slot w-slot flex-none rounded-field bg-surface-sunken overflow-hidden flex items-center justify-center">
+            <!-- The list has no cap, so this is every feed's artwork at
+ once — full-size cover art shrunk into a 34px square. Left eager, a phone
+ downloads and decodes the lot before anyone has scrolled past the first
+ screen. -->
             <img
               v-if="app.queries.imageForFeed(feed)"
               class="h-full w-full object-cover"
               :src="app.queries.imageForFeed(feed)"
               alt=""
+              loading="lazy"
+              decoding="async"
             >
             <span
               v-else

@@ -3,6 +3,8 @@
     v-if="src"
     :src="src"
     class="-mt-1 w-full"
+    loading="lazy"
+    decoding="async"
   >
 </template>
 

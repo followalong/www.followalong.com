@@ -5,12 +5,22 @@
         v-if="media === 'video'"
         data-media-lead
         type="button"
-        class="w-full aspect-video bg-surface-sunken bg-cover bg-center flex items-center justify-center"
-        :style="poster ? { backgroundImage: `url(${poster})` } : null"
+        class="relative w-full aspect-video bg-surface-sunken flex items-center justify-center"
         aria-label="Play"
         @click="$emit('play')"
       >
-        <span class="h-11 w-11 rounded-full bg-ink flex items-center justify-center text-white">
+        <!-- An element rather than a background, because a background is
+ always fetched: a video feed's page is one of these per entry, and the poster
+ is the largest thing on the card. -->
+        <img
+          v-if="poster"
+          :src="poster"
+          alt=""
+          loading="lazy"
+          decoding="async"
+          class="absolute inset-0 h-full w-full object-cover"
+        >
+        <span class="relative h-11 w-11 rounded-full bg-ink flex items-center justify-center text-white">
           <svg
             class="h-5 w-5 ml-0.5"
             viewBox="0 0 20 20"
