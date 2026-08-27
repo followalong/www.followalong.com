@@ -1,4 +1,4 @@
-import { mountApp, describe, story } from './helper.js'
+import { mountApp, describe, story, s3Bucket, s3Response } from './helper.js'
 import { decodeHandoff } from '../src/queries/handoff.js'
 
 const IDENTITY = (data) => `
@@ -10,26 +10,18 @@ const IDENTITY = (data) => `
 describe('Set up another device', () => {
   let app
   let bucket
-  let endpoints
 
-  // One bucket, shared by both devices, and it answers by key: a device that
-  // reconstructs the wrong key finds nothing there.
-  const awsS3 = (config) => {
-    endpoints.push(config.endpoint)
-
-    return Promise.resolve({
-      putObject: (params, cb) => { bucket[params.Key] = `${params.Body}`; cb(null) },
-      getObject: (params, cb) => bucket[params.Key] ? cb(null, { Body: bucket[params.Key] }) : cb(new Error('NoSuchKey'))
-    })
-  }
+  // One bucket, shared by both devices, keyed by the address the adapter
+  // built: a device that reconstructs the wrong key — or the wrong host —
+  // finds nothing there.
+  const hosts = () => Array.from(new Set(bucket.requests.map((r) => new URL(r.url).host)))
 
   const link = () => app.find('[aria-label="Handoff link"]').element.value
 
   const firstDevice = async (addonData) => {
-    bucket = {}
-    endpoints = []
+    bucket = s3Bucket()
 
-    app = await mountApp({ state: { abc123: { config: {}, data: IDENTITY(addonData) } }, awsS3 })
+    app = await mountApp({ state: { abc123: { config: {}, data: IDENTITY(addonData) } }, awsClient: bucket.client })
 
     await app.click('[aria-label="You"]')
     await app.click('[aria-label="Back up now"]')
@@ -69,7 +61,7 @@ describe('Set up another device', () => {
     let second
 
     const arrive = async () => {
-      second = await mountApp({ handoffHash: `#${link().split('#')[1]}`, awsS3 })
+      second = await mountApp({ handoffHash: `#${link().split('#')[1]}`, awsClient: bucket.client })
 
       await second.wait()
     }
@@ -110,7 +102,7 @@ describe('Set up another device', () => {
       await arrive()
       await second.click('[aria-label="Set it up"]')
 
-      expect(Object.keys(bucket)).toEqual(['identities/followalong.log'])
+      expect(Object.keys(bucket.objects)).toEqual(['https://s3.us-east-1.amazonaws.com/b/identities/followalong.log'])
       expect(second.text()).not.toContain('NoSuchKey')
     })
 
@@ -118,7 +110,7 @@ describe('Set up another device', () => {
       await arrive()
       await second.click('[aria-label="Set it up"]')
 
-      expect(Array.from(new Set(endpoints))).toEqual(['s3.us-east-1.amazonaws.com'])
+      expect(hosts()).toEqual(['s3.us-east-1.amazonaws.com'])
     })
 
     story('says so when the bucket cannot be read', async () => {
@@ -126,13 +118,13 @@ describe('Set up another device', () => {
 
       second = await mountApp({
         handoffHash: `#${setup}`,
-        awsS3: () => Promise.resolve({
-          putObject: (params, cb) => cb(new Error('nope')),
-          getObject: (params, cb) => cb(new Error('Access denied'))
-        })
+        awsClient: s3Bucket({
+          answer: () => s3Response({ status: 403, body: '<Error><Code>Access denied</Code></Error>' })
+        }).client
       })
 
       await second.click('[aria-label="Set it up"]')
+      await second.wait()
 
       expect(second.text()).toContain('Access denied')
     })
@@ -150,14 +142,14 @@ describe('Set up another device', () => {
     })
 
     story('sets the second device up from them', async () => {
-      const second = await mountApp({ handoffHash: `#${link().split('#')[1]}`, awsS3 })
+      const second = await mountApp({ handoffHash: `#${link().split('#')[1]}`, awsClient: bucket.client })
 
       await second.wait()
       await second.click('[aria-label="Set it up"]')
 
-      expect(Object.keys(bucket)).toEqual(['mine/followalong.log'])
+      expect(Object.keys(bucket.objects)).toEqual(['https://nyc3.digitaloceanspaces.com/b/mine/followalong.log'])
       expect(second.vm.queries.allIdentities().map((i) => i.id)).toContain('abc123')
-      expect(Array.from(new Set(endpoints))).toEqual([OWN.endpoint])
+      expect(hosts()).toEqual([OWN.endpoint])
     })
   })
 })

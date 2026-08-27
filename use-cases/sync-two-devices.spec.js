@@ -1,4 +1,4 @@
-import { mountApp, describe, story } from './helper.js'
+import { mountApp, describe, story, s3Bucket, s3Response } from './helper.js'
 
 const ADDON = JSON.stringify({
   type: 'S3Adapter',
@@ -14,28 +14,21 @@ const ADDON = JSON.stringify({
 
 // One bucket, two devices.
 const bucket = () => {
-  const store = { body: null, missing: true, puts: 0 }
+  const shared = s3Bucket()
 
-  store.awsS3 = () => Promise.resolve({
-    putObject: (params, cb) => {
-      store.body = `${params.Body}`
-      store.missing = false
-      store.puts++
-      cb(null, {})
-    },
-    getObject: (params, cb) => {
-      if (store.unreadable) return cb(new Error('Access denied'))
-      if (store.missing) return cb(Object.assign(new Error('NoSuchKey'), { code: 'NoSuchKey' }))
-
-      cb(null, { Body: store.body })
+  shared.answer = (request) => {
+    if (shared.unreadable) {
+      return s3Response({ status: 403, body: '<Error><Code>Access denied</Code></Error>' })
     }
-  })
 
-  return store
+    return request.method === 'PUT' ? shared.store(request) : shared.read(request)
+  }
+
+  return shared
 }
 
 const device = (id, shared, feedUrl) => mountApp({
-  awsS3: shared.awsS3,
+  awsClient: shared.client,
   state: {
     [id]: {
       config: {},
@@ -63,8 +56,8 @@ describe('Sync two devices through one bucket', () => {
     await one.vm.commands.syncIdentity(one.vm.identity)
     await two.vm.commands.syncIdentity(two.vm.identity)
 
-    expect(shared.body).toContain('deviceone')
-    expect(shared.body).toContain('devicetwo')
+    expect(shared.body()).toContain('deviceone')
+    expect(shared.body()).toContain('devicetwo')
   })
 
   story('brings the other device down on the next sync', async () => {
@@ -81,20 +74,20 @@ describe('Sync two devices through one bucket', () => {
   story('writes on the very first sync, when the bucket is empty', async () => {
     await one.vm.commands.syncIdentity(one.vm.identity)
 
-    expect(shared.puts).toEqual(1)
-    expect(shared.body).toContain('deviceone')
+    expect(shared.writes().length).toEqual(1)
+    expect(shared.body()).toContain('deviceone')
   })
 
   story('refuses to overwrite a copy it could not read', async () => {
     await one.vm.commands.syncIdentity(one.vm.identity)
 
-    const before = shared.body
+    const before = shared.body()
 
     shared.unreadable = true
 
     const status = await two.vm.commands.syncIdentity(two.vm.identity)
 
     expect(status.status).toEqual('failed')
-    expect(shared.body).toEqual(before)
+    expect(shared.body()).toEqual(before)
   })
 })

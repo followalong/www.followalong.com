@@ -1,7 +1,19 @@
 import Adapter from './adapter.js'
+import s3Url from './s3-url.js'
 
-const STRIP_BEGINNING_AND_END_SLASHES = /^\/|\/$/g
 const NOT_MODIFIED = 304
+const OK = 200
+
+// The object is the whole log rather than a page of it, and an upload leaves
+// over the slow half of a home connection, so the bucket gets a far larger
+// budget than a feed poll does. It is here at all because a request with no
+// limit leaves the sync reading "Saving..." for the rest of the session.
+const TIMEOUT_MS = 60000
+
+// S3 says what went wrong in the body, and the difference between an empty
+// bucket and a bucket we were refused decides whether we are allowed to
+// write over what is there.
+const CODE = /<Code>([^<]+)<\/Code>/
 
 class S3Adapter extends Adapter {
   constructor (adapterOptions, addonData) {
@@ -16,15 +28,9 @@ class S3Adapter extends Adapter {
   // Answers with the version it just wrote, so the next read can ask for
   // anything but that and be told there is nothing to fetch.
   save (data, encrypt) {
-    return Promise.all([this._buildS3(), encrypt(data)]).then(([s3, body]) => {
-      return new Promise((resolve, reject) => {
-        s3.putObject({
-          Body: body,
-          Bucket: this.data.bucket,
-          Key: this._key()
-        }, (err, written) => err ? reject(err) : resolve({ etag: written && written.ETag }))
-      })
-    })
+    return Promise.resolve(encrypt(data))
+      .then((body) => this._send({ method: 'PUT', body }))
+      .then((response) => ({ etag: response.headers.get('etag') || undefined }))
   }
 
   // Conditional on the version the caller already holds: the log is the whole
@@ -39,57 +45,71 @@ class S3Adapter extends Adapter {
       .catch((e) => etag ? this._read() : Promise.reject(e))
       .then((response) => {
         if (response.status === NOT_MODIFIED) {
-          return response
+          return { status: NOT_MODIFIED, body: '', etag }
         }
 
-        return Promise.resolve(decrypt(`${response.body}`))
-          .then((body) => Object.assign({}, response, { body }))
+        return response.text()
+          .then((body) => Promise.resolve(decrypt(body)))
+          .then((body) => ({ status: OK, body, etag: response.headers.get('etag') || undefined }))
       })
   }
 
   _read (etag) {
-    return this._buildS3().then((s3) => {
-      const params = { Bucket: this.data.bucket, Key: this._key() }
+    return this._send({ method: 'GET', headers: etag ? { 'if-none-match': etag } : {} })
+  }
 
-      if (etag) {
-        params.IfNoneMatch = etag
-      }
+  _send ({ method, body, headers = {} }) {
+    const url = this.url()
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
-      return new Promise((resolve, reject) => {
-        s3.getObject(params, (err, data) => {
-          // A match comes back through the error argument in this SDK, and it
-          // is the opposite of a failure: what we hold is what is there.
-          if (err && (err.statusCode === NOT_MODIFIED || err.code === 'NotModified')) {
-            return resolve({ status: NOT_MODIFIED, body: '', etag })
-          }
+    return Promise.resolve(this.awsClient({
+      accessKeyId: this.data.accessKeyId,
+      secretAccessKey: this.data.secretAccessKey,
+      region: this.data.region,
+      service: 's3'
+    }))
+      .then((client) => client.fetch(url, { method, body, headers, signal: controller.signal }))
+      // The budget buys an answer, not the reading of one. Left armed while
+      // the body is read, it would relabel a refusal we are halfway through
+      // as a bucket that never answered — and on an upload the answer only
+      // comes once the whole log has gone up, which is the part worth timing.
+      .then(
+        (response) => {
+          clearTimeout(timer)
 
-          if (!data) {
-            return reject(new Error(err || 'No data returned'))
-          }
+          return response
+        },
+        (e) => {
+          clearTimeout(timer)
 
-          resolve({ status: 200, body: data.Body, etag: data.ETag })
+          throw controller.signal.aborted ? new Error('The bucket did not answer in time') : e
+        }
+      )
+      .then((response) => {
+        if (response.ok || response.status === NOT_MODIFIED) {
+          return response
+        }
+
+        // Status first, so the message carries it whether or not the body
+        // named a code we recognise.
+        return response.text().then((text) => {
+          const found = `${text || ''}`.match(CODE)
+
+          throw new Error(`${response.status} ${found ? found[1] : 'request refused'}`)
         })
       })
-    })
+  }
+
+  // The address the bucket, endpoint and key make. s3Url decides whether the
+  // bucket belongs in the host or the path, which is not ours to choose: it
+  // is whatever the storage is already answering to.
+  url () {
+    return s3Url({ bucket: this.data.bucket, endpoint: this.data.endpoint, key: this.data.key })
   }
 
   validate (data) {
     return !!(data.bucket && data.accessKeyId && data.secretAccessKey)
-  }
-
-  _key () {
-    return this.data.key.replace(STRIP_BEGINNING_AND_END_SLASHES, '')
-  }
-
-  _buildS3 () {
-    return Promise.resolve(this.awsS3({
-      endpoint: this.data.endpoint,
-      accessKeyId: this.data.accessKeyId,
-      secretAccessKey: this.data.secretAccessKey,
-      region: this.data.region,
-      apiVersion: 'latest',
-      maxRetries: 1
-    }))
   }
 }
 
@@ -136,4 +156,5 @@ S3Adapter.FIELDS = {
   }
 }
 
+export { TIMEOUT_MS }
 export default S3Adapter

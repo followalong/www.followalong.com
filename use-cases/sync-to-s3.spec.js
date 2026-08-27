@@ -1,4 +1,4 @@
-import { mountApp, describe, story, test, vi } from './helper.js'
+import { mountApp, describe, story, test, s3Bucket, s3Response } from './helper.js'
 import { decrypt } from '../src/queries/crypt.js'
 
 const ADDON = JSON.stringify({
@@ -13,9 +13,7 @@ const ADDON = JSON.stringify({
   }
 })
 
-// The bucket answers a conditional read that matches through the error
-// argument, which is the opposite of a failure.
-const notModified = () => Object.assign(new Error('NotModified'), { statusCode: 304, code: 'NotModified' })
+const URL_OF = 'https://my-bucket.s3.us-east-1.amazonaws.com/identities/abc123.log'
 
 const seed = (extra = '', config = {}) => ({
   abc123: {
@@ -33,42 +31,44 @@ const seed = (extra = '', config = {}) => ({
 
 describe('Sync to S3', () => {
   let app
-  let putObject
-  let getObject
+  let bucket
 
   const mount = (options = {}) => {
-    putObject = vi.fn((params, cb) => cb(null, { ETag: '"written"' }))
-    getObject = vi.fn((params, cb) => {
-      return options.getError ? cb(options.getError, null) : cb(null, { Body: options.remote || '', ETag: options.etag || '"remote"' })
+    bucket = s3Bucket({
+      answer: (request) => {
+        if (options.getError && request.method === 'GET') return options.getError(request)
+        if (request.method === 'PUT') return s3Response({ headers: { etag: '"written"' } })
+
+        return s3Response({ status: 200, body: options.remote || '', headers: { etag: options.etag || '"remote"' } })
+      }
     })
 
     return mountApp({
-      awsS3: () => Promise.resolve({ putObject, getObject }),
+      awsClient: bucket.client,
       state: seed(options.extra, options.config),
       ...options
     })
   }
 
+  const reads = () => bucket.reads()
+  const writes = () => bucket.writes()
+
   describe('after a change', () => {
     beforeEach(async () => {
       app = await mount()
 
-      putObject.mockClear()
+      bucket.requests.length = 0
 
       await app.click('[aria-label="Mark as read 6363"]')
     })
 
     story('pushes the event log to the configured bucket', () => {
-      expect(putObject).toHaveBeenCalled()
-
-      const params = putObject.mock.calls[0][0]
-
-      expect(params.Bucket).toEqual('my-bucket')
-      expect(params.Key).toEqual('identities/abc123.log')
+      expect(writes().length).toBeGreaterThan(0)
+      expect(writes()[0].url).toEqual(URL_OF)
     })
 
     test('sends the events themselves, one per line', () => {
-      const body = putObject.mock.calls[0][0].Body
+      const body = writes()[0].body
 
       expect(body).toContain('/entries/6363/markRead/')
       expect(body).toContain('/feeds/543/create/')
@@ -76,7 +76,7 @@ describe('Sync to S3', () => {
     })
 
     test('debounces so a burst of events is one upload', () => {
-      expect(putObject).toHaveBeenCalledTimes(1)
+      expect(writes().length).toEqual(1)
     })
   })
 
@@ -86,7 +86,7 @@ describe('Sync to S3', () => {
 
       await app.vm.commands.keychain.addStore('abc123')
 
-      putObject.mockClear()
+      bucket.requests.length = 0
 
       await app.click('[aria-label="Mark as read 6363"]')
 
@@ -96,14 +96,14 @@ describe('Sync to S3', () => {
     })
 
     story('never puts the plaintext log in the bucket', () => {
-      const body = putObject.mock.calls[0][0].Body
+      const body = writes()[0].body
 
       expect(body).not.toContain('/entries/6363/markRead/')
       expect(body).not.toContain('Feed title')
     })
 
     test('round-trips back to the same log', async () => {
-      const body = putObject.mock.calls[0][0].Body
+      const body = writes()[0].body
 
       expect(await decrypt('hunter2')(body)).toContain('/entries/6363/markRead/')
     })
@@ -135,15 +135,27 @@ describe('Sync to S3', () => {
     // survive. A read that fails has to stop the write, or a device that
     // cannot see the copy overwrites it with its own.
     test('does not write over a copy it could not read', async () => {
-      app = await mount()
+      app = await mount({ getError: () => s3Response({ status: 403, body: '<Error><Code>AccessDenied</Code></Error>' }) })
 
-      getObject = vi.fn((params, cb) => cb(new Error('AccessDenied'), null))
-      putObject.mockClear()
+      bucket.requests.length = 0
 
       await app.click('[aria-label="Mark as read 6363"]')
 
-      expect(putObject).not.toHaveBeenCalled()
+      expect(writes().length).toEqual(0)
       expect(app.vm.queries.syncStatusForIdentity(app.vm.identity).status).toEqual('failed')
+    })
+
+    // An empty bucket is not a read that failed. The very first sync has
+    // nothing to merge and must still write.
+    test('writes on the very first sync, when there is nothing there yet', async () => {
+      app = await mount({ getError: () => s3Response({ status: 404, body: '<Error><Code>NoSuchKey</Code></Error>' }) })
+
+      bucket.requests.length = 0
+
+      await app.click('[aria-label="Mark as read 6363"]')
+
+      expect(writes().length).toEqual(1)
+      expect(app.vm.queries.syncStatusForIdentity(app.vm.identity).status).toEqual('saved')
     })
 
     test('does not duplicate events it already has', async () => {
@@ -164,19 +176,19 @@ describe('Sync to S3', () => {
     story('asks for anything but that copy', async () => {
       app = await mount({ config: { remoteEtag: '"held"' } })
 
-      expect(getObject.mock.calls[0][0].IfNoneMatch).toEqual('"held"')
+      expect(reads()[0].headers['if-none-match']).toEqual('"held"')
     })
 
     test('asks unconditionally when it has never read one', async () => {
       app = await mount()
 
-      expect(getObject.mock.calls[0][0].IfNoneMatch).toBeUndefined()
+      expect(reads()[0].headers['if-none-match']).toBeUndefined()
     })
 
     test('does not fold a copy it is told it already holds', async () => {
       app = await mount({
         config: { remoteEtag: '"held"' },
-        getError: notModified(),
+        getError: () => s3Response({ status: 304 }),
         remote: '9/entries/7777/create/v2.1 {"feedId":"543","data":{"guid":"999","title":"From the bucket"}}'
       })
 
@@ -188,13 +200,13 @@ describe('Sync to S3', () => {
     // Not the same case as an empty bucket, and nothing like a read that
     // failed: the copy is there, we have it, and the write must still happen.
     test('still writes its own events over it', async () => {
-      app = await mount({ config: { remoteEtag: '"held"' }, getError: notModified() })
+      app = await mount({ config: { remoteEtag: '"held"' }, getError: () => s3Response({ status: 304 }) })
 
-      putObject.mockClear()
+      bucket.requests.length = 0
 
       await app.click('[aria-label="Mark as read 6363"]')
 
-      expect(putObject).toHaveBeenCalled()
+      expect(writes().length).toBeGreaterThan(0)
       expect(app.vm.queries.syncStatusForIdentity(app.vm.identity).status).toEqual('saved')
     })
 
@@ -203,7 +215,7 @@ describe('Sync to S3', () => {
 
       await app.click('[aria-label="Mark as read 6363"]')
 
-      expect(getObject.mock.calls[1][0].IfNoneMatch).toEqual('"remote"')
+      expect(reads()[1].headers['if-none-match']).toEqual('"remote"')
     })
 
     test('remembers the copy it wrote, rather than fetching it back to find out', async () => {
@@ -212,7 +224,7 @@ describe('Sync to S3', () => {
       await app.click('[aria-label="Mark as read 6363"]')
       await app.click('[aria-label="Mark as unread 6363"]')
 
-      expect(getObject.mock.calls[2][0].IfNoneMatch).toEqual('"written"')
+      expect(reads()[2].headers['if-none-match']).toEqual('"written"')
     })
 
     // It describes what this browser last saw in one bucket. Another device

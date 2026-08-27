@@ -1,4 +1,4 @@
-import { mountApp, describe, story, vi } from './helper.js'
+import { mountApp, describe, story, s3Bucket, s3Response } from './helper.js'
 
 const ADDON = JSON.stringify({
   type: 'S3Adapter',
@@ -31,12 +31,18 @@ describe('Open the app before the bucket answers', () => {
   beforeEach(async () => {
     // The bucket is left hanging, which is what a slow connection looks like
     // from the device: the copy is on the way and has not arrived.
-    const getObject = vi.fn((params, cb) => { answer = cb })
+    const bucket = s3Bucket({
+      answer: (request) => {
+        if (request.method === 'PUT') return s3Response({ headers: { etag: '"written"' } })
+
+        return new Promise((resolve) => { answer = resolve })
+      }
+    })
 
     app = await mountApp({
       path: '/following',
       state: seed(),
-      awsS3: () => Promise.resolve({ putObject: vi.fn((params, cb) => cb(null, {})), getObject })
+      awsClient: bucket.client
     })
   })
 
@@ -47,7 +53,10 @@ describe('Open the app before the bucket answers', () => {
   })
 
   story('takes the copy from the bucket once it arrives', async () => {
-    answer(null, { Body: '4/feeds/544/create/v2.1 {"url":"https://baz.qux/rss.xml","data":{"title":"Feed from the bucket"}}' })
+    answer(s3Response({
+      body: '4/feeds/544/create/v2.1 {"url":"https://baz.qux/rss.xml","data":{"title":"Feed from the bucket"}}',
+      headers: { etag: '"arrived"' }
+    }))
     await app.wait()
 
     expect(app.text()).toContain('Feed from the bucket')

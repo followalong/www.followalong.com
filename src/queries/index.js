@@ -761,7 +761,7 @@ class Queries {
 
   adapterForAddonForIdentity (identity, addon) {
     const Adapter = ADAPTERS.find((Adapter) => Adapter.name === addon.type) || None
-    const adapter = new Adapter({ fetch: this.fetch, awsS3: this.awsS3 }, addon)
+    const adapter = new Adapter({ fetch: this.fetch, awsClient: this.awsClient }, addon)
 
     return adapter
   }
@@ -791,7 +791,7 @@ class Queries {
     return ADAPTERS.map((Adapter) => {
       const addon = installed.find((a) => a.type === Adapter.name)
 
-      return new Adapter({ fetch: this.fetch, awsS3: this.awsS3 }, addon || {})
+      return new Adapter({ fetch: this.fetch, awsClient: this.awsClient }, addon || {})
     })
   }
 

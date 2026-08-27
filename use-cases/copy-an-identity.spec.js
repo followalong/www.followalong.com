@@ -1,4 +1,4 @@
-import { mountApp, describe, story, vi } from './helper.js'
+import { mountApp, describe, story, vi, s3Bucket, s3Response } from './helper.js'
 
 const seed = `
   0/identities/abc123/create/v2.1 {"name":"My Account"}
@@ -31,7 +31,7 @@ describe('Copy an identity that backs up', () => {
 
     app = await mountApp({
       copyToClipboard,
-      awsS3: () => Promise.resolve({ getObject: (params, cb) => cb(null, { Body: '' }) }),
+      awsClient: s3Bucket({ answer: () => s3Response({ body: '' }) }).client,
       state: { abc123: { config: {}, data: `${seed}\n  7/addons/s3addon/configure/v2.1 ${S3}` } }
     })
 

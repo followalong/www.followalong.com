@@ -1,5 +1,5 @@
-import { describe, test, expect } from 'vitest'
-import S3Adapter from './s3.js'
+import { describe, test, expect, vi, afterEach } from 'vitest'
+import S3Adapter, { TIMEOUT_MS } from './s3.js'
 
 const CONFIGURED = {
   bucket: 'followalong-backup',
@@ -8,24 +8,30 @@ const CONFIGURED = {
   secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
 }
 
-const adapter = (data, awsS3) => new S3Adapter({ awsS3 }, { id: 'x', data: Object.assign({}, data) })
+const adapter = (data, awsClient) => new S3Adapter({ awsClient }, { id: 'x', data: Object.assign({}, data) })
 
-const bucket = (responses = {}) => {
-  const calls = { getObject: [], putObject: [] }
-  const s3 = {
-    getObject (params, cb) {
-      calls.getObject.push(params)
-      const { err, data } = responses.get || { data: { Body: 'the log', ETag: '"current"' } }
-      cb(err || null, data || null)
-    },
-    putObject (params, cb) {
-      calls.putObject.push(params)
-      const { err, data } = responses.put || { data: { ETag: '"written"' } }
-      cb(err || null, data || null)
+const response = ({ status = 200, body = '', headers = {} }) => ({
+  ok: status >= 200 && status < 300,
+  status,
+  text: () => Promise.resolve(body),
+  headers: { get: (name) => headers[name.toLowerCase()] ?? null }
+})
+
+// Signed requests over fetch, recorded so a spec can see the URL the
+// addressing rule built and the headers the signer was asked to sign.
+const bucket = (answer) => {
+  const requests = []
+  const awsClient = (config) => ({
+    fetch: (url, init = {}) => {
+      const request = { url: `${url}`, method: init.method || 'GET', body: init.body, headers: init.headers || {}, signal: init.signal, config }
+
+      requests.push(request)
+
+      return Promise.resolve((answer || (() => response({ body: 'the log', headers: { etag: '"current"' } })))(request))
     }
-  }
+  })
 
-  return { calls, awsS3: () => Promise.resolve(s3) }
+  return { requests, awsClient }
 }
 
 const plain = (data) => Promise.resolve(data)
@@ -54,72 +60,136 @@ describe('S3Adapter', () => {
   })
 
   describe('#get', () => {
+    test('signs with the credentials and region the addon was configured with', async () => {
+      const { requests, awsClient } = bucket()
+
+      await adapter(CONFIGURED, awsClient).get(null, plain, {})
+
+      expect(requests[0].config).toMatchObject({
+        accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+        secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+        region: 'us-east-1',
+        service: 's3'
+      })
+    })
+
+    test('asks the address the bucket and key make', async () => {
+      const { requests, awsClient } = bucket()
+
+      await adapter(CONFIGURED, awsClient).get(null, plain, {})
+
+      expect(requests[0].url).toEqual('https://followalong-backup.s3.us-east-1.amazonaws.com/identities/followalong.log')
+      expect(requests[0].method).toEqual('GET')
+    })
+
     test('asks unconditionally when it has not seen a copy', async () => {
-      const { calls, awsS3 } = bucket()
+      const { requests, awsClient } = bucket()
 
-      await adapter(CONFIGURED, awsS3).get(null, plain, {})
+      await adapter(CONFIGURED, awsClient).get(null, plain, {})
 
-      expect(calls.getObject[0].IfNoneMatch).toBeUndefined()
+      expect(requests[0].headers['if-none-match']).toBeUndefined()
     })
 
     test('asks for the copy it has not seen, and reports the one it got', async () => {
-      const { calls, awsS3 } = bucket()
+      const { requests, awsClient } = bucket()
 
-      const response = await adapter(CONFIGURED, awsS3).get(null, plain, { etag: '"held"' })
+      const answer = await adapter(CONFIGURED, awsClient).get(null, plain, { etag: '"held"' })
 
-      expect(calls.getObject[0].IfNoneMatch).toEqual('"held"')
-      expect(response.status).toEqual(200)
-      expect(response.body).toEqual('the log')
-      expect(response.etag).toEqual('"current"')
+      expect(requests[0].headers['if-none-match']).toEqual('"held"')
+      expect(answer.status).toEqual(200)
+      expect(answer.body).toEqual('the log')
+      expect(answer.etag).toEqual('"current"')
     })
 
-    // This SDK hands a conditional match to the callback as an error, and a
-    // caller that read it as one would abort the sync it was about to do.
     test('reads a conditional match as no change, not as a failure', async () => {
-      const { awsS3 } = bucket({ get: { err: Object.assign(new Error('NotModified'), { statusCode: 304, code: 'NotModified' }) } })
+      const { awsClient } = bucket(() => response({ status: 304 }))
 
-      const response = await adapter(CONFIGURED, awsS3).get(null, plain, { etag: '"held"' })
+      const answer = await adapter(CONFIGURED, awsClient).get(null, plain, { etag: '"held"' })
 
-      expect(response.status).toEqual(304)
-      expect(response.body).toEqual('')
-      expect(response.etag).toEqual('"held"')
+      expect(answer.status).toEqual(304)
+      expect(answer.body).toEqual('')
+      expect(answer.etag).toEqual('"held"')
     })
 
     // A bucket whose CORS policy names the headers it allows rather than
     // allowing all of them refuses the preflight for If-None-Match, and a
     // request we did not have to make must not be what stops the sync.
     test('reads unconditionally when the bucket refuses the condition', async () => {
-      const calls = []
-      const awsS3 = () => Promise.resolve({
-        getObject (params, cb) {
-          calls.push(params)
+      const { requests, awsClient } = bucket((request) => {
+        if (request.headers['if-none-match']) return Promise.reject(new TypeError('Failed to fetch'))
 
-          return params.IfNoneMatch ? cb(new Error('Network Failure'), null) : cb(null, { Body: 'the log', ETag: '"current"' })
-        }
+        return response({ body: 'the log', headers: { etag: '"current"' } })
       })
 
-      const response = await adapter(CONFIGURED, awsS3).get(null, plain, { etag: '"held"' })
+      const answer = await adapter(CONFIGURED, awsClient).get(null, plain, { etag: '"held"' })
 
-      expect(calls.length).toEqual(2)
-      expect(calls[1].IfNoneMatch).toBeUndefined()
-      expect(response.body).toEqual('the log')
-      expect(response.etag).toEqual('"current"')
+      expect(requests.length).toEqual(2)
+      expect(requests[1].headers['if-none-match']).toBeUndefined()
+      expect(answer.body).toEqual('the log')
     })
 
     test('still fails on anything else', async () => {
-      const { awsS3 } = bucket({ get: { err: new Error('AccessDenied') } })
+      const { awsClient } = bucket(() => response({ status: 403, body: '<Error><Code>AccessDenied</Code></Error>' }))
 
-      await expect(adapter(CONFIGURED, awsS3).get(null, plain, {})).rejects.toThrow(/AccessDenied/)
+      await expect(adapter(CONFIGURED, awsClient).get(null, plain, {})).rejects.toThrow(/AccessDenied/)
+    })
+
+    // Commands tells an empty bucket apart from a read that failed by the
+    // message, and writing over a copy it could not read is what that guards.
+    test('names a missing object the way an empty bucket is recognised', async () => {
+      const { awsClient } = bucket(() => response({ status: 404, body: '<Error><Code>NoSuchKey</Code></Error>' }))
+
+      await expect(adapter(CONFIGURED, awsClient).get(null, plain, {})).rejects.toThrow(/nosuchkey|404/i)
+    })
+  })
+
+  // A hung bucket read is swallowed with a console.warn on boot and leaves
+  // the sync reading "Saving..." for the rest of the session otherwise.
+  describe('when the bucket never answers', () => {
+    afterEach(() => vi.useRealTimers())
+
+    test('gives up, and says the bucket is what did not answer', async () => {
+      vi.useFakeTimers()
+
+      // What fetch does with a signal: rejects when it is aborted, and
+      // straight away if it already was.
+      const { awsClient } = bucket((request) => new Promise((resolve, reject) => {
+        const stop = () => reject(new Error('The operation was aborted.'))
+
+        request.signal.aborted ? stop() : request.signal.addEventListener('abort', stop)
+      }))
+
+      const caught = adapter(CONFIGURED, awsClient).get(null, plain, {}).catch((e) => e)
+
+      vi.advanceTimersByTime(TIMEOUT_MS)
+
+      expect((await caught).message).toMatch(/did not answer in time/)
     })
   })
 
   describe('#save', () => {
+    test('puts the body at the same address', async () => {
+      const { requests, awsClient } = bucket(() => response({ headers: { etag: '"written"' } }))
+
+      await adapter(CONFIGURED, awsClient).save('the log', plain)
+
+      expect(requests[0].method).toEqual('PUT')
+      expect(requests[0].url).toEqual('https://followalong-backup.s3.us-east-1.amazonaws.com/identities/followalong.log')
+      expect(requests[0].body).toEqual('the log')
+    })
+
     test('reports the copy it just wrote', async () => {
-      const { awsS3 } = bucket()
+      const { awsClient } = bucket(() => response({ headers: { etag: '"written"' } }))
 
-      const response = await adapter(CONFIGURED, awsS3).save('the log', plain)
+      const written = await adapter(CONFIGURED, awsClient).save('the log', plain)
 
-      expect(response.etag).toEqual('"written"')
+      expect(written.etag).toEqual('"written"')
+    })
+
+    test('fails when the bucket refuses the write', async () => {
+      const { awsClient } = bucket(() => response({ status: 403, body: '<Error><Code>AccessDenied</Code></Error>' }))
+
+      await expect(adapter(CONFIGURED, awsClient).save('the log', plain)).rejects.toThrow(/AccessDenied/)
     })
   })
 

@@ -1,4 +1,4 @@
-import { mountApp, describe, story, vi } from './helper.js'
+import { mountApp, describe, story, vi, s3Bucket, s3Response } from './helper.js'
 
 const ADDON = JSON.stringify({
   type: 'S3Adapter',
@@ -49,10 +49,13 @@ describe('Poll feeds once at a time', () => {
       fetch,
       automaticFetch: true,
       state: seed(),
-      awsS3: () => Promise.resolve({
-        putObject: vi.fn((params, cb) => cb(null, {})),
-        getObject: vi.fn((params, cb) => { answer = cb })
-      })
+      awsClient: s3Bucket({
+        answer: (request) => {
+          if (request.method === 'PUT') return s3Response({ headers: { etag: '"written"' } })
+
+          return new Promise((resolve) => { answer = resolve })
+        }
+      }).client
     })
 
     // The sweep is scheduled off a timer and works through the feeds in
@@ -66,7 +69,10 @@ describe('Poll feeds once at a time', () => {
   story('does not start a second sweep while one is running', async () => {
     expect(callsFor(fetch, 'one.example')).toEqual(1)
 
-    answer(null, { Body: '5/feeds/three/create/v2.1 {"url":"http://three.example/rss.xml","data":{"title":"Three"}}' })
+    answer(s3Response({
+      body: '5/feeds/three/create/v2.1 {"url":"http://three.example/rss.xml","data":{"title":"Three"}}',
+      headers: { etag: '"arrived"' }
+    }))
     for (let i = 0; i < 10; i++) await app.wait()
 
     expect(callsFor(fetch, 'one.example')).toEqual(1)

@@ -1,4 +1,4 @@
-import { mountApp, describe, story, vi } from './helper.js'
+import { mountApp, describe, story, vi, s3Bucket, s3Response } from './helper.js'
 
 const IDENTITY = `
   0/identities/abc123/create/v2.1 {"name":"My Account"}
@@ -42,10 +42,17 @@ describe('Know my backup status', () => {
 
       app = await mountApp({
         state: { abc123: { config: {}, data: withS3 } },
-        awsS3: () => Promise.resolve({
-          putObject: (params, cb) => { save(params); cb(null) },
-          getObject: (params, cb) => cb(new Error('NoSuchKey'))
-        })
+        awsClient: s3Bucket({
+          answer: (request) => {
+            if (request.method === 'PUT') {
+              save(request)
+
+              return s3Response({ headers: { etag: '"written"' } })
+            }
+
+            return s3Response({ status: 404, body: '<Error><Code>NoSuchKey</Code></Error>' })
+          }
+        }).client
       })
 
       await app.click('[aria-label="You"]')
@@ -103,10 +110,13 @@ describe('Know my backup status', () => {
     beforeEach(async () => {
       app = await mountApp({
         state: { abc123: { config: {}, data: withS3 } },
-        awsS3: () => Promise.resolve({
-          putObject: (params, cb) => cb(new Error('Access denied')),
-          getObject: (params, cb) => cb(new Error('NoSuchKey'))
-        })
+        awsClient: s3Bucket({
+          answer: (request) => {
+            return request.method === 'PUT'
+              ? s3Response({ status: 403, body: '<Error><Code>Access denied</Code></Error>' })
+              : s3Response({ status: 404, body: '<Error><Code>NoSuchKey</Code></Error>' })
+          }
+        }).client
       })
 
       await app.click('[aria-label="You"]')

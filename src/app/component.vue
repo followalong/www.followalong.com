@@ -157,7 +157,7 @@ import Queries from '../queries/index.js'
 import NoSleep from 'nosleep.js'
 import KeychainAdapter from '../adapters/keychain.js'
 import buildFetch from '../adapters/fetch.js'
-import loadAwsSdk from '../adapters/aws-sdk.js'
+import { AwsClient } from 'aws4fetch'
 
 const POLL_INTERVAL = 5 * 60 * 1000
 let POLL_TIMEOUT
@@ -231,11 +231,11 @@ export default {
       type: String,
       default: ''
     },
-    // Loaded on demand: the SDK is far larger than the rest of the app, and
-    // only identities syncing to a bucket ever need it.
-    awsS3: {
+    // A SigV4 signer over the browser's own fetch. Small enough to bundle
+    // with everything else, so a bucket costs no extra request.
+    awsClient: {
       type: Function,
-      default: (config) => loadAwsSdk().then((AWS) => new AWS.S3(config))
+      default: (config) => new AwsClient(config)
     }
   },
   data () {
@@ -244,7 +244,7 @@ export default {
     const queries = new Queries({
       fetch: this.fetch,
       state: this.state,
-      awsS3: this.awsS3
+      awsClient: this.awsClient
     })
     const commands = new Commands({
       fetch: this.fetch,
