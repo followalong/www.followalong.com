@@ -39,6 +39,14 @@ describe('Play audio and video', () => {
       expect(app.find('[data-pip] video').attributes('src')).toEqual('https://foo.bar/clip.mp4')
     })
 
+    // Scrubbing, volume and fullscreen all arrive with the browser's own
+    // control. The app used to offer a single pause button instead.
+    story('hands the transport to the browser', () => {
+      expect(app.find('[data-pip] video').attributes('controls')).toBeDefined()
+      expect(app.find('[data-pip-pause]').exists()).toEqual(false)
+      expect(app.find('[data-pip-progress]').exists()).toEqual(false)
+    })
+
     story('keeps playing across a page change', async () => {
       await app.click('[aria-label="You"]')
 
@@ -63,6 +71,13 @@ describe('Play audio and video', () => {
 
     story('embeds it rather than trying to play the page', () => {
       expect(app.find('[data-pip] iframe').attributes('src')).toContain('youtube.com/embed/abc123xyz')
+    })
+
+    // The embed brings its own. Ours could not reach across the origin to
+    // drive it, so a pause button over a YouTube video did nothing at all.
+    story('leaves the controls to YouTube', () => {
+      expect(app.find('[data-pip-pause]').exists()).toEqual(false)
+      expect(app.find('[data-pip-progress]').exists()).toEqual(false)
     })
   })
 })

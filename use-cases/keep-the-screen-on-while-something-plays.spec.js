@@ -76,10 +76,14 @@ describe('Keep the screen on while something plays', () => {
       expect(wakeLock.hold).toHaveBeenCalled()
     })
 
-    story('lets it sleep again when it is paused', async () => {
+    // The listeners are on the element, so the browser's own pause control
+    // releases the screen. It used to take our button, which was the only
+    // transport there was.
+    story('lets it sleep again when the browser’s own control pauses it', async () => {
       await app.find('[data-pip] video').trigger('play')
       await app.find('[data-pip] video').trigger('pause')
 
+      expect(app.find('[data-pip] video').attributes('controls')).toBeDefined()
       expect(wakeLock.release).toHaveBeenCalled()
     })
 

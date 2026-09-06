@@ -80,9 +80,7 @@
       :title="queries.titleForEntry(playing)"
       :history="playHistory"
       :now-playing-id="`${playing.id}`"
-      :progress="playProgress"
       @close="playing = null"
-      @pause="togglePlayback"
       @select="play(playingEntries[$event.id])"
     >
       <iframe
@@ -98,9 +96,9 @@
         ref="pipVideo"
         :src="playingSrc"
         class="h-full w-full"
+        controls
         autoplay
         playsinline
-        @timeupdate="onPlayProgress"
         @play="commands.keepScreenAwake()"
         @pause="commands.letScreenSleep()"
         @ended="commands.letScreenSleep()"
@@ -274,8 +272,7 @@ export default {
       settingUp: false,
       playing: null,
       playHistory: [],
-      playingEntries: {},
-      playProgress: 0
+      playingEntries: {}
     }
   },
   computed: {
@@ -436,7 +433,6 @@ export default {
     // history live on the shell rather than in any one view.
     play (entry) {
       this.playingEntries[entry.id] = entry
-      this.playProgress = 0
       this.playing = entry
 
       this.commands.notePlaying(this.identity, {
@@ -447,20 +443,6 @@ export default {
         { id: `${entry.id}`, title: this.queries.titleForEntry(entry), duration: '' },
         ...this.playHistory.filter((item) => item.id !== `${entry.id}`)
       ].slice(0, 6)
-    },
-
-    togglePlayback () {
-      const video = this.$refs.pipVideo
-
-      if (!video) return
-
-      video.paused ? video.play() : video.pause()
-    },
-
-    onPlayProgress (event) {
-      const { currentTime, duration } = event.target
-
-      this.playProgress = duration ? (currentTime / duration) * 100 : 0
     },
 
     onSearch (q) {

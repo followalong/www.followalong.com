@@ -37,9 +37,9 @@
         </div>
       </div>
 
-      <!-- Controls sit above the picture rather than on top of it: a 310px
-           window has no room to spare, and overlaid buttons cover the thing
-           you are trying to watch. -->
+      <!-- The bar names what is playing and gets you out of it. Transport is
+           whatever is playing: a <video> carries the browser's own control and
+           an embed brings its own, and neither can be driven from here. -->
       <div class="bg-ink flex items-center gap-1 px-1.5 py-1">
         <button
           data-pip-menu
@@ -59,23 +59,6 @@
             aria-hidden="true"
           >
             <path d="M1.5 2.5h9M1.5 6h9M1.5 9.5h9" />
-          </svg>
-        </button>
-
-        <button
-          data-pip-pause
-          type="button"
-          aria-label="Pause"
-          class="h-8 w-8 flex-none flex items-center justify-center text-white"
-          @click="$emit('pause')"
-        >
-          <svg
-            class="h-4 w-4"
-            viewBox="0 0 16 16"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path d="M4.5 2.5h2.5v11H4.5zM9 2.5h2.5v11H9z" />
           </svg>
         </button>
 
@@ -99,14 +82,6 @@
         class="relative aspect-video bg-ink"
       >
         <slot />
-
-        <span class="absolute inset-x-0 bottom-0 h-0.75 bg-white/25">
-          <span
-            data-pip-progress
-            class="block h-0.75 bg-accent"
-            :style="{ width: `${progress}%` }"
-          />
-        </span>
       </div>
     </div>
   </div>
@@ -117,10 +92,9 @@ export default {
   props: {
     title: { type: String, default: '' },
     history: { type: Array, default: () => [] },
-    nowPlayingId: { type: String, default: '' },
-    progress: { type: Number, default: 0 }
+    nowPlayingId: { type: String, default: '' }
   },
-  emits: ['pause', 'close', 'select'],
+  emits: ['close', 'select'],
   data: () => ({ showHistory: false })
 }
 </script>

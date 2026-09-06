@@ -27,14 +27,27 @@ describe('PipPlayer', () => {
     expect(player().get('[data-pip-frame]').classes()).toContain('aspect-video')
   })
 
-  test('emits pause and close from the overlay controls', async () => {
+  test('emits close from the overlay controls', async () => {
     const wrapper = player()
 
-    await wrapper.get('[data-pip-pause]').trigger('click')
     await wrapper.get('[data-pip-close]').trigger('click')
 
-    expect(wrapper.emitted('pause')).toHaveLength(1)
     expect(wrapper.emitted('close')).toHaveLength(1)
+  })
+
+  // Transport is whatever is playing: our own pause button and progress bar
+  // could only ever drive a <video>, and did nothing at all over an embed.
+  test('carries no transport of its own', () => {
+    const wrapper = player()
+
+    expect(wrapper.find('[data-pip-pause]').exists()).toBe(false)
+    expect(wrapper.find('[data-pip-progress]').exists()).toBe(false)
+  })
+
+  // What is left is the window: without a way out, a player that is playing
+  // something a reader has left behind cannot be dismissed.
+  test('keeps the way out', () => {
+    expect(player().find('[data-pip-close]').exists()).toBe(true)
   })
 
   test('keeps the history dropdown shut until the amber hamburger is used', async () => {
@@ -56,12 +69,5 @@ describe('PipPlayer', () => {
 
     expect(rows[1].text()).toContain('▶ now')
     expect(rows[0].text()).toContain('22:10')
-  })
-
-  test('shows progress in amber', () => {
-    const el = player({ progress: 45 }).get('[data-pip-progress]')
-
-    expect(el.attributes('style')).toContain('width: 45%')
-    expect(el.classes()).toContain('bg-accent')
   })
 })
