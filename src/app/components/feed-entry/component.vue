@@ -9,7 +9,7 @@
       savable
       :saved="isSaved"
       :subject="`${entry.id}`"
-      :readable="!!content"
+      :readable="hasContent"
       :poster="poster"
       @done="toggleRead"
       @save="toggleSave"
@@ -81,25 +81,6 @@ import EntryReader from '../entry-reader/component.vue'
 import AudioPlayer from '../audio-player/component.vue'
 import ImagePlayer from '../image-player/component.vue'
 
-const MAX_SUMMARY = 200
-
-const twoSentences = (html) => {
-  if (!html) return ''
-
-  const text = `${html}`
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-
-  const sentences = text.match(/[^.!?]+[.!?]+/g)
-  const taken = sentences ? sentences.slice(0, 2).join(' ').trim() : text
-
-  if (taken.length <= MAX_SUMMARY) return taken
-
-  return `${taken.slice(0, MAX_SUMMARY).replace(/\s+\S*$/, '')}…`
-}
-
 export default {
   components: {
     EntryCard,
@@ -146,8 +127,15 @@ export default {
       return 'text'
     },
 
+    // Only the reader wants the sanitised body, and only once it is open.
+    // Asking here for every card was the single most expensive thing a feed
+    // page did.
     content () {
       return this.app.queries.contentForEntry(this.entry)
+    },
+
+    hasContent () {
+      return this.app.queries.hasContentForEntry(this.entry)
     },
 
     html () {
@@ -166,7 +154,9 @@ export default {
     summary () {
       if (this.media === 'video') return ''
 
-      return twoSentences(this.addonSummary || this.content)
+      if (this.addonSummary) return this.app.queries.excerptFrom(this.addonSummary)
+
+      return this.app.queries.excerptForEntry(this.entry)
     },
 
     summaryLabel () {

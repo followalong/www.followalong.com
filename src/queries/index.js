@@ -7,6 +7,7 @@ import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
 import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
 import sanitizeContent from './presenters/sanitize-content.js'
 import UnkeyableEntryError from './unkeyable-entry-error.js'
+import excerpt from './presenters/excerpt.js'
 import { sessionsIn, deaths } from './sessions.js'
 
 // How long a feed is considered fresh. The poll ticks more often than this
@@ -562,13 +563,32 @@ class Queries {
     return date.toLocaleDateString('en-us', { year: 'numeric', month: 'short', day: 'numeric' })
   }
 
-  contentForEntry (entry) {
-    const content = getAttr(entry, 'content:encoded') ||
+  // The body as the feed wrote it. Everything a card needs comes from here;
+  // only the reader pays to have it sanitised.
+  rawContentForEntry (entry) {
+    return getAttr(entry, 'content:encoded') ||
       getAttr(entry, 'content.#text') ||
       getAttr(entry, 'description') ||
-      getAttr(entry, 'media:group.media:description')
+      getAttr(entry, 'media:group.media:description') ||
+      ''
+  }
 
-    return sanitizeContent(content || '')
+  contentForEntry (entry) {
+    return sanitizeContent(this.rawContentForEntry(entry))
+  }
+
+  // Whether there is a body worth opening the reader for. Every card asks, so
+  // it must not be the question that parses one.
+  hasContentForEntry (entry) {
+    return !!this.rawContentForEntry(entry)
+  }
+
+  excerptForEntry (entry) {
+    return excerpt(this.rawContentForEntry(entry))
+  }
+
+  excerptFrom (html) {
+    return excerpt(html)
   }
 
   sanitizeCopy (content) {
