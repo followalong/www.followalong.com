@@ -250,10 +250,15 @@ export default {
     }
   },
 
+  // Marked as seen after the feed answers, not before. Asking takes time, so
+  // marking first left every article the answer brought stamped later than the
+  // mark, and a feed opened for the first time held all of it behind the
+  // new-items bar and read as empty. The bar is for what arrives while someone
+  // is reading, not for what they opened the page to see.
   mounted () {
     this.app.pageMenu = this.openMenu
     this.app.commands.showNewEntries(this.identity)
-    this.fetchFeed()
+    this.fetchNow()
   },
 
   // The bar belongs to the shell and outlives this page, so a menu left
