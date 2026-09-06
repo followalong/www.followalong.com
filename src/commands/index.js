@@ -2,6 +2,7 @@ import VERSION from '../state/version.js'
 import { encrypt, decrypt } from '../queries/crypt.js'
 import { encodeHandoff } from '../queries/handoff.js'
 import UnkeyableEntryError from '../queries/unkeyable-entry-error.js'
+import fingerprint from './fingerprint.js'
 import { sessionsIn, started, closed, resumed, nowPlaying } from '../queries/sessions.js'
 import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT_SIGNALS, SAVED_SIGNAL } from './seed.js'
 
@@ -138,10 +139,7 @@ class Commands {
       // at boot, so whichever one tracked an event last won, and the other's
       // events were gone until it happened to restart.
       .then((key) => this.mergeRemoteInto(identity, remote, key)
-        .then(() => remote.save(this.queries.eventsToFile(identity), encrypt(key)))
-        // The copy we just wrote is one we obviously already hold, so the
-        // next read asks for anything but it instead of fetching it back.
-        .then((written) => this.rememberRemoteVersion(identity, written && written.etag)))
+        .then(({ unchanged }) => this.saveUnlessTheBucketHasIt(identity, remote, key, unchanged)))
       .then(() => {
         this.state.updateConfig(identity.id, {
           syncStatus: 'saved',
@@ -160,13 +158,43 @@ class Commands {
       .then(() => this.queries.syncStatusForIdentity(identity))
   }
 
+  // Answers whether the bucket still holds the copy this device last folded
+  // in, which is the half of "is there anything to write" that the log itself
+  // cannot say.
   mergeRemoteInto (identity, remote, key) {
     return Promise.resolve(remote.get(identity, decrypt(key), this.remoteVersionForIdentity(identity)))
-      .then((response) => this.importRemoteResponse(identity, response))
+      .then((response) => {
+        return Promise.resolve(this.importRemoteResponse(identity, response))
+          .then(() => ({ unchanged: !!response && response.status === NOT_MODIFIED }))
+      })
       .catch((e) => {
-        if (NOTHING_THERE.test((e && e.message) || '')) return
+        // An empty bucket is not a copy we are up to date with: there is
+        // nothing there and the whole log has to go up.
+        if (NOTHING_THERE.test((e && e.message) || '')) return { unchanged: false }
 
         throw new Error(`Could not read the copy already there: ${(e && e.message) || 'unknown'}`)
+      })
+  }
+
+  // Putting the log back when the bucket already holds exactly these bytes is
+  // a megabyte of upload to arrive where it already is, and it ran 1.5
+  // seconds after every tracked event. Both halves have to hold: the object
+  // is still the one we wrote, and our log has not moved since we wrote it.
+  saveUnlessTheBucketHasIt (identity, remote, key, unchanged) {
+    const file = this.queries.eventsToFile(identity)
+    const stamp = fingerprint(file)
+
+    if (unchanged && stamp === this.state.getConfig(identity.id).remoteFingerprint) {
+      return Promise.resolve()
+    }
+
+    return Promise.resolve(remote.save(file, encrypt(key)))
+      .then((written) => {
+        // The copy we just wrote is one we obviously already hold, so the
+        // next read asks for anything but it instead of fetching it back.
+        this.rememberRemoteVersion(identity, written && written.etag)
+
+        return this.state.updateConfig(identity.id, { remoteFingerprint: stamp })
       })
   }
 

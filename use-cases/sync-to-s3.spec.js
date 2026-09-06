@@ -238,4 +238,107 @@ describe('Sync to S3', () => {
       expect(app.vm.state.getConfig('abc123').remoteEtag).toEqual('"written"')
     })
   })
+
+  // The read is conditional; the write was not. Every tracked event put the
+  // whole log back in the bucket 1.5 seconds later, changed or not, which at
+  // this size is a megabyte up per click.
+  describe('when the log is the one already in the bucket', () => {
+    let real
+
+    // A bucket that answers conditional reads the way one does, because
+    // whether the object is still ours is half of the question.
+    const withARealBucket = (options = {}) => {
+      real = s3Bucket(options)
+
+      return mountApp({ awsClient: real.client, state: seed() })
+    }
+
+    const sent = () => real.writes().length
+
+    story('does not send it again', async () => {
+      app = await withARealBucket()
+
+      await app.click('[aria-label="Mark as read 6363"]')
+
+      expect(sent()).toEqual(1)
+
+      await app.vm.commands.syncIdentity(app.vm.identity)
+      await app.vm.commands.syncIdentity(app.vm.identity)
+
+      expect(sent()).toEqual(1)
+    })
+
+    test('says it is saved even so', async () => {
+      app = await withARealBucket()
+
+      await app.click('[aria-label="Mark as read 6363"]')
+      await app.vm.commands.syncIdentity(app.vm.identity)
+
+      expect(app.vm.queries.syncStatusForIdentity(app.vm.identity).status).toEqual('saved')
+    })
+
+    test('sends it again as soon as something changes', async () => {
+      app = await withARealBucket()
+
+      await app.click('[aria-label="Mark as read 6363"]')
+
+      expect(sent()).toEqual(1)
+
+      await app.click('[aria-label="Mark as unread 6363"]')
+
+      expect(sent()).toEqual(2)
+    })
+
+    // Nothing was written, so there is nothing to claim was written.
+    test('tries again after a write that failed', async () => {
+      // The read works and only the write is refused, which is the case
+      // where there is something to try again.
+      app = await withARealBucket({
+        answer: (request) => {
+          return request.method === 'PUT'
+            ? s3Response({ status: 403, body: '<Error><Code>AccessDenied</Code></Error>' })
+            : real.read(request)
+        }
+      })
+
+      await app.click('[aria-label="Mark as read 6363"]')
+
+      expect(app.vm.queries.syncStatusForIdentity(app.vm.identity).status).toEqual('failed')
+
+      const failed = sent()
+
+      await app.vm.commands.syncIdentity(app.vm.identity)
+
+      expect(sent()).toEqual(failed + 1)
+    })
+
+    // Somebody else wrote after we did, so the object is no longer the one we
+    // put there and the question of whether our log moved does not arise.
+    test('sends it when the bucket has moved on', async () => {
+      app = await withARealBucket()
+
+      await app.click('[aria-label="Mark as read 6363"]')
+
+      const before = sent()
+
+      real.answer = (request) => {
+        if (request.method === 'PUT') return real.store(request)
+
+        return s3Response({ status: 200, body: '9/entries/7777/create/v2.1 {"feedId":"543","data":{"guid":"999","title":"From the bucket"}}', headers: { etag: '"somebody-else"' } })
+      }
+
+      await app.vm.commands.syncIdentity(app.vm.identity)
+
+      expect(sent()).toEqual(before + 1)
+    })
+
+    test('keeps what it remembers out of the log', async () => {
+      app = await withARealBucket()
+
+      await app.click('[aria-label="Mark as read 6363"]')
+
+      expect(app.vm.queries.eventsToFile(app.vm.identity)).not.toContain('remoteFingerprint')
+      expect(app.vm.state.getConfig('abc123').remoteFingerprint).toBeTruthy()
+    })
+  })
 })
