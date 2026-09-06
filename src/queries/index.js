@@ -6,6 +6,7 @@ import SORT_BY_TIME from './sorters/sort-by-time.js'
 import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
 import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
 import sanitizeContent from './presenters/sanitize-content.js'
+import UnkeyableEntryError from './unkeyable-entry-error.js'
 import { sessionsIn, deaths } from './sessions.js'
 
 // How long a feed is considered fresh. The poll ticks more often than this
@@ -57,6 +58,27 @@ const hostFor = (url) => {
   } catch (e) {
     return url
   }
+}
+
+// A guid or a link is either the text of the element or an attribute on it,
+// and Atom entries usually carry several links: alternate points at the
+// entry, self and replies point elsewhere.
+const textOnly = (value) => (typeof value === 'string' ? value : '')
+
+const hrefOf = (value) => {
+  if (!value) {
+    return ''
+  }
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (Array.isArray(value)) {
+    return hrefOf(value.find((one) => (one || {})['@_rel'] === 'alternate') || value[0])
+  }
+
+  return value['@_href'] || ''
 }
 
 const stripHTML = (html) => {
@@ -352,17 +374,42 @@ class Queries {
     return obj
   }
 
+  // The order is load-bearing and must not be tidied: it is what every stored
+  // entry was keyed by, and an entry that keys differently tomorrow comes back
+  // as a duplicate of itself. The first four are what has always been read.
+  // The rest are additions, so they can only catch entries that used to have
+  // no key at all.
   keyForEntry (entry) {
+    const data = (entry || {}).data || {}
+
     const key = getAttr(entry, 'id') ||
-      getAttr(entry, 'guid.href') ||
-      getAttr(entry, 'link.href') ||
-      getAttr(entry, 'guid.#text')
+      textOnly(data.guid) ||
+      textOnly(data.link) ||
+      getAttr(entry, 'guid.#text') ||
+      hrefOf(data.guid) ||
+      hrefOf(data.link) ||
+      this.fallbackKeyForEntry(entry)
 
     if (key) {
       return key
     }
 
-    throw new Error(`Cannot find a key for ${JSON.stringify(entry)}`)
+    throw new UnkeyableEntryError(entry)
+  }
+
+  // What the entry says it is, for a feed that offers nothing to identify it
+  // by. Not stable if the feed edits a title, so it is the last resort — but
+  // the alternative was dropping the item and everything after it.
+  fallbackKeyForEntry (entry) {
+    const title = `${this.titleForEntry(entry) || ''}`.trim()
+    const date = this.dateForEntry(entry)
+    const stamp = isNaN(date.getTime()) ? '' : date.toISOString()
+
+    if (!title && !stamp) {
+      return ''
+    }
+
+    return `followalong:${title}|${stamp}`
   }
 
   entryForIdentity (identity, entryId) {
@@ -406,6 +453,13 @@ class Queries {
 
   // What to tell the reader when a feed stops answering. Kept as a query so
   // the message survives a reload rather than living in a view's state.
+  // Items the last body carried that could not be stored. A feed reporting
+  // one is not failing — it is arriving incomplete, which is a different
+  // thing and used to be invisible.
+  skippedEntriesForFeed (feed) {
+    return (feed && feed.skippedEntries) || 0
+  }
+
   fetchErrorForFeed (feed) {
     if (!feed || !feed.failedAt) return null
 

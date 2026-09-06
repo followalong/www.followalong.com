@@ -1,6 +1,7 @@
 import VERSION from '../state/version.js'
 import { encrypt, decrypt } from '../queries/crypt.js'
 import { encodeHandoff } from '../queries/handoff.js'
+import UnkeyableEntryError from '../queries/unkeyable-entry-error.js'
 import { sessionsIn, started, closed, resumed, nowPlaying } from '../queries/sessions.js'
 import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT_SIGNALS, SAVED_SIGNAL } from './seed.js'
 
@@ -288,12 +289,46 @@ class Commands {
 
         this.upsertFeedForIdentity(identity, feed, data, response)
 
-        entries.forEach((e) => this.upsertEntryForIdentity(identity, feed, e, this.queries.lastReadDateForFeed(identity, feed)))
+        let skipped = 0
+
+        entries.forEach((e) => {
+          // One item we cannot identify is not a reason to lose the rest of
+          // the feed. Letting this escape the loop meant a single item with
+          // no guid and no link hid every item after it, on every poll, while
+          // the feed went on reading as successfully fetched.
+          try {
+            this.upsertEntryForIdentity(identity, feed, e, this.queries.lastReadDateForFeed(identity, feed))
+          } catch (error) {
+            // Only the item's own fault. Anything else thrown here is a bug
+            // of ours, and swallowing those is how a feed goes quiet with
+            // nothing to say why.
+            if (!(error instanceof UnkeyableEntryError)) {
+              throw error
+            }
+
+            skipped++
+
+            console.warn(`Could not store an entry from ${this.queries.urlForFeed(feed)}`, error)
+          }
+        })
+
+        this.trackSkippedEntriesForIdentity(identity, feed, skipped)
       })
   }
 
   trackFetchedForIdentity (identity, feed, { etag, lastModified } = {}) {
     this.track(identity, 'feeds', feed.id, 'fetched', { etag, lastModified })
+  }
+
+  // Only on a change, so a healthy feed writes nothing and a feed that has
+  // stopped sending the bad item says so once. A 304 leaves the count alone,
+  // because the body it describes is the body we still have.
+  trackSkippedEntriesForIdentity (identity, feed, count) {
+    if (!count && !this.queries.skippedEntriesForFeed(feed)) {
+      return
+    }
+
+    this.track(identity, 'feeds', feed.id, 'skippedEntries', { count })
   }
 
   trackFetchFailedForIdentity (identity, feed, error) {

@@ -155,18 +155,21 @@ describe('failure backoff', () => {
 describe('an error of our own while reading a good response', () => {
   let state, queries, commands, identity
 
-  // No guid, no id, no link: keyForEntry has nothing to key on and throws,
-  // from inside the fold rather than from the request.
-  const UNKEYABLE = '<rss><channel><title>A</title><item><title>No key</title></item></channel></rss>'
+  // A perfectly good feed, and a crash of ours while folding it. An item the
+  // feed gave us no way to identify is not this: that one is the feed's
+  // shape, is handled, and is covered further down.
+  const GOOD = '<rss><channel><title>A</title><item><title>One</title><guid>g1</guid></item></channel></rss>'
 
   beforeEach(async () => {
-    const fetch = () => Promise.resolve({ status: 200, body: UNKEYABLE })
+    const fetch = () => Promise.resolve({ status: 200, body: GOOD })
 
     state = new MultiEventStore(`fold-error-${Math.random()}`, 'v2.3', runners)
     await state.clear()
     identity = { id: state.createDB(null, {}) }
     queries = new Queries({ state, fetch })
     commands = new Commands({ state, queries, fetch })
+
+    queries.dateForEntry = () => { throw new TypeError('Cannot read properties of undefined') }
 
     state.track(identity.id, 'feeds', 'f1', 'create', { url: 'https://a.example/feed', data: { title: 'A' } })
   })
@@ -384,5 +387,82 @@ describe('releasing failures that no server refused', () => {
 
     expect(await boot()).toEqual(1)
     expect(await boot()).toEqual(1)
+  })
+})
+
+// One item a feed cannot identify used to take every item after it with it:
+// keyForEntry throws, the throw escapes the forEach that folds the entries,
+// and the feed is left recorded as successfully fetched.
+describe('a feed carrying an item that cannot be keyed', () => {
+  let state, queries, commands, identity, respond
+
+  const ITEM = (n, inner) => `<item><title>Item ${n}</title><description>About ${n}</description><pubDate>Mon, 0${n} May 2023 00:00:00 GMT</pubDate>${inner}</item>`
+  const FEED = (items) => `<rss><channel><title>A</title>${items}</channel></rss>`
+
+  beforeEach(async () => {
+    respond = () => Promise.resolve({ status: 200, body: '' })
+
+    const fetch = (url, options) => respond(url, options)
+
+    state = new MultiEventStore(`keyless-${Math.random()}`, 'v2.3', runners)
+    await state.clear()
+    identity = { id: state.createDB(null, {}) }
+    queries = new Queries({ state, fetch })
+    commands = new Commands({ state, queries, fetch })
+
+    state.track(identity.id, 'feeds', 'f1', 'create', { url: 'https://a.example/feed', data: { title: 'A' } })
+  })
+
+  const reload = () => queries.feedForIdentity(identity, 'f1')
+  const titles = () => queries.entriesForFeed(identity, reload()).map((e) => queries.titleForEntry(e))
+
+  const answer = (items) => {
+    respond = () => Promise.resolve({ status: 200, body: FEED(items) })
+
+    return commands.fetchFeed(identity, reload())
+  }
+
+  test('keeps the items either side of one with no guid and no link', async () => {
+    await answer(ITEM(1, '<guid>https://a.example/1</guid>') + ITEM(2, '') + ITEM(3, '<guid>https://a.example/3</guid>'))
+
+    expect(titles().sort()).toEqual(['Item 1', 'Item 2', 'Item 3'])
+  })
+
+  test('does not store the middle one twice when the feed is polled again', async () => {
+    const items = ITEM(1, '<guid>https://a.example/1</guid>') + ITEM(2, '') + ITEM(3, '<guid>https://a.example/3</guid>')
+
+    await answer(items)
+    await answer(items)
+
+    expect(titles().length).toEqual(3)
+  })
+
+  // Nothing to identify it by at all: no id, no guid, no link, no title and
+  // no date. That one is genuinely unstorable, and the rest of the feed is
+  // none of its business.
+  test('keeps the rest of the feed when an item has nothing to identify it', async () => {
+    await answer(ITEM(1, '<guid>https://a.example/1</guid>') + '<item><description>nothing at all</description></item>' + ITEM(3, '<guid>https://a.example/3</guid>'))
+
+    expect(titles().sort()).toEqual(['Item 1', 'Item 3'])
+  })
+
+  test('says how many it could not store, rather than dropping them quietly', async () => {
+    await answer(ITEM(1, '<guid>https://a.example/1</guid>') + '<item><description>nothing at all</description></item>')
+
+    expect(queries.skippedEntriesForFeed(reload())).toEqual(1)
+  })
+
+  test('records the feed as fetched, because it was', async () => {
+    await answer(ITEM(1, '<guid>https://a.example/1</guid>') + '<item><description>nothing at all</description></item>')
+
+    expect(reload().updatedAt).toBeGreaterThan(0)
+    expect(reload().failedAt).toBeFalsy()
+  })
+
+  test('forgets the count once the feed stops sending the bad item', async () => {
+    await answer(ITEM(1, '<guid>https://a.example/1</guid>') + '<item><description>nothing at all</description></item>')
+    await answer(ITEM(1, '<guid>https://a.example/1</guid>'))
+
+    expect(queries.skippedEntriesForFeed(reload())).toEqual(0)
   })
 })
