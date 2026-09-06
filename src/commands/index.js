@@ -502,6 +502,20 @@ class Commands {
   // document a second time - and the unwrapping only reaches the top level,
   // so anything nesting its items elsewhere put every one of them on the
   // feed, at up to a megabyte an event.
+  carriesItems (data) {
+    if (!data || typeof data !== 'object') {
+      return false
+    }
+
+    if (Array.isArray(data)) {
+      return data.some((one) => this.carriesItems(one))
+    }
+
+    return Object.keys(data).some((key) => {
+      return key === 'item' || key === 'entry' || this.carriesItems(data[key])
+    })
+  }
+
   withoutItems (data) {
     if (!data || typeof data !== 'object') {
       return data
@@ -529,11 +543,21 @@ class Commands {
     // make the next poll conditional, and clears any failure backoff.
     this.trackFetchedForIdentity(identity, feed, response)
 
-    if (!this.queries.feedChanged(feed, data)) {
+    const lean = this.withoutItems(data)
+
+    // Compared stripped against stripped, because the record being stored is
+    // the stripped one: measuring the raw document against it called every
+    // feed changed on every poll, since the items are missing from what we
+    // keep and look like news every time.
+    //
+    // A record written before the stripping stays fat, and a stripped document
+    // never looks like new data beside it, so nothing would rewrite it and it
+    // would sit there for good. Carrying items is a reason to write on its own.
+    if (!this.queries.feedChanged(feed, lean) && !this.carriesItems(feed.data)) {
       return
     }
 
-    this.track(identity, 'feeds', feed.id, 'update', { data: this.withoutItems(data) })
+    this.track(identity, 'feeds', feed.id, 'update', { data: lean })
   }
 
   // Derived from the feed and the article rather than drawn at random, so two

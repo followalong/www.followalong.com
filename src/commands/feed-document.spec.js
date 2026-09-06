@@ -87,3 +87,58 @@ describe('what a feed stores about itself', () => {
     expect(queries.titleForFeed(reload())).toEqual('Name three')
   })
 })
+
+describe('a feed record stored before items were stripped', () => {
+  let state, queries, commands, identity, respond
+
+  const ITEM = (n) => `<item><title>Item ${n}</title><guid>https://a.example/${n}</guid><description>${'x'.repeat(500)}</description></item>`
+  const RSS = (items) => `<rss><channel><title>A channel</title>${items}</channel></rss>`
+
+  beforeEach(async () => {
+    respond = () => Promise.resolve({ status: 200, body: '' })
+
+    const fetch = (url, options) => respond(url, options)
+
+    state = new MultiEventStore(`feed-fat-${Math.random()}`, 'v2.3', runners)
+    await state.clear()
+    identity = { id: state.createDB(null, {}) }
+    queries = new Queries({ state, fetch })
+    commands = new Commands({ state, queries, fetch })
+
+    // A record as it was stored before the items were kept out of it.
+    state.track(identity.id, 'feeds', 'f1', 'create', {
+      url: 'https://a.example/feed',
+      data: { title: 'A channel', item: [{ title: 'Item 1', description: 'x'.repeat(500) }] }
+    })
+  })
+
+  const reload = () => queries.feedForIdentity(identity, 'f1')
+  const poll = (body) => {
+    respond = () => Promise.resolve({ status: 200, body })
+
+    return commands.fetchFeed(identity, reload())
+  }
+
+  // Nothing rewrites a fat record on its own: the document we would store has
+  // strictly less in it, so it never reads as a change. Without a reason of
+  // its own, a feed followed before the strip keeps its articles in the log
+  // for good, which is most of what a large log is made of.
+  test('is rewritten without them on the next poll, changed or not', async () => {
+    expect(commands.carriesItems(reload().data)).toEqual(true)
+
+    await poll(RSS(ITEM(1)))
+
+    expect(commands.carriesItems(reload().data)).toEqual(false)
+    expect(queries.titleForFeed(reload())).toEqual('A channel')
+  })
+
+  test('is left alone once it carries none', async () => {
+    await poll(RSS(ITEM(1)))
+
+    const after = state.findAllEvents(identity.id).length
+
+    await poll(RSS(ITEM(1)))
+
+    expect(state.findAllEvents(identity.id).length).toEqual(after)
+  })
+})
