@@ -131,6 +131,68 @@ class EventStore {
     return bucket
   }
 
+  // Folding a log cannot supersede as it goes: the event that supersedes
+  // another may be folded before it, and a merge is exactly where an old
+  // event turns up late. So the decision is made once every event is in, by
+  // time rather than by the order they happened to arrive in.
+  //
+  // Without this every merge from the bucket brought back what this device
+  // had already dropped, and the next upload carried them on to every other
+  // device. One log held 4,591 poll records for 132 feeds.
+  _pruneSuperseded () {
+    const doomed = new Set()
+
+    this._supersedable.forEach((bucket, id) => {
+      if (bucket.size < 2) {
+        return
+      }
+
+      let newest = null
+
+      bucket.forEach((key) => {
+        if (newest === null || EventStore.TIME_OF(key) > EventStore.TIME_OF(newest)) {
+          newest = key
+        }
+      })
+
+      bucket.forEach((key) => {
+        if (key !== newest) {
+          doomed.add(key)
+        }
+      })
+
+      this._supersedable.set(id, new Set([newest]))
+    })
+
+    if (!doomed.size) {
+      return
+    }
+
+    // One pass over the log. What this drops sorts by time near the front,
+    // which is the opposite end from where tracking a single event looks, so
+    // scanning per dropped event would walk the whole log every time.
+    const kept = []
+
+    for (let i = 0; i < this._events.length; i++) {
+      const event = this._events[i]
+
+      if (!doomed.has(event.key)) {
+        kept.push(event)
+
+        continue
+      }
+
+      this._keys.delete(event.key)
+      this._db.removeItem(event.key)
+    }
+
+    this._events.splice(0)
+
+    for (let i = 0; i < kept.length; i++) {
+      this._events.push(kept[i])
+    }
+  }
+
   eachCollectionName (func) {
     for (const key in this._runners) {
       if (/^v[0-9.]+$/.test(key)) {
@@ -186,6 +248,8 @@ class EventStore {
     this._supersedable.clear()
 
     events.forEach((event) => this._runEvent(event))
+
+    this._pruneSuperseded()
   }
 
   findAllEvents () {
@@ -240,6 +304,11 @@ class EventStore {
         events
           .sort(EventStore.SORT_BY_TIME)
           .forEach((event) => this._runEvent(event))
+
+        // A log written before anything pruned it is full of events that
+        // decide nothing, so it is pruned on the way in rather than left to
+        // wait for a merge.
+        this._pruneSuperseded()
       })
   }
 
@@ -353,6 +422,11 @@ EventStore.RUNNERS = {
     existing.deletedAt = event.time
   }
 }
+
+// The time an event key starts with. Keys are what a bucket of superseded
+// events holds, and the time in them is the one thing that decides which of
+// them is still worth keeping.
+EventStore.TIME_OF = (key) => parseInt(key) || 0
 
 EventStore.SORT_BY_TIME = (a, b) => {
   return (a.time || 0) - (b.time || 0)
