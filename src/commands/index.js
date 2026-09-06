@@ -440,7 +440,23 @@ class Commands {
           return this.trackFetchedForIdentity(identity, feed, this.queries.validatorsForFeed(feed))
         }
 
-        const data = response.data
+        const data = response.data || {}
+
+        // A page is not a feed. Asking a site's own address rather than its
+        // feed's answers with HTML, which parses into an object like any
+        // other document: one channel page was kept as a feed's own record at
+        // a megabyte, for a feed that can never hold an article. No feed
+        // format has an html root, so this cannot mistake a real one.
+        if (data.html) {
+          const notAFeed = new Error(`${this.queries.urlForFeed(feed)} answered with a web page, not a feed`)
+
+          notAFeed.reason = 'answered with a web page, not a feed'
+
+          this.trackFetchFailedForIdentity(identity, feed, notAFeed)
+
+          throw notAFeed
+        }
+
         const entries = data.entry || data.item || []
 
         delete data.entry
@@ -493,7 +509,12 @@ class Commands {
   trackFetchFailedForIdentity (identity, feed, error) {
     this.track(identity, 'feeds', feed.id, 'fetchFailed', {
       count: this.queries.failureCountForFeed(feed) + 1,
-      status: error && error.status
+      status: error && error.status,
+      // Kept only when it says something the host and the status cannot. A
+      // page answering in place of a feed was reported as unreachable, which
+      // is the one thing it is not, and the reader was left to guess that the
+      // address they followed was a site rather than its feed.
+      reason: (error && error.reason) || undefined
     })
   }
 

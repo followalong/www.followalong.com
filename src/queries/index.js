@@ -468,6 +468,10 @@ class Queries {
 
     const host = hostFor(this.urlForFeed(feed))
 
+    // A failure that knows why says so. Only the ones that do not fall back to
+    // the host and the status, which is all we can say about them.
+    if (feed.failureReason) return `${host} ${feed.failureReason}`
+
     if (!feed.failureStatus) return `${host} could not be reached`
 
     return `${host} refused the request (${feed.failureStatus})`

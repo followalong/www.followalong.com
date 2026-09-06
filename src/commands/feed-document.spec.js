@@ -142,3 +142,52 @@ describe('a feed record stored before items were stripped', () => {
     expect(state.findAllEvents(identity.id).length).toEqual(after)
   })
 })
+
+describe('a url that is a page rather than a feed', () => {
+  let state, queries, commands, identity, respond
+
+  const PAGE = '<html><head><title>A channel</title></head><body>' + '<div>x</div>'.repeat(200) + '</body></html>'
+
+  beforeEach(async () => {
+    respond = () => Promise.resolve({ status: 200, body: '' })
+
+    const fetch = (url, options) => respond(url, options)
+
+    state = new MultiEventStore(`page-${Math.random()}`, 'v2.3', runners)
+    await state.clear()
+    identity = { id: state.createDB(null, {}) }
+    queries = new Queries({ state, fetch })
+    commands = new Commands({ state, queries, fetch })
+
+    state.track(identity.id, 'feeds', 'f1', 'create', { url: 'https://a.example/@someone', data: {} })
+  })
+
+  const reload = () => queries.feedForIdentity(identity, 'f1')
+  const poll = () => {
+    respond = () => Promise.resolve({ status: 200, body: PAGE })
+
+    return commands.fetchFeed(identity, reload()).catch((e) => e)
+  }
+
+  // The whole parsed page was stored as the feed's own record, which is how
+  // one feed came to hold a megabyte while every other held about a kilobyte.
+  test('is not stored as though it were a feed', async () => {
+    await poll()
+
+    expect(JSON.stringify(reload().data || {})).not.toContain('<div>')
+    expect(JSON.stringify(reload().data || {}).length).toBeLessThan(500)
+  })
+
+  test('says what is wrong with it', async () => {
+    const error = await poll()
+
+    expect(`${error.message}`).toContain('not a feed')
+    expect(queries.fetchErrorForFeed(reload())).toContain('not a feed')
+  })
+
+  test('makes no entries out of it', async () => {
+    await poll()
+
+    expect(queries.entriesForFeed(identity, reload()).length).toEqual(0)
+  })
+})

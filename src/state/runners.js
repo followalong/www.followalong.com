@@ -55,11 +55,12 @@ const FETCH_FAILED = (store, event) => {
     return console.warn(`Object not found for event: ${JSON.stringify(event)}`)
   }
 
-  const { count, status } = event.data || {}
+  const { count, status, reason } = event.data || {}
 
   existing.failedAt = event.time
   existing.failureCount = count
   existing.failureStatus = status
+  existing.failureReason = reason
 }
 
 // Items the last body carried that we could not store. The count rides in the
