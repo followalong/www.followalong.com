@@ -318,6 +318,7 @@ class Commands {
       .then(() => {
         this.queries.allIdentities().forEach((identity) => {
           this.releaseUnrefusedFailuresForIdentity(identity)
+          this.mergeDuplicateEntriesForIdentity(identity)
         })
       })
   }
@@ -342,6 +343,68 @@ class Commands {
     this.queries.feedsWithUnrefusedFailureForIdentity(identity).forEach((feed) => {
       this.track(identity, 'feeds', feed.id, 'clearFailure')
     })
+  }
+
+  // Articles stored twice because two devices each created one before ids
+  // were derived from the article itself. Once per device: what it does is
+  // recorded as events, so every other device gets the result through the
+  // merge rather than repeating the work.
+  //
+  // The survivor is the lowest id, which every device agrees on without
+  // asking. Choosing by anything local - whichever was folded first, whichever
+  // is read - would have two devices delete each other's survivor and lose the
+  // article from both.
+  mergeDuplicateEntriesForIdentity (identity) {
+    if (this.state.getConfig(identity.id).mergedDuplicateEntries) {
+      return
+    }
+
+    this.state.updateConfig(identity.id, { mergedDuplicateEntries: true })
+
+    const byKey = {}
+
+    this.queries.entriesForIdentity(identity).forEach((entry) => {
+      let key
+
+      try {
+        key = `${entry.feedId}\u0000${this.queries.keyForEntry(entry)}`
+      } catch (e) {
+        return
+      }
+
+      byKey[key] = byKey[key] || []
+      byKey[key].push(entry)
+    })
+
+    // Above every event already in the log, because a time is the replay
+    // order: what is written here has to fold after the creates it is about.
+    let floor = this.queries.findAllEvents(identity).reduce((latest, event) => Math.max(latest, event.time || 0), 0) + 1
+
+    for (const key in byKey) {
+      const copies = byKey[key]
+
+      if (copies.length < 2) {
+        continue
+      }
+
+      const survivor = copies.slice(0).sort((a, b) => `${a.id}`.localeCompare(`${b.id}`))[0]
+
+      // Anything either copy was is something the reader did, so it moves
+      // across before the copy that lost is deleted.
+      if (copies.some((entry) => this.queries.isEntryRead(entry)) && !this.queries.isEntryRead(survivor)) {
+        this.track(identity, 'entries', survivor.id, 'markRead', {}, floor++)
+      }
+
+      if (copies.some((entry) => this.queries.isEntrySaved(entry)) && !this.queries.isEntrySaved(survivor)) {
+        this.track(identity, 'entries', survivor.id, 'save', {}, floor++)
+      }
+
+      copies.forEach((entry) => {
+        if (entry.id !== survivor.id) {
+          this.track(identity, 'entries', entry.id, 'delete', {}, floor++)
+        }
+      })
+    }
   }
 
   restoreFromRemote () {
@@ -474,12 +537,21 @@ class Commands {
     this.track(identity, 'feeds', feed.id, 'update', { data: this.withoutItems(data) })
   }
 
+  // Derived from the feed and the article rather than drawn at random, so two
+  // devices that meet the same article independently create it under the same
+  // id and a merge folds them into one entry instead of keeping both. Feed ids
+  // are shared - a second device gets them with the identity - so this agrees
+  // across devices.
+  idForEntry (feed, key) {
+    return `e${fingerprint(`${feed.id}\u0000${key}`).replace(/:/g, '')}`
+  }
+
   upsertEntryForIdentity (identity, feed, data, lastReadDateForFeed = 0) {
     const key = this.queries.keyForEntry({ data })
     const found = this.queries.entryForFeedForIdentity(identity, feed, key)
 
     if (!found) {
-      const event = this.track(identity, 'entries', null, 'create', { feedId: feed.id, data })
+      const event = this.track(identity, 'entries', this.idForEntry(feed, key), 'create', { feedId: feed.id, data })
       const entry = this.queries.entryForIdentity(identity, event.objectId)
 
       if (lastReadDateForFeed > this.queries.dateForEntry({ data }).getTime()) {

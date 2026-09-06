@@ -420,7 +420,29 @@ class Queries {
   entryForFeedForIdentity (identity, feed, key) {
     const entry = this._entryIndex(identity).byKey.get(`${feed.id}\u0000${key}`)
 
-    return entry && !entry._deleted ? entry : undefined
+    if (entry && !entry._deleted) {
+      return entry
+    }
+
+    // The index keeps the last entry it saw under a key, and after duplicates
+    // are merged that can be the copy that lost. Answering "not here" would
+    // have the next poll store the article all over again, so a deleted one
+    // sends us looking for the copy that survived.
+    if (!entry) {
+      return undefined
+    }
+
+    return this.rawEntriesForFeed(identity, feed).find((one) => {
+      if (one._deleted) {
+        return false
+      }
+
+      try {
+        return this.keyForEntry(one) === key
+      } catch (e) {
+        return false
+      }
+    })
   }
 
   feedsForIdentity (identity) {
