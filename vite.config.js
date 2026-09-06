@@ -129,7 +129,10 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,jpeg,jpg,png,svg}'],
+        // Fonts too: they are same-origin and charged at their real size,
+        // so the padding that keeps the picture cache small does not apply, and
+        // without them an offline start renders in whatever the system has.
+        globPatterns: ['**/*.{js,css,html,ico,jpeg,jpg,png,svg,woff2}'],
         runtimeCaching: [
           {
             // Feed pictures come from wherever the feed lives, so they are not
