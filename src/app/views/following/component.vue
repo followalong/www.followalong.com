@@ -49,12 +49,11 @@ export default {
   data: () => ({ filter: '' }),
 
   computed: {
-    // Feeds with something waiting come first: the question this page answers
-    // is"what should I open?", not"what am I subscribed to?".
+    // Alphabetical, which is the only order somebody can predict in a list of
+    // a hundred. Ordering by what was waiting moved every other feed whenever
+    // one of them published, so the list was never twice the same.
     allFeeds () {
       return this.app.queries.feedsForIdentity(this.identity)
-        .slice()
-        .sort((a, b) => this.unreadFor(b) - this.unreadFor(a))
     },
 
     feeds () {
