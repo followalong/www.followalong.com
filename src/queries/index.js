@@ -669,6 +669,10 @@ class Queries {
       status: !config.syncStatus || config.syncStatus === 'off' ? 'idle' : config.syncStatus,
       at: config.syncedAt || 0,
       error: config.syncError || '',
+      // Not a failed backup, and it must not be shown as one: what was saved
+      // is still saved. It is this device having lost sight of the bucket,
+      // which is worth knowing before the next write finds out the hard way.
+      checkError: config.checkError ? `Could not check the backup (${config.checkError})` : '',
       target: remote.title || remote.type
     }
   }

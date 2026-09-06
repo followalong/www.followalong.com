@@ -198,13 +198,26 @@ class Commands {
       })
   }
 
+  // Failing quietly is right - the app is already painted and there is
+  // nothing here to interrupt - but failing invisibly is not. The card
+  // reports the last successful write, so without this a device that can no
+  // longer reach its bucket goes on saying it is backed up, and for somebody
+  // who only reads, no write ever follows to find out.
   restoreIdentityFromRemote (identity) {
     const adapter = this.queries.addonAdapterForActionForIdentity(identity, 'get')
 
     return this.keyForIdentity(identity)
       .then((key) => adapter.get(identity, decrypt(key), this.remoteVersionForIdentity(identity)))
       .then((response) => this.importRemoteResponse(identity, response))
-      .catch((e) => console.warn('Could not restore identity from remote', e))
+      .catch((e) => {
+        console.warn('Could not restore identity from remote', e)
+
+        // An empty bucket is not a failure to look in it. We looked, and
+        // there is nothing there yet.
+        const reason = NOTHING_THERE.test((e && e.message) || '') ? '' : ((e && e.message) || 'unknown')
+
+        return this.state.updateConfig(identity.id, { checkError: reason })
+      })
   }
 
   // Which copy of the log this browser last folded in. Device-local, like the
@@ -220,6 +233,10 @@ class Commands {
   // the empty string it comes with would be a merge of nothing, and treating
   // it as a failed read would abort the save that follows.
   importRemoteResponse (identity, response) {
+    // Whatever stopped the last read is over, whether the copy had moved on
+    // or not.
+    this.state.updateConfig(identity.id, { checkError: '' })
+
     if (!response || response.status === NOT_MODIFIED) {
       return
     }
