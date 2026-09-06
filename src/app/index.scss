@@ -1,11 +1,13 @@
-@import "@fontsource/public-sans/400.css";
-@import "@fontsource/public-sans/500.css";
-@import "@fontsource/public-sans/600.css";
-@import "@fontsource/public-sans/700.css";
-@import "@fontsource/public-sans/800.css";
-@import "@fontsource/newsreader/400.css";
-@import "@fontsource/newsreader/400-italic.css";
-@import "@fontsource/newsreader/700.css";
+// Latin only, and only the weights the app asks for. Every face is precached
+// so the type survives an offline start, which means anything imported here is
+// carried on every device whether or not a glyph in it is ever drawn.
+@import "@fontsource/public-sans/latin-400.css";
+@import "@fontsource/public-sans/latin-500.css";
+@import "@fontsource/public-sans/latin-600.css";
+@import "@fontsource/public-sans/latin-700.css";
+@import "@fontsource/newsreader/latin-400.css";
+@import "@fontsource/newsreader/latin-400-italic.css";
+@import "@fontsource/newsreader/latin-700.css";
 
 @tailwind base;
 @tailwind components;
