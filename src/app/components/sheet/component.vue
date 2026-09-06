@@ -97,6 +97,11 @@
 const CLOSE_DISTANCE = 72
 const SETTLE_MS = 160
 
+// How many sheets are open. There is more than one on the page: a feed mounts
+// a reader per card and the shell keeps its own, so the page belongs to
+// whichever of them is still open rather than to whichever moved last.
+let OPEN_SHEETS = 0
+
 export default {
   props: {
     open: { type: Boolean, default: false },
@@ -105,7 +110,7 @@ export default {
     narrow: { type: Boolean, default: false }
   },
   emits: ['close'],
-  data: () => ({ opener: null, dragging: false, settling: false, from: 0, offset: 0 }),
+  data: () => ({ opener: null, dragging: false, settling: false, from: 0, offset: 0, holding: false }),
   computed: {
     // Only while the sheet is being moved by hand. An inline transform that
     // outlived the drag would beat the leave transition's own translate and
@@ -218,10 +223,19 @@ export default {
 
     // Without this the page behind scrolls under the sheet, which detaches
     // the sticky bar and loses your place in the river.
+    //
+    // Counted rather than set, because this sheet is not the only one. The
+    // `open` watcher is immediate, so every closed sheet on a page used to
+    // announce itself by handing the page back: measured on a feed of 645
+    // entries that was 647 writes to body.style during one mount, any one of
+    // which would have freed the page under a sheet that was open.
     lockPage (locked) {
-      if (typeof document === 'undefined') return
+      if (typeof document === 'undefined' || locked === this.holding) return
 
-      document.body.style.overflow = locked ? 'hidden' : ''
+      this.holding = locked
+      OPEN_SHEETS += locked ? 1 : -1
+
+      document.body.style.overflow = OPEN_SHEETS > 0 ? 'hidden' : ''
     }
   }
 }

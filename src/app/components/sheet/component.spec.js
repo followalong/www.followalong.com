@@ -1,14 +1,28 @@
 import { mount } from '@vue/test-utils'
-import { describe, test, expect } from 'vitest'
+import { describe, test, expect, afterEach } from 'vitest'
 import Sheet from './component.vue'
 
+// Open sheets are counted across every sheet on the page, so one left mounted
+// by a test holds the page still for the next one.
+const mounted = []
+
 const sheet = (options = {}) => {
-  return mount(Sheet, {
+  const wrapper = mount(Sheet, {
     props: { open: true, title: 'CORSAnywhere Proxy', ...options.props },
     slots: options.slots,
     attachTo: document.body
   })
+
+  mounted.push(wrapper)
+
+  return wrapper
 }
+
+afterEach(() => {
+  while (mounted.length) {
+    try { mounted.pop().unmount() } catch (e) { /* already gone */ }
+  }
+})
 
 describe('Sheet', () => {
   test('renders nothing while closed', () => {
@@ -52,6 +66,49 @@ describe('Sheet', () => {
 
   test('holds the page still while it is open', () => {
     const wrapper = sheet()
+
+    expect(document.body.style.overflow).toEqual('hidden')
+
+    wrapper.unmount()
+
+    expect(document.body.style.overflow).toEqual('')
+  })
+
+  // A feed page mounts a closed sheet per card, and the shell keeps one of its
+  // own. Whoever is last to close must not hand the page back while another is
+  // still open, and a closed one must not hand back a page it never took.
+  test('leaves the page held while another sheet is still open', () => {
+    const first = sheet()
+    const second = sheet()
+
+    second.unmount()
+
+    expect(document.body.style.overflow).toEqual('hidden')
+
+    first.unmount()
+
+    expect(document.body.style.overflow).toEqual('')
+  })
+
+  test('a closed sheet going away does not free the page under an open one', () => {
+    const open = sheet()
+    const closed = sheet({ props: { open: false } })
+
+    closed.unmount()
+
+    expect(document.body.style.overflow).toEqual('hidden')
+
+    open.unmount()
+
+    expect(document.body.style.overflow).toEqual('')
+  })
+
+  test('closing and reopening the same sheet counts once either way', async () => {
+    const wrapper = sheet()
+
+    await wrapper.setProps({ open: false })
+    await wrapper.setProps({ open: true })
+    await wrapper.setProps({ open: true })
 
     expect(document.body.style.overflow).toEqual('hidden')
 
