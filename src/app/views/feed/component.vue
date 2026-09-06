@@ -329,11 +329,22 @@ export default {
       this.liveFetchError = null
       this.fetching = true
 
+      // The feed route is a single record, so walking from one feed to the
+      // next reuses this component while the request for the one we left is
+      // still in flight. Whatever it answers with describes a feed nobody is
+      // looking at any more, and writing it here put one feed's entries and
+      // failures under another feed's name. Only the newest ask may write.
+      const asking = {}
+
+      this.asking = asking
+
+      const stillWanted = () => this.asking === asking
+
       if (this.feed) {
         return this.app.commands.fetchFeed(this.identity, this.feed)
-          .then(() => { this.remoteFeed = true })
-          .catch((e) => { this.liveFetchError = e.message })
-          .then(() => { this.fetching = false })
+          .then(() => { if (stillWanted()) this.remoteFeed = true })
+          .catch((e) => { if (stillWanted()) this.liveFetchError = e.message })
+          .then(() => { if (stillWanted()) this.fetching = false })
       }
 
       this.app.commands.fetchUrl(this.identity, 'rss', this.url)
@@ -343,6 +354,8 @@ export default {
           delete data.entry
           delete data.item
 
+          if (!stillWanted()) return
+
           this.remoteFeed = Object.assign({}, {
             url: this.url,
             data,
@@ -350,9 +363,9 @@ export default {
           })
         })
         .catch((e) => {
-          this.liveFetchError = e.message
+          if (stillWanted()) this.liveFetchError = e.message
         })
-        .then(() => { this.fetching = false })
+        .then(() => { if (stillWanted()) this.fetching = false })
     }
   }
 }
