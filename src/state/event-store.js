@@ -281,8 +281,19 @@ class EventStore {
 
     runner(this, event)
 
-    this._events.push(event)
-    this._keys.add(event.key)
+    // The key is the identity: time, collection, object, action and version.
+    // Two events tracked in the same millisecond against the same object are
+    // therefore the same event, and the database already stores them as one
+    // — so holding both here left memory disagreeing with disk, and left
+    // superseding nothing to drop, since what it would drop is itself.
+    if (this._keys.has(event.key)) {
+      const at = this._events.findIndex((held) => held.key === event.key)
+
+      at === -1 ? this._events.push(event) : this._events.splice(at, 1, event)
+    } else {
+      this._events.push(event)
+      this._keys.add(event.key)
+    }
 
     if (SUPERSEDING.indexOf(`${event.collection}.${event.action}`) !== -1) {
       const id = `${event.collection}/${event.objectId}/${event.action}`
