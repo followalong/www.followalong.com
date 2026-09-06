@@ -33,7 +33,20 @@ const toBase64 = (bytes) => {
   return btoa(text)
 }
 
-const fromBase64 = (text) => Uint8Array.from(atob(text), (c) => c.charCodeAt(0))
+// A plain loop, because Uint8Array.from with a mapper calls back per byte
+// through the iterator protocol and spent 57ms on a 1.3MB log — three
+// quarters of what decrypting one cost, against half a millisecond for the
+// AES-GCM itself.
+const fromBase64 = (text) => {
+  const binary = atob(text)
+  const bytes = new Uint8Array(binary.length)
+
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+
+  return bytes
+}
 
 const deriveKey = (password, salt) => {
   const encoded = new TextEncoder().encode(password)
