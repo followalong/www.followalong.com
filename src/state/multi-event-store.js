@@ -70,10 +70,17 @@ class MultipleEventStore extends EventStore {
     return this._configs[dbId] || {}
   }
 
+  // Flattened on the way in, because the store is handed to a Vue app and
+  // everything read back out of it is a reactive Proxy. IndexedDB saves by
+  // structured clone and a Proxy cannot be cloned, so one wrapped value made
+  // the whole config fail to save — and a config is written whole, so it took
+  // the sync status, the bucket's version and the upload fingerprint with it.
   setConfig (dbId, config) {
-    this._configs[dbId] = config
+    const plain = JSON.parse(JSON.stringify(config || {}))
 
-    return this._config.setItem(dbId, config)
+    this._configs[dbId] = plain
+
+    return this._config.setItem(dbId, plain)
   }
 
   updateConfig (dbId, updates) {
