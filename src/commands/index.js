@@ -435,6 +435,33 @@ class Commands {
     })
   }
 
+  // A feed's record is its title, its icon and its validators. The articles
+  // are a collection of their own, so carrying them here stores the whole
+  // document a second time - and the unwrapping only reaches the top level,
+  // so anything nesting its items elsewhere put every one of them on the
+  // feed, at up to a megabyte an event.
+  withoutItems (data) {
+    if (!data || typeof data !== 'object') {
+      return data
+    }
+
+    if (Array.isArray(data)) {
+      return data.map((one) => this.withoutItems(one))
+    }
+
+    const kept = {}
+
+    for (const key in data) {
+      if (key === 'item' || key === 'entry') {
+        continue
+      }
+
+      kept[key] = this.withoutItems(data[key])
+    }
+
+    return kept
+  }
+
   upsertFeedForIdentity (identity, feed, data, response = {}) {
     // Recorded on every poll, changed or not: it carries the validators that
     // make the next poll conditional, and clears any failure backoff.
@@ -444,7 +471,7 @@ class Commands {
       return
     }
 
-    this.track(identity, 'feeds', feed.id, 'update', { data })
+    this.track(identity, 'feeds', feed.id, 'update', { data: this.withoutItems(data) })
   }
 
   upsertEntryForIdentity (identity, feed, data, lastReadDateForFeed = 0) {

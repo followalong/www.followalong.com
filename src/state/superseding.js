@@ -9,6 +9,10 @@
 // the log keeps the latest of each and the fold still replays them in time
 // order to the right answer. The same for saving.
 const SUPERSEDING = [
+  // Every one carries the whole feed document, so the one before it decides
+  // nothing the latest does not decide again. Only upsertFeedForIdentity
+  // writes these, and it always writes the complete record.
+  'feeds.update',
   'feeds.fetched',
   'feeds.fetchFailed',
   'feeds.skippedEntries',
