@@ -11,7 +11,6 @@ import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT
 // other device put there.
 const NOTHING_THERE = /nosuchkey|notfound|no data returned|404/i
 
-const MAX_OLD_ITEMS_PER_FEED = 15
 const NOT_MODIFIED = 304
 const SYNC_DEBOUNCE = 1500
 
@@ -716,8 +715,8 @@ class Commands {
       .join('\n')
   }
 
-  // A roll up folds every entry into one event, where the filter above cannot
-  // see them one at a time.
+  // A log written when roll up existed holds every entry inside one event,
+  // where the filter above cannot see them one at a time.
   portableEvent (event) {
     if (event.action !== 'rollup') return event.toLocal()
 
@@ -786,23 +785,6 @@ class Commands {
 
     return this.state.importRaw(id, data)
       .then(() => this.queries.allIdentities().find((identity) => identity.id === id))
-  }
-
-  createProjectionForIdentity (identity) {
-    return new Promise((resolve, reject) => {
-      const data = {
-        identity,
-        feeds: this.queries.feedsForIdentity(identity),
-        entries: this.queries.entriesForIdentity(identity, MAX_OLD_ITEMS_PER_FEED),
-        signals: this.queries.signalsForIdentityForProjection(identity),
-        addons: this.queries.addonsForIdentity(identity)
-      }
-
-      this.resetIdentity(identity)
-        .then(() => this.track(identity, 'identities', identity.id, 'rollup', data))
-        .then(resolve)
-        .catch(reject)
-    })
   }
 }
 

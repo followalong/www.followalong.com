@@ -1,4 +1,4 @@
-import { mountApp, describe, story, vi } from './helper.js'
+import { mountApp, describe, story, vi, rollUp } from './helper.js'
 
 const COPY = `0/identities/imported9/create/v2.1 {"name":"Imported"}
 1/feeds/999/create/v2.1 {"url":"https://imported.example/rss.xml","data":{"title":"Imported feed"}}`
@@ -53,9 +53,9 @@ describe('Paste an identity', () => {
     expect(app.vm.queries.allIdentities()).toHaveLength(1)
   })
 
-  // Rolling up replaces the whole log with a single rollup event, so there is
-  // no create event left for the copy to carry. It is still an identity.
-  story('takes a copy of an identity that has been rolled up', async () => {
+  // A log that was rolled up is a single rollup event, so there is no create
+  // event left for the copy to carry. It is still an identity.
+  story('takes a copy of an identity that had been rolled up', async () => {
     const copyToClipboard = vi.fn()
 
     const other = await mountApp({
@@ -63,8 +63,8 @@ describe('Paste an identity', () => {
       state: { rolledup: { config: {}, data: COPY.replace('imported9', 'rolledup') } }
     })
 
-    await other.click('[aria-label="You"]')
-    await other.click('[aria-label="Roll up identity"]')
+    await rollUp(other)
+
     await other.click('[aria-label="You"]')
     await other.click('[aria-label="Copy identity"]')
 

@@ -113,13 +113,6 @@
         aria-label="Paste identity"
         @click="restoreOpen = true"
       />
-      <ListRow
-        title="Roll up this identity"
-        meta="clean up"
-        action
-        aria-label="Roll up identity"
-        @click="rollUpIdentity"
-      />
     </Card>
 
     <!-- The app cannot tell anyone it was killed while it was being killed,
@@ -695,13 +688,6 @@ export default {
       this.app.confirm('Are you sure you want to remove this identity?')
         .then(() => this.app.commands.forgetIdentity(this.identity))
         .then(() => this.app.setIdentity(this.app.queries.allIdentities()[0]))
-        .then(() => this.$router.push('/'))
-        .catch(() => {})
-    },
-
-    rollUpIdentity () {
-      this.app.confirm('Are you sure you want to roll up this identity?')
-        .then(() => this.app.commands.createProjectionForIdentity(this.identity))
         .then(() => this.$router.push('/'))
         .catch(() => {})
     }

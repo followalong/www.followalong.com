@@ -1,4 +1,4 @@
-import { mountApp, describe, story, vi, s3Bucket, s3Response } from './helper.js'
+import { mountApp, describe, story, vi, s3Bucket, s3Response, rollUp } from './helper.js'
 
 const seed = `
   0/identities/abc123/create/v2.1 {"name":"My Account"}
@@ -86,10 +86,11 @@ describe('Copy an identity', () => {
     expect(copied()).not.toContain('entries/drop')
   })
 
-  // A roll up folds the entries into one event, where the filter above cannot
-  // see them one at a time.
-  story('leaves the rest of the entries behind after a roll up', async () => {
-    await app.click('[aria-label="Roll up identity"]')
+  // A log written when roll up existed holds the entries inside one event,
+  // where the filter above cannot see them one at a time.
+  story('leaves the rest of the entries behind in a log that was rolled up', async () => {
+    await rollUp(app)
+
     await app.click('[aria-label="You"]')
     await app.click('[aria-label="Copy identity"]')
 

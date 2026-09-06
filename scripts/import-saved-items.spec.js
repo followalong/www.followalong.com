@@ -146,12 +146,23 @@ describe('the console script that brings saved items back', () => {
     expect(queries.entriesForIdentity(app.identity).length).toEqual(entries)
   })
 
-  // After a roll up the whole log is one identities.rollup event stamped now,
-  // and replay sorts by time. A save carrying its original savedAt sorts ahead
-  // of the event that introduces the entry, so the runner finds nothing to
-  // stamp and the save is dropped on the next reload — silently.
-  test('survives a reload of an identity that has been rolled up', async () => {
-    await commands.createProjectionForIdentity(app.identity)
+  // A log that was rolled up is one identities.rollup event stamped when the
+  // roll up ran, and replay sorts by time. A save carrying its original
+  // savedAt sorts ahead of the event that introduces the entry, so the runner
+  // finds nothing to stamp and the save is dropped on the next reload —
+  // silently. Nothing makes these any more; plenty of logs are one.
+  test('survives a reload of an identity whose log was rolled up', async () => {
+    const rolledUp = {
+      identity: app.identity,
+      feeds: queries.feedsForIdentity(app.identity),
+      entries: queries.entriesForIdentity(app.identity),
+      signals: queries.signalsForIdentityForProjection(app.identity),
+      addons: queries.addonsForIdentity(app.identity)
+    }
+
+    await state.reset(app.identity.id)
+
+    state.track(app.identity.id, 'identities', app.identity.id, 'rollup', rolledUp)
 
     const report = importSaved(app, OLD)
 

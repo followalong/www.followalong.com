@@ -184,30 +184,10 @@ class Queries {
     return (identity && identity.name) || 'My Account'
   }
 
-  entriesForIdentity (identity, maxOldItems = null) {
-    let entries = this._memo(identity, 'entries', () => {
+  entriesForIdentity (identity) {
+    return this._memo(identity, 'entries', () => {
       return this.sortEntries(this.state.findAll(identity.id, 'entries'))
     }, ['entries'])
-
-    if (maxOldItems) {
-      // Per feed, because a cap shared across the whole list is spent on
-      // whichever feeds sort first and leaves every other one with nothing
-      // behind it. Saved entries are never counted against it: saving is the
-      // one place a reader says to keep something.
-      const oldItems = {}
-
-      entries = entries.filter((entry) => {
-        if (!this.isEntryRead(entry) || this.isEntrySaved(entry)) {
-          return true
-        }
-
-        oldItems[entry.feedId] = (oldItems[entry.feedId] || 0) + 1
-
-        return oldItems[entry.feedId] <= maxOldItems
-      })
-    }
-
-    return entries
   }
 
   entriesForSignal (identity, signal) {

@@ -176,6 +176,28 @@ const s3Bucket = ({ answer, objects = {} } = {}) => {
   return bucket
 }
 
+// Roll up is retired, so nothing in the app makes one of these any more. Logs
+// written while it existed still arrive, and every object inside one exists
+// only in that event, so the specs that cover them build one themselves.
+const rollUp = async (app) => {
+  const identity = app.vm.identity
+  const queries = app.vm.queries
+
+  const data = {
+    identity,
+    feeds: queries.feedsForIdentity(identity),
+    entries: queries.entriesForIdentity(identity),
+    signals: queries.signalsForIdentityForProjection(identity),
+    addons: queries.addonsForIdentity(identity)
+  }
+
+  await app.vm.state.reset(identity.id)
+
+  app.vm.state.track(identity.id, 'identities', identity.id, 'rollup', data)
+
+  await app.wait()
+}
+
 // A stubbed response is written as the feed body it returns; anything richer
 // (a 304, an error status) is given as the whole response object.
 const responses = (values) => {
@@ -262,6 +284,7 @@ export {
   describe,
   test,
   responses,
+  rollUp,
   s3Bucket,
   s3Response,
   story,
