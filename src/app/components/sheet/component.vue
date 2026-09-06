@@ -1,5 +1,10 @@
 <template>
+  <!-- appear, because a sheet is no longer always mounted closed and opened
+ later: one built already open would otherwise snap its scrim on rather than
+ fade it in. Mounted closed there is nothing to appear, so this costs the
+ usual case nothing. -->
   <Transition
+    appear
     enter-active-class="transition duration-200 ease-out"
     enter-from-class="opacity-0"
     leave-active-class="transition duration-150 ease-in"

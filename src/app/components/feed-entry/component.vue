@@ -13,7 +13,7 @@
       :poster="poster"
       @done="toggleRead"
       @save="toggleSave"
-      @read="reading = true"
+      @read="openReader"
       @play="$emit('play', entry)"
     >
       <template
@@ -55,7 +55,13 @@
       </template>
     </EntryCard>
 
+    <!-- Built on the first Read and kept afterwards, because a sheet slides
+ out rather than vanishing and a component removed on the way to closed has
+ nothing left to run the leave transition with. Before this every card on a
+ feed carried a reader, a sheet and a transition standing by for a screen
+ almost none of them would ever show. -->
     <EntryReader
+      v-if="everOpened"
       :open="reading"
       :entry-id="`${entry.id}`"
       :title="title"
@@ -103,7 +109,7 @@ export default {
   },
   props: ['app', 'identity', 'entry', 'feed'],
   emits: ['play'],
-  data: () => ({ reading: false }),
+  data: () => ({ reading: false, everOpened: false }),
   computed: {
     entryFeed () {
       return this.feed || this.feedFromIdentity
@@ -186,6 +192,11 @@ export default {
     }
   },
   methods: {
+    openReader () {
+      this.everOpened = true
+      this.reading = true
+    },
+
     finishReading () {
       this.reading = false
 
