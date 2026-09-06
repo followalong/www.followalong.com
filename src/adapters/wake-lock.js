@@ -6,6 +6,12 @@
 // back. Without that second half this looks fine until someone switches apps
 // mid-episode, and then the screen sleeps and iOS suspends the app.
 //
+// More than one thing can want the screen at once: a feed page runs a podcast
+// card while a video window is opened and closed over it. So the wish is a set
+// of who is asking rather than a flag, and the screen is handed back when the
+// last of them has let go. Asking and letting go are both idempotent, because
+// a player that never started still releases on the way out.
+//
 // Everything here fails soft. The API is absent on older browsers and refuses
 // outright in low power mode or on a page that is not visible, and none of
 // that is worth interrupting playback over.
@@ -14,27 +20,33 @@ class WakeLock {
     this._navigator = navigator
     this._document = document
     this._sentinel = null
-    this._wanted = false
+    this._owners = new Set()
 
     if (this._document) {
       this._document.addEventListener('visibilitychange', () => this._onVisibilityChange())
     }
   }
 
-  hold () {
-    this._wanted = true
+  hold (owner) {
+    this._owners.add(owner)
 
     return this._ask()
   }
 
-  release () {
-    this._wanted = false
+  release (owner) {
+    this._owners.delete(owner)
+
+    if (this._wanted()) return Promise.resolve()
 
     return this._letGo()
   }
 
+  _wanted () {
+    return this._owners.size > 0
+  }
+
   _onVisibilityChange () {
-    if (!this._wanted || this._document.visibilityState !== 'visible') return
+    if (!this._wanted() || this._document.visibilityState !== 'visible') return
 
     return this._ask()
   }
@@ -50,7 +62,7 @@ class WakeLock {
         // Nothing is playing any more: the answer arrived after the question
         // stopped mattering, so give it straight back rather than leaving the
         // screen on for a player that has gone.
-        if (!this._wanted) return Promise.resolve(sentinel.release()).catch(() => {})
+        if (!this._wanted()) return Promise.resolve(sentinel.release()).catch(() => {})
 
         this._sentinel = sentinel
 

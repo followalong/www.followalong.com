@@ -83,6 +83,51 @@ describe('WakeLock', () => {
     expect(w.navigator.wakeLock.request).toHaveBeenCalledTimes(1)
   })
 
+  // A feed page can have a podcast going while a video window is opened and
+  // closed over it. Whoever asked is who may let go, or closing the window
+  // turns the screen off under the episode still playing behind it.
+  test('keeps the screen on while another player still wants it', async () => {
+    const w = world()
+    const lock = new WakeLock(w)
+    const episode = {}
+    const window = {}
+
+    await lock.hold(episode)
+    await lock.hold(window)
+    await lock.release(window)
+
+    expect(w.held.release).not.toHaveBeenCalled()
+  })
+
+  test('hands it back once the last player has let go', async () => {
+    const w = world()
+    const lock = new WakeLock(w)
+    const episode = {}
+    const window = {}
+
+    await lock.hold(episode)
+    await lock.hold(window)
+    await lock.release(window)
+    await lock.release(episode)
+
+    expect(w.held.release).toHaveBeenCalled()
+  })
+
+  // A native video that never started still releases on the way out, and a
+  // player that stops twice is a pause followed by the page going.
+  test('ignores a release from someone who was not holding it', async () => {
+    const w = world()
+    const lock = new WakeLock(w)
+    const episode = {}
+
+    await lock.hold(episode)
+    await lock.release({})
+    await lock.release(episode)
+    await lock.release(episode)
+
+    expect(w.held.release).toHaveBeenCalledTimes(1)
+  })
+
   // Absent on older browsers; refuses in low power mode or on a hidden page.
   // Playback is not worth interrupting over either.
   test('shrugs when the browser has never heard of it', async () => {

@@ -1,4 +1,5 @@
 import { mountApp, describe, story, vi } from './helper.js'
+import WakeLock from '../src/adapters/wake-lock.js'
 
 const seed = `
   0/identities/abc123/create/v2.1 {"name":"My Account"}
@@ -92,6 +93,57 @@ describe('Keep the screen on while something plays', () => {
       await app.click('[data-pip-close]')
 
       expect(wakeLock.release).toHaveBeenCalled()
+    })
+  })
+
+  // A podcast keeps playing while a video window is opened and closed over it.
+  // Two players, one screen and one record of what is playing, so the one that
+  // asked has to be the one that lets go.
+  describe('An episode with a video window opened over it', () => {
+    let sentinel
+    let realLock
+
+    const playingNow = () => {
+      const { sessions } = app.vm.state.getConfig(app.vm.identity.id)
+
+      return sessions[sessions.length - 1].playing
+    }
+
+    beforeEach(async () => {
+      sentinel = { release: vi.fn().mockResolvedValue(), addEventListener: vi.fn() }
+      realLock = new WakeLock({
+        document: { visibilityState: 'visible', addEventListener: vi.fn() },
+        navigator: { wakeLock: { request: vi.fn().mockResolvedValue(sentinel) } }
+      })
+
+      app = await mountApp({
+        fetch: () => Promise.resolve({ status: 304, body: '' }),
+        state: { abc123: { config: {}, data: seed } },
+        wakeLock: realLock
+      })
+
+      app.vm.$router.push('/https://foo.bar/rss.xml')
+      await app.wait()
+
+      await app.find('audio').trigger('play')
+      await app.click('[data-media-lead]')
+      await app.click('[data-pip-close]')
+    })
+
+    story('leaves the screen on for the episode still playing', () => {
+      expect(sentinel.release).not.toHaveBeenCalled()
+    })
+
+    // The restart report exists to say what was playing when the app died, and
+    // closing a window over a running episode used to erase exactly that.
+    story('still says the episode is the thing playing', () => {
+      expect(playingNow()).toMatchObject({ kind: 'audio', title: 'An episode' })
+    })
+
+    story('lets the screen sleep once the episode stops too', async () => {
+      await app.find('audio').trigger('pause')
+
+      expect(sentinel.release).toHaveBeenCalled()
     })
   })
 

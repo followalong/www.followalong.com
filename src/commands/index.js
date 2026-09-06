@@ -20,6 +20,11 @@ class Commands {
     for (const key in options) {
       this[key] = options[key]
     }
+
+    // Who is playing what, right now. A feed page runs a podcast card while a
+    // video window is opened and closed over it, so this is more than one
+    // thing at a time and the record has to survive the wrong one stopping.
+    this._playing = new Map()
   }
 
   addIdentity (identity) {
@@ -91,12 +96,23 @@ class Commands {
   // on a timer: how far in is worked out from when the next run starts, which
   // a jettison follows within a second or two, so keeping it accurate costs no
   // writes at all while a video is decoding.
-  notePlaying (identity, what) {
-    return this._rememberRun(identity, (list) => nowPlaying(list, what && {
-      kind: what.kind,
-      title: `${what.title || ''}`.slice(0, 120),
-      at: Date.now()
-    }))
+  notePlaying (identity, what, owner) {
+    if (what) {
+      this._playing.set(owner, {
+        kind: what.kind,
+        title: `${what.title || ''}`.slice(0, 120),
+        at: Date.now()
+      })
+    } else {
+      this._playing.delete(owner)
+    }
+
+    // Whatever is still going. Closing a video window over a running episode
+    // used to write `null` here and erase the very thing the restart report
+    // exists to name.
+    const current = Array.from(this._playing.values()).pop() || null
+
+    return this._rememberRun(identity, (list) => nowPlaying(list, current))
   }
 
   forgetRestarts (identity) {
@@ -554,12 +570,14 @@ class Commands {
     this.track(identity, 'addons', addon.id, 'delete')
   }
 
-  keepScreenAwake () {
-    return this.wakeLock.hold()
+  // The owner is whoever is playing. More than one thing can be, so the one
+  // that asked for the screen is the one that may hand it back.
+  keepScreenAwake (owner) {
+    return this.wakeLock.hold(owner)
   }
 
-  letScreenSleep () {
-    return this.wakeLock.release()
+  letScreenSleep (owner) {
+    return this.wakeLock.release(owner)
   }
 
   // The keychain has always known all three strategies; nothing until now

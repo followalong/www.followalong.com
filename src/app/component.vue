@@ -99,9 +99,9 @@
         controls
         autoplay
         playsinline
-        @play="commands.keepScreenAwake()"
-        @pause="commands.letScreenSleep()"
-        @ended="commands.letScreenSleep()"
+        @play="commands.keepScreenAwake(screen)"
+        @pause="commands.letScreenSleep(screen)"
+        @ended="commands.letScreenSleep(screen)"
       />
     </PipPlayer>
 
@@ -272,7 +272,10 @@ export default {
       settingUp: false,
       playing: null,
       playHistory: [],
-      playingEntries: {}
+      playingEntries: {},
+      // Names the picture-in-picture window as one of the things that can be
+      // playing, so closing it hands back only what it took.
+      screen: {}
     }
   },
   computed: {
@@ -336,12 +339,12 @@ export default {
     // window being open is the only signal there is.
     playing (val) {
       if (!val) {
-        this.commands.notePlaying(this.identity, null)
+        this.commands.notePlaying(this.identity, null, this.screen)
 
-        return this.commands.letScreenSleep()
+        return this.commands.letScreenSleep(this.screen)
       }
 
-      if (this.playingIsEmbed) this.commands.keepScreenAwake()
+      if (this.playingIsEmbed) this.commands.keepScreenAwake(this.screen)
     }
   },
   // The device already holds everything, so the bucket is asked behind the
@@ -438,7 +441,7 @@ export default {
       this.commands.notePlaying(this.identity, {
         kind: this.playingIsEmbed ? 'youtube' : 'video',
         title: this.queries.titleForEntry(entry)
-      })
+      }, this.screen)
       this.playHistory = [
         { id: `${entry.id}`, title: this.queries.titleForEntry(entry), duration: '' },
         ...this.playHistory.filter((item) => item.id !== `${entry.id}`)

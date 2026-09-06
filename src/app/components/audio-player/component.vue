@@ -23,7 +23,10 @@
 <script>
 export default {
   props: ['app', 'identity', 'entry'],
-  data: () => ({ playing: false }),
+  // Names this card as one of the things that can be playing. A feed page
+  // mounts one per episode and a video window opens over them, so every
+  // player needs to be told apart from every other.
+  data: () => ({ playing: false, screen: {} }),
   computed: {
     src () {
       return this.app.queries.audioForEntry(this.entry)
@@ -35,11 +38,11 @@ export default {
   methods: {
     onPlay () {
       this.playing = true
-      this.app.commands.keepScreenAwake()
+      this.app.commands.keepScreenAwake(this.screen)
       this.app.commands.notePlaying(this.identity, {
         kind: 'audio',
         title: this.app.queries.titleForEntry(this.entry)
-      })
+      }, this.screen)
     },
 
     // Only the player that took the screen gives it back. A feed page mounts
@@ -49,8 +52,8 @@ export default {
       if (!this.playing) return
 
       this.playing = false
-      this.app.commands.letScreenSleep()
-      this.app.commands.notePlaying(this.identity, null)
+      this.app.commands.letScreenSleep(this.screen)
+      this.app.commands.notePlaying(this.identity, null, this.screen)
     }
   }
 }
