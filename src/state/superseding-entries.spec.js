@@ -111,3 +111,59 @@ describe('reading and saving the same entry over and over', () => {
     expect(count('markRead')).toEqual(2)
   })
 })
+
+// A rewritten entry stored the whole entry every time, and kept every one of
+// them. The newest says everything the ones before it said.
+describe('an entry the feed keeps rewriting', () => {
+  let state, queries, identity, name, clock
+
+  const ENTRY = 'e1'
+
+  beforeEach(async () => {
+    name = `rewritten-${Math.random()}`
+    state = new MultiEventStore(name, 'v2.3', runners)
+    await state.clear()
+    identity = { id: state.createDB(null, {}) }
+    queries = new Queries({ state })
+
+    state.track(identity.id, 'identities', identity.id, 'create', { name: 'Me' })
+    state.track(identity.id, 'feeds', 'f1', 'create', { url: 'https://a.example/feed', data: { title: 'A' } })
+    state.track(identity.id, 'entries', ENTRY, 'create', { feedId: 'f1', data: { guid: 'g1', title: 'One' } })
+
+    clock = Date.now() + 1000
+  })
+
+  const rewrite = (title) => {
+    state.track(identity.id, 'entries', ENTRY, 'update', { data: { guid: 'g1', title } }, clock++)
+  }
+
+  const updates = () => state.findAllEvents(identity.id).filter((e) => e.action === 'update').length
+
+  const reloaded = async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    const booted = new MultiEventStore(name, 'v2.3', runners)
+
+    await booted.restore()
+
+    return new Queries({ state: booted }).entryForIdentity(identity, ENTRY)
+  }
+
+  test('keeps one record of what it says now', () => {
+    rewrite('Two')
+    rewrite('Three')
+    rewrite('Four')
+
+    expect(updates()).toEqual(1)
+    expect(queries.entryForIdentity(identity, ENTRY).data.title).toEqual('Four')
+  })
+
+  // The live projection was updated as each event was tracked, so only a
+  // reload replays what the log actually still holds.
+  test('still says the latest after a reload', async () => {
+    rewrite('Two')
+    rewrite('Three')
+
+    expect((await reloaded()).data.title).toEqual('Three')
+  })
+})
