@@ -5,7 +5,7 @@ import AudioPlayer from './component.vue'
 const player = (src) => {
   return mount(AudioPlayer, {
     props: {
-      app: { queries: { audioForEntry: () => src }, commands: { keepScreenAwake: vi.fn(), letScreenSleep: vi.fn() } },
+      app: { queries: { audioForEntry: () => src, titleForEntry: () => 'An episode' }, commands: { keepScreenAwake: vi.fn(), letScreenSleep: vi.fn(), notePlaying: vi.fn() } },
       identity: {},
       entry: { id: '1' }
     }
@@ -31,10 +31,10 @@ describe('AudioPlayer', () => {
   // A feed page mounts one of these per episode. The thirty-nine that were
   // never playing must not hand back a screen the one that is playing took.
   test('gives the screen back only if it was the one that took it', async () => {
-    const commands = { keepScreenAwake: vi.fn(), letScreenSleep: vi.fn() }
+    const commands = { keepScreenAwake: vi.fn(), letScreenSleep: vi.fn(), notePlaying: vi.fn() }
     const wrapper = mount(AudioPlayer, {
       props: {
-        app: { queries: { audioForEntry: () => 'https://foo.bar/ep14.mp3' }, commands },
+        app: { queries: { audioForEntry: () => 'https://foo.bar/ep14.mp3', titleForEntry: () => 'An episode' }, commands },
         identity: {},
         entry: { id: '1' }
       }
@@ -45,10 +45,10 @@ describe('AudioPlayer', () => {
   })
 
   test('gives the screen back when it goes while playing', async () => {
-    const commands = { keepScreenAwake: vi.fn(), letScreenSleep: vi.fn() }
+    const commands = { keepScreenAwake: vi.fn(), letScreenSleep: vi.fn(), notePlaying: vi.fn() }
     const wrapper = mount(AudioPlayer, {
       props: {
-        app: { queries: { audioForEntry: () => 'https://foo.bar/ep14.mp3' }, commands },
+        app: { queries: { audioForEntry: () => 'https://foo.bar/ep14.mp3', titleForEntry: () => 'An episode' }, commands },
         identity: {},
         entry: { id: '1' }
       }

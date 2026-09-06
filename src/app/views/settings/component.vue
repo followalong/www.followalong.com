@@ -122,6 +122,56 @@
       />
     </Card>
 
+    <!-- The app cannot tell anyone it was killed while it was being killed,
+ so it writes down every run and reports the ones that never finished. This
+ stays on this device: it is one phone's noise, not part of the identity. -->
+    <Card>
+      <h2 class="text-sm font-bold text-ink">
+        How this app has been behaving
+      </h2>
+      <p
+        v-if="!restarts.length"
+        class="text-meta text-ink-secondary mt-1"
+      >
+        Follow Along has not restarted on its own on this device. If it ever
+        does, what happened will show up here.
+      </p>
+      <p
+        v-else
+        class="text-meta text-ink-secondary mt-1"
+      >
+        Follow Along closed and reopened by itself. That is usually the phone
+        running out of memory and taking the app with it.
+      </p>
+    </Card>
+
+    <Card
+      v-if="restarts.length"
+      :padded="false"
+    >
+      <ListRow
+        v-for="restart in restarts"
+        :key="restart.at"
+        title="Restarted on its own"
+        :meta="storyOf(restart)"
+      >
+        <template #trailing>
+          <span />
+        </template>
+      </ListRow>
+      <ListRow
+        title="Forget these"
+        meta="clears the list on this device"
+        action
+        aria-label="Forget restarts"
+        @click="forgetRestarts"
+      >
+        <template #trailing>
+          <span />
+        </template>
+      </ListRow>
+    </Card>
+
     <Card :padded="false">
       <ListRow
         title="Help"
@@ -385,6 +435,12 @@ const SYNC_TITLES = {
   failed: 'Backup failed'
 }
 
+const PLAYING_LABELS = {
+  youtube: 'a YouTube video',
+  video: 'a video',
+  audio: 'a podcast'
+}
+
 const STRATEGY_LABELS = {
   none: 'No password',
   ask: 'Ask me each time',
@@ -433,6 +489,10 @@ export default {
   }),
 
   computed: {
+    restarts () {
+      return this.app.queries.restartsForIdentity(this.identity)
+    },
+
     sync () {
       return this.app.queries.syncStatusForIdentity(this.identity)
     },
@@ -486,6 +546,47 @@ export default {
   },
 
   methods: {
+    // One line a reader can repeat back: when it happened, what was playing,
+    // and how long the app had been open. Those three are what separate the
+    // phone running out of memory from the app doing something to itself.
+    storyOf (restart) {
+      const parts = [this.whenOf(restart.at)]
+
+      if (restart.playing) {
+        parts.push(`playing ${PLAYING_LABELS[restart.playing.kind] || 'something'}, ${this.spanOf(restart.playedFor)} in`)
+      } else {
+        parts.push('nothing was playing')
+      }
+
+      parts.push(`open for ${this.spanOf(restart.lasted)}`)
+
+      if (restart.wasSyncing) parts.push('during a backup')
+
+      return parts.join(' · ')
+    },
+
+    whenOf (at) {
+      const then = new Date(at)
+      const time = then.toLocaleTimeString('en-us', { hour: 'numeric', minute: '2-digit' })
+
+      if (new Date(this.now).toDateString() === then.toDateString()) return `Today at ${time}`
+
+      return `${then.toLocaleDateString('en-us', { month: 'short', day: 'numeric' })} at ${time}`
+    },
+
+    spanOf (ms) {
+      const seconds = Math.max(0, Math.round(ms / 1000))
+
+      if (seconds < 60) return `${seconds} sec`
+      if (seconds < 3600) return `${Math.round(seconds / 60)} min`
+
+      return `${Math.round(seconds / 3600)} hr`
+    },
+
+    forgetRestarts () {
+      return this.app.commands.forgetRestarts(this.identity)
+    },
+
     plural (count, one, many) {
       return `${count} ${count === 1 ? one : (many || `${one}s`)}`
     },

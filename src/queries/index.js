@@ -6,6 +6,7 @@ import SORT_BY_TIME from './sorters/sort-by-time.js'
 import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
 import SORT_BY_NEED_TO_UPDATE from './sorters/sort-by-need-to-update.js'
 import sanitizeContent from './presenters/sanitize-content.js'
+import { sessionsIn, deaths } from './sessions.js'
 
 // How long a feed is considered fresh. The poll ticks more often than this
 // so a feed that just came out of backoff is picked up promptly.
@@ -586,6 +587,18 @@ class Queries {
     const adapter = this.addonAdapterForActionForIdentity(identity, 'save')
 
     return adapter && adapter.adapter !== 'none' ? adapter : null
+  }
+
+  // Only the runs that ended without saying goodbye. Never throws: a broken
+  // diagnostic must not take the page that shows it down with it.
+  restartsForIdentity (identity) {
+    try {
+      if (!identity) return []
+
+      return deaths(sessionsIn(this.state.getConfig(identity.id)))
+    } catch (e) {
+      return []
+    }
   }
 
   syncStatusForIdentity (identity) {

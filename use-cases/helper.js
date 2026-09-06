@@ -12,16 +12,22 @@ const mountApp = (options) => {
   return new Promise(async (resolve) => {
     options = options || {}
 
-    const store = new MultiEventStore(Math.random(), 'v2.1', runners)
+    // Handing back a store from an earlier mount is how a spec says "the app
+    // started again on the same device" -- everything the device already held
+    // is still there, which is the whole point of anything that survives a
+    // restart.
+    const store = options.store || new MultiEventStore(Math.random(), 'v2.1', runners)
 
-    await store.clear()
+    if (!options.store) {
+      await store.clear()
 
-    if (options.state) {
-      for (const id in options.state) {
-        const identity = options.state[id]
+      if (options.state) {
+        for (const id in options.state) {
+          const identity = options.state[id]
 
-        store.createDB(id, identity.config)
-        await store.importRaw(id, identity.data)
+          store.createDB(id, identity.config)
+          await store.importRaw(id, identity.data)
+        }
       }
     }
 

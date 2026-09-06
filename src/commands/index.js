@@ -1,6 +1,7 @@
 import VERSION from '../state/version.js'
 import { encrypt, decrypt } from '../queries/crypt.js'
 import { encodeHandoff } from '../queries/handoff.js'
+import { sessionsIn, started, closed, resumed, nowPlaying } from '../queries/sessions.js'
 import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT_SIGNALS, SAVED_SIGNAL } from './seed.js'
 
 // An empty bucket is not a failure to read; anything else is. The difference
@@ -48,6 +49,56 @@ class Commands {
     this.queries.entriesForFeed(identity, feed).forEach((entry) => {
       this.track(identity, 'entries', entry.id, 'delete')
     })
+  }
+
+  // Diagnostics only, and this device's alone: they go in the config beside
+  // syncStatus and remoteEtag, never through track(), so they never reach the
+  // log and never reach another device. Nothing here may break the app, so a
+  // storage failure costs the diagnostics and nothing else.
+  _rememberRun (identity, change) {
+    try {
+      const config = this.state.getConfig(identity.id)
+
+      return Promise.resolve(this.state.updateConfig(identity.id, {
+        sessions: change(sessionsIn(config), config)
+      })).catch(() => {})
+    } catch (e) {
+      return Promise.resolve()
+    }
+  }
+
+  noteRunStarted (identity, route) {
+    return this._rememberRun(identity, (list, config) => started(list, {
+      at: Date.now(),
+      route,
+      // Read before anything can start a new one, so it describes the run that
+      // just died rather than this one.
+      wasSyncing: config.syncStatus === 'syncing'
+    }))
+  }
+
+  noteRunEnded (identity) {
+    return this._rememberRun(identity, (list) => closed(list, Date.now()))
+  }
+
+  noteRunResumed (identity) {
+    return this._rememberRun(identity, (list) => resumed(list))
+  }
+
+  // Written once when playback starts and once when it stops. Deliberately not
+  // on a timer: how far in is worked out from when the next run starts, which
+  // a jettison follows within a second or two, so keeping it accurate costs no
+  // writes at all while a video is decoding.
+  notePlaying (identity, what) {
+    return this._rememberRun(identity, (list) => nowPlaying(list, what && {
+      kind: what.kind,
+      title: `${what.title || ''}`.slice(0, 120),
+      at: Date.now()
+    }))
+  }
+
+  forgetRestarts (identity) {
+    return this._rememberRun(identity, () => [])
   }
 
   track (identity, collectionName, objectId, action, data, time) {

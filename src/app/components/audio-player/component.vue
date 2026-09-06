@@ -36,6 +36,10 @@ export default {
     onPlay () {
       this.playing = true
       this.app.commands.keepScreenAwake()
+      this.app.commands.notePlaying(this.identity, {
+        kind: 'audio',
+        title: this.app.queries.titleForEntry(this.entry)
+      })
     },
 
     // Only the player that took the screen gives it back. A feed page mounts
@@ -46,6 +50,7 @@ export default {
 
       this.playing = false
       this.app.commands.letScreenSleep()
+      this.app.commands.notePlaying(this.identity, null)
     }
   }
 }

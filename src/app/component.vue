@@ -338,7 +338,12 @@ export default {
     // itself. An embed is another origin and says nothing at all, so its
     // window being open is the only signal there is.
     playing (val) {
-      if (!val) return this.commands.letScreenSleep()
+      if (!val) {
+        this.commands.notePlaying(this.identity, null)
+
+        return this.commands.letScreenSleep()
+      }
+
       if (this.playingIsEmbed) this.commands.keepScreenAwake()
     }
   },
@@ -355,13 +360,37 @@ export default {
         this.isLoading = false
         this.setIdentity(this.queries.allIdentities()[0])
 
+        // Before anything can start a backup, so the config still describes
+        // the run that died rather than this one.
+        this.commands.noteRunStarted(this.identity, this.$route.path)
+        this.watchForTheEnd()
+
         // Merging re-folds the log, which replaces every projection object,
         // and the identity held here is one of them.
         return this.commands.restoreFromRemote()
           .then(() => this.setIdentity(this.queries.allIdentities()[0]))
       })
   },
+  unmounted () {
+    document.removeEventListener('visibilitychange', this.onVisibility)
+    window.removeEventListener('pagehide', this.onPageHide)
+  },
   methods: {
+    // A run cannot report its own death, so it says goodbye on the way out and
+    // anything that never said it was killed. iOS often gives only the
+    // visibility change, so both are listened for.
+    watchForTheEnd () {
+      this.onVisibility = () => {
+        if (document.visibilityState === 'hidden') return this.commands.noteRunEnded(this.identity)
+
+        return this.commands.noteRunResumed(this.identity)
+      }
+      this.onPageHide = () => this.commands.noteRunEnded(this.identity)
+
+      document.addEventListener('visibilitychange', this.onVisibility)
+      window.addEventListener('pagehide', this.onPageHide)
+    },
+
     // The code carries the bucket's credentials, so it leaves the address bar
     // the moment it has been used.
     setUp () {
@@ -409,6 +438,11 @@ export default {
       this.playingEntries[entry.id] = entry
       this.playProgress = 0
       this.playing = entry
+
+      this.commands.notePlaying(this.identity, {
+        kind: this.playingIsEmbed ? 'youtube' : 'video',
+        title: this.queries.titleForEntry(entry)
+      })
       this.playHistory = [
         { id: `${entry.id}`, title: this.queries.titleForEntry(entry), duration: '' },
         ...this.playHistory.filter((item) => item.id !== `${entry.id}`)
