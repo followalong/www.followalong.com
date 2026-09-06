@@ -121,7 +121,43 @@ class Commands {
     }, SYNC_DEBOUNCE)
   }
 
+  // One write at a time. The log goes up whole, so a second sync starting
+  // while the first is still in the air sends the same megabytes again and
+  // races the read that built them; the debounce only stops a second timer,
+  // not a second flight. Anything asked for while one is running is remembered
+  // and run once at the end, so nothing tracked meanwhile is left behind.
   syncIdentity (identity) {
+    this._syncing = this._syncing || {}
+    this._syncAgain = this._syncAgain || {}
+
+    const running = this._syncing[identity.id]
+
+    if (running) {
+      this._syncAgain[identity.id] = true
+
+      return running
+    }
+
+    const settled = () => {
+      this._syncing[identity.id] = null
+
+      if (!this._syncAgain[identity.id]) {
+        return this.queries.syncStatusForIdentity(identity)
+      }
+
+      this._syncAgain[identity.id] = false
+
+      return this.syncIdentity(identity)
+    }
+
+    const flight = this._syncNow(identity).then(settled, settled)
+
+    this._syncing[identity.id] = flight
+
+    return flight
+  }
+
+  _syncNow (identity) {
     const remote = this.queries.remoteAdapterForIdentity(identity)
 
     // Nothing to sync to is a state worth reporting, not a silent success.
