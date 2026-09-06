@@ -35,6 +35,19 @@ const FEED_IMAGE_DAYS = 30
 // and the browser showed nothing. Published hosts answer unknown paths with the
 // app (that is what dist/404.html is for); dev and preview have to do the same
 // or they are not serving the same app.
+// Postcss drops the woff fallback from every face, but Vite has already
+// resolved the url by then and emits the file anyway, so it ships as an asset
+// nothing points at. This drops the orphan rather than the reference.
+const dropOrphanedWoff = () => ({
+  name: 'drop-orphaned-woff',
+  enforce: 'post',
+  generateBundle (options, bundle) {
+    Object.keys(bundle)
+      .filter((name) => name.endsWith('.woff'))
+      .forEach((name) => { delete bundle[name] })
+  }
+})
+
 const wantsThePage = (req) => {
   return (req.method === 'GET' || req.method === 'HEAD') &&
     `${req.headers.accept || ''}`.includes('text/html')
@@ -87,6 +100,7 @@ const serveAppForDeepLinks = () => {
 export default defineConfig({
   plugins: [
     vue(),
+    dropOrphanedWoff(),
     serveAppForDeepLinks(),
     VitePWA({
       registerType: 'autoUpdate',
