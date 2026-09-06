@@ -261,7 +261,6 @@ export default {
       app: this,
       queries,
       commands,
-      now: new Date(),
       isLoading: true,
       identity: null,
       pageTitle: '',
@@ -372,6 +371,14 @@ export default {
       })
   },
   unmounted () {
+    this.gone = true
+
+    // The sweep reschedules itself forever, and the timeout is module state
+    // that outlives any one shell. Left running it wakes up every five minutes
+    // to fetch feeds for an app that is not there.
+    clearTimeout(POLL_TIMEOUT)
+    POLL_IN_FLIGHT = null
+
     document.removeEventListener('visibilitychange', this.onVisibility)
     window.removeEventListener('pagehide', this.onPageHide)
   },
@@ -380,6 +387,11 @@ export default {
     // anything that never said it was killed. iOS often gives only the
     // visibility change, so both are listened for.
     watchForTheEnd () {
+      // Reached from a promise in `mounted`, which can settle after the shell
+      // has gone. `unmounted` has already run its removals by then, so adding
+      // the listeners here would leave them behind for good.
+      if (this.gone) return
+
       this.onVisibility = () => {
         if (document.visibilityState === 'hidden') return this.commands.noteRunEnded(this.identity)
 
@@ -413,6 +425,11 @@ export default {
     // reached yet still looks outdated, so a second sweep would ask for all of
     // them again: the copy from the bucket landing is enough to start one.
     pollFeeds () {
+      // Asked from a timer every time, and more than one of them can be
+      // pending: the identity watcher sets its own alongside the sweep's.
+      // Refusing here covers all of them.
+      if (this.gone) return Promise.resolve()
+
       const id = (this.identity || {}).id
 
       if (POLL_IN_FLIGHT && POLL_IN_FLIGHT.id === id) {
@@ -423,6 +440,12 @@ export default {
 
       const done = () => {
         POLL_IN_FLIGHT = null
+
+        // A sweep that was in flight when the shell went would otherwise
+        // schedule the next one on its way out, and a timeout cleared on the
+        // way out cannot catch one set after it.
+        if (this.gone) return
+
         POLL_TIMEOUT = setTimeout(() => this.pollFeeds(), POLL_INTERVAL)
       }
 

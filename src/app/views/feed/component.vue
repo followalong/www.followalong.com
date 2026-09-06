@@ -306,8 +306,11 @@ export default {
       this.app.commands.pauseFeedForIdentity(this.identity, this.existingFeed)
     },
 
+    // Oldest first, on a copy. `unreadEntries` is a computed, and its value is
+    // handed to whoever asks next: turning it round in place turned it round
+    // for them.
     catchUpOnFeed () {
-      this.unreadEntries.reverse().forEach((entry) => {
+      this.unreadEntries.slice().reverse().forEach((entry) => {
         this.app.commands.markEntryAsReadForIdentity(this.identity, entry)
       })
     },
