@@ -9,48 +9,13 @@
     />
 
     <Card :padded="false">
-      <ListRow
+      <FeedRow
         v-for="feed in feeds"
         :key="feed.id"
-        :title="app.queries.titleForFeed(feed)"
-        :meta="metaFor(feed)"
-        :to="`/${app.queries.urlForFeed(feed)}`"
-        :muted="!unreadFor(feed)"
-        :aria-label="`Visit ${app.queries.titleForFeed(feed)} feed`"
-      >
-        <template #leading>
-          <span class="h-slot w-slot flex-none rounded-field bg-surface-sunken overflow-hidden flex items-center justify-center">
-            <!-- The list has no cap, so this is every feed's artwork at
- once — full-size cover art shrunk into a 34px square. Left eager, a phone
- downloads and decodes the lot before anyone has scrolled past the first
- screen. -->
-            <img
-              v-if="app.queries.imageForFeed(feed)"
-              class="h-full w-full object-cover"
-              :src="app.queries.imageForFeed(feed)"
-              alt=""
-              loading="lazy"
-              decoding="async"
-            >
-            <span
-              v-else
-              class="text-field font-bold text-ink-subtle"
-            >{{ (app.queries.titleForFeed(feed) || '?').trim().charAt(0).toUpperCase() }}</span>
-          </span>
-        </template>
-
-        <template #trailing>
-          <span
-            v-if="app.queries.isFeedPaused(feed)"
-            data-paused-badge
-            class="flex-none rounded-pill bg-surface-sunken px-2 py-0.5 text-tiny font-bold text-ink-muted"
-          >Paused</span>
-          <span
-            v-if="unreadFor(feed)"
-            class="flex-none rounded-pill bg-accent px-2 py-0.5 text-tiny font-bold text-ink"
-          >{{ unreadFor(feed) }} new</span>
-        </template>
-      </ListRow>
+        :app="app"
+        :identity="identity"
+        :feed="feed"
+      />
     </Card>
 
     <EmptyState v-if="!allFeeds.length">
@@ -64,7 +29,7 @@
 </template>
 
 <script>
-import ListRow from '../../components/list-row/component.vue'
+import FeedRow from '../../components/feed-row/component.vue'
 import PageBody from '../../components/page-body/component.vue'
 import Card from '../../components/card/component.vue'
 import EmptyState from '../../components/empty-state/component.vue'
@@ -72,7 +37,7 @@ import SearchBox from '../../components/search-box/component.vue'
 
 export default {
   components: {
-    ListRow,
+    FeedRow,
     PageBody,
     Card,
     EmptyState,
@@ -104,22 +69,10 @@ export default {
   },
 
   methods: {
+    // Only the sort needs this here; what a row says about itself is the row's
+    // own business now.
     unreadFor (feed) {
       return this.app.queries.unreadEntriesForFeedLength(this.identity, feed)
-    },
-
-    // Paused has its own badge on the row, so this line is free to say the same
-    // thing it says about every other feed: when something last arrived.
-    metaFor (feed) {
-      if (!this.unreadFor(feed)) {
-        const last = this.app.queries.niceDateForEntry(
-          this.app.queries.lastEntryForFeed(this.identity, feed)
-        )
-
-        return last ? `Nothing new · last ${last}` : 'Nothing new'
-      }
-
-      return `${this.app.queries.entriesForFeed(this.identity, feed).length} items`
     }
   }
 }
