@@ -65,14 +65,6 @@ export default {
         return this.app.queries.titleForFeed(feed).toLowerCase().includes(filter)
       })
     }
-  },
-
-  methods: {
-    // Only the sort needs this here; what a row says about itself is the row's
-    // own business now.
-    unreadFor (feed) {
-      return this.app.queries.unreadEntriesForFeedLength(this.identity, feed)
-    }
   }
 }
 </script>
