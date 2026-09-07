@@ -12,6 +12,18 @@ import { sessionsIn, deaths } from './sessions.js'
 
 // How long a feed is considered fresh. The poll ticks more often than this
 // so a feed that just came out of backoff is picked up promptly.
+// What a roll up keeps of a feed's read entries. Retention, deliberately, and
+// not a side effect of compaction: a roll up is a snapshot, so whatever it
+// leaves out is gone from this device for good. Fifteen is enough that
+// scrolling back through a feed still finds something, and small enough that
+// a corpus stops growing with every article ever published.
+//
+// Unread entries are never counted against it - they have not been read, so
+// nobody has decided anything about them - and a saved entry is never
+// discarded at all, because saving is the one place a reader says to keep
+// something.
+const KEEP_READ_PER_FEED = 15
+
 const OUTDATED_MINUTES = 15
 const BACKOFF_BASE_MINUTES = 15
 const BACKOFF_MAX_MINUTES = 24 * 60
@@ -188,6 +200,23 @@ class Queries {
     return this._memo(identity, 'entries', () => {
       return this.sortEntries(this.state.findAll(identity.id, 'entries'))
     }, ['entries'])
+  }
+
+  // The entries a roll up carries forward. Per feed, because one cap over the
+  // whole list is spent on whichever feeds sort first and leaves every other
+  // one with nothing behind it.
+  entriesWorthKeepingForIdentity (identity, keepReadPerFeed = KEEP_READ_PER_FEED) {
+    const kept = {}
+
+    return this.entriesForIdentity(identity).filter((entry) => {
+      if (!this.isEntryRead(entry) || this.isEntrySaved(entry)) {
+        return true
+      }
+
+      kept[entry.feedId] = (kept[entry.feedId] || 0) + 1
+
+      return kept[entry.feedId] <= keepReadPerFeed
+    })
   }
 
   entriesForSignal (identity, signal) {

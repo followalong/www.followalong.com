@@ -760,8 +760,8 @@ class Commands {
       .join('\n')
   }
 
-  // A log written when roll up existed holds every entry inside one event,
-  // where the filter above cannot see them one at a time.
+  // A roll up folds every entry into one event, where the filter above cannot
+  // see them one at a time.
   portableEvent (event) {
     if (event.action !== 'rollup') return event.toLocal()
 
@@ -830,6 +830,28 @@ class Commands {
 
     return this.state.importRaw(id, data)
       .then(() => this.queries.allIdentities().find((identity) => identity.id === id))
+  }
+
+  // The tidy-up: replace the whole log with one event describing where the
+  // identity has got to. What it leaves out is gone from this device, so what
+  // it keeps is a retention decision and lives with the rule that makes it.
+  createProjectionForIdentity (identity) {
+    // Read before the reset, because afterwards there is nothing to read.
+    const projection = this.projectionOfIdentity(identity)
+
+    return this.resetIdentity(identity)
+      .then(() => this.track(identity, 'identities', identity.id, 'rollup', projection))
+  }
+
+  // Everything the identity is, as one payload.
+  projectionOfIdentity (identity, entries) {
+    return {
+      identity,
+      feeds: this.queries.feedsForIdentity(identity),
+      entries: entries || this.queries.entriesWorthKeepingForIdentity(identity),
+      signals: this.queries.signalsForIdentityForProjection(identity),
+      addons: this.queries.addonsForIdentity(identity)
+    }
   }
 }
 

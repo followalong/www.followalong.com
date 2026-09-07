@@ -113,6 +113,13 @@
         aria-label="Paste identity"
         @click="restoreOpen = true"
       />
+      <ListRow
+        title="Roll up this identity"
+        meta="fold the log into what it says now"
+        action
+        aria-label="Roll up identity"
+        @click="rollUp"
+      />
     </Card>
 
     <!-- The app cannot tell anyone it was killed while it was being killed,
@@ -645,6 +652,16 @@ export default {
 
       return Promise.resolve(this.app.commands.copyIdentityToClipboard(this.identity))
         .then(() => { this.copied = true })
+        .catch(() => {})
+    },
+
+    // Everything the log says, folded into the one event that says it, and the
+    // oldest read entries of a long feed let go of. It cannot be undone from
+    // here, which is why it asks first.
+    rollUp () {
+      return this.app.confirm('Are you sure you want to roll up this identity?')
+        .then(() => this.app.commands.createProjectionForIdentity(this.identity))
+        .then(() => this.$router.push('/'))
         .catch(() => {})
     },
 
