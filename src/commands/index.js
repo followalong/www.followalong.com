@@ -673,13 +673,15 @@ class Commands {
     this.track(identity, 'entries', entry.id, 'markUnread')
   }
 
+  // The moment decides, not the order the log is folded in, so it is written
+  // down rather than left to be inferred from where the event lands.
   saveEntryForIdentity (identity, entry) {
     this.ensureSavedSignalForIdentity(identity)
-    this.track(identity, 'entries', entry.id, 'save')
+    this.track(identity, 'entries', entry.id, 'save', { at: Date.now() })
   }
 
   unsaveEntryForIdentity (identity, entry) {
-    this.track(identity, 'entries', entry.id, 'unsave')
+    this.track(identity, 'entries', entry.id, 'unsave', { at: Date.now() })
   }
 
   // Identities created before saving existed have no Saved signal, so give

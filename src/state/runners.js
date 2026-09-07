@@ -24,6 +24,35 @@ const UNTIMESTAMP = (attr) => (store, event) => {
   delete existing[attr]
 }
 
+// A decision a reader made at a moment, where the moment decides and not the
+// order the log happens to be folded in. A rollup folds ahead of everything
+// and a merge brings events written before the snapshot they land on, so an
+// event that arrives late is not thereby the newest thing to have happened.
+//
+// Each of a pair records when it was decided - saved or unsaved, read or
+// unread - so the fold can tell which came last from the events themselves
+// and reaches the same answer whatever order it sees them in.
+const DECIDED = (attr, insteadOf) => (store, event) => {
+  const existing = store.findByIdWithDeleted(event.collection, event.objectId)
+
+  if (!existing) {
+    return console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+  }
+
+  // Events written before this carry no moment of their own. When they were
+  // tracked is the best answer they have, and it is the answer the fold gave
+  // all of them until now, so nothing already stored changes meaning.
+  const at = (event.data || {}).at || event.time
+
+  if (at <= (existing[attr] || 0) || at <= (existing[insteadOf] || 0)) {
+    return
+  }
+
+  existing[attr] = at
+
+  delete existing[insteadOf]
+}
+
 // A poll records what the feed answered with, so the next one can ask
 // conditionally. Absent validators are cleared rather than kept: a feed that
 // stops sending an ETag must not be asked with a stale one forever.
@@ -156,8 +185,8 @@ export default {
   'entries.create': EventStore.RUNNERS.CREATE, // TODO: We can't use nested func because feedId is outside of data; OK because feedId is immutable for now
   'entries.update': EventStore.RUNNERS.UPDATE,
   'entries.delete': EventStore.RUNNERS.DELETE,
-  'entries.save': TIMESTAMP('savedAt'),
-  'entries.unsave': UNTIMESTAMP('savedAt'),
+  'entries.save': DECIDED('savedAt', 'unsavedAt'),
+  'entries.unsave': DECIDED('unsavedAt', 'savedAt'),
   'entries.markRead': TIMESTAMP('readAt'),
   'entries.markUnread': UNTIMESTAMP('readAt'),
   // Action names used before v2.3. Events already on disk still carry them.
