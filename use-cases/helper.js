@@ -49,7 +49,7 @@ const mountApp = (options) => {
         state: store,
         confirm: options.confirm || vi.fn().mockResolvedValue(),
         automaticFetch: options.automaticFetch || false,
-        scrollTo: vi.fn(),
+        scrollTo: options.scrollTo || vi.fn(),
         prompt: options.prompt || vi.fn(),
         keychainName: `keychain-${Math.random()}`,
         copyToClipboard: options.copyToClipboard || vi.fn(),

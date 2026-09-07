@@ -159,9 +159,11 @@ export default {
   },
 
   watch: {
+    // A different list, read from its own beginning.
     signal () {
       this.limit = LIMIT
       this.app.commands.showNewEntries(this.identity)
+      this.app.commands.scrollToTop()
     }
   },
 

@@ -692,9 +692,12 @@ class Commands {
     this.addSignalToIdentity(identity, SAVED_SIGNAL)
   }
 
+  // Marks what has arrived as seen, and nothing else. Jumping to the top used
+  // to ride along with it, which meant a feed answering while somebody was
+  // reading threw them back to the first article. Whoever wants the jump asks
+  // for it, and only the reader tapping the bar does.
   showNewEntries (identity) {
     this.state.updateConfig(identity.id, { lastBackgroundFetch: Date.now() })
-    this.scrollToTop()
   }
 
   scrollToTop () {
