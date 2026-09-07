@@ -112,9 +112,11 @@
     var report = { saved: 0, matched: 0, created: 0, feeds: 0, alreadySaved: 0 }
     // Replay sorts by time, so anything appended has to be stamped after every
     // event already here or it folds before the event that introduces what it
-    // refers to and is dropped. A rolled-up identity is the case that bites:
-    // its whole log is one event stamped when the roll up ran, which is later
-    // than any savedAt an older export can carry.
+    // refers to and is dropped. A rolled-up identity is no longer the case
+    // that bites - a rollup folds ahead of everything now, so a save carrying
+    // its original date lands on top of it - but an entry this script creates
+    // itself still has a create of its own, and a save stamped before it
+    // would fold against nothing.
     var floor = queries.findAllEvents(identity).reduce(function (latest, event) {
       return Math.max(latest, event.time || 0)
     }, 0)

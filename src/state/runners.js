@@ -99,35 +99,40 @@ const ROLLUP = (store, event) => {
   // identities, so nothing else would tell a reader its entries had moved.
   store.bumpEveryRevision()
 
-  const identities = [event.data.identity]
+  const data = event.data || {}
+
+  // A rollup can be empty - one written to stand in for others carries no
+  // objects at all - and an empty one has nothing to say rather than
+  // something to crash over.
+  const identities = data.identity ? [data.identity] : []
   identities.forEach((identity) => {
     const identityEvent = new EventStoreEvent('identities', identity.id, 'create', identity, identity.createdAt, event.version)
 
     EventStore.RUNNERS.CREATE(store, identityEvent)
   })
 
-  const feeds = event.data.feeds || []
+  const feeds = data.feeds || []
   feeds.forEach((feed) => {
     const feedEvent = new EventStoreEvent('feeds', feed.id, 'create', feed, feed.createdAt, event.version)
 
     EventStore.RUNNERS.CREATE(store, feedEvent)
   })
 
-  const entries = event.data.entries || []
+  const entries = data.entries || []
   entries.forEach((entry) => {
     const entryEvent = new EventStoreEvent('entries', entry.id, 'create', entry, entry.createdAt, event.version)
 
     EventStore.RUNNERS.CREATE(store, entryEvent)
   })
 
-  const signals = event.data.signals || []
+  const signals = data.signals || []
   signals.forEach((signal) => {
     const signalEvent = new EventStoreEvent('signals', signal.id, 'create', signal, signal.createdAt, event.version)
 
     EventStore.RUNNERS.CREATE(store, signalEvent)
   })
 
-  const addons = event.data.addons || []
+  const addons = data.addons || []
   addons.forEach((addon) => {
     const addonEvent = new EventStoreEvent('addons', addon.id, 'configure', addon, addon.updatedAt, event.version)
 

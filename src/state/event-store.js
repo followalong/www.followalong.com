@@ -240,7 +240,7 @@ class EventStore {
     // An imported event can predate events already folded in, so replaying it
     // on top would let a stale change win just by arriving late. Fold the whole
     // log again in time order instead.
-    const events = this._events.concat(imported).sort(EventStore.SORT_BY_TIME)
+    const events = this._events.concat(imported).sort(EventStore.SORT_FOR_FOLD)
 
     this._resetCollections()
     this._events.splice(0)
@@ -302,7 +302,7 @@ class EventStore {
       })
       .then(() => {
         events
-          .sort(EventStore.SORT_BY_TIME)
+          .sort(EventStore.SORT_FOR_FOLD)
           .forEach((event) => this._runEvent(event))
 
         // A log written before anything pruned it is full of events that
@@ -427,6 +427,22 @@ EventStore.RUNNERS = {
 // events holds, and the time in them is the one thing that decides which of
 // them is still worth keeping.
 EventStore.TIME_OF = (key) => parseInt(key) || 0
+
+// A rollup is a snapshot of where everything had got to, not something that
+// happened at a moment, so it folds before every other event whatever its
+// timestamp and the history applies on top of it. Sorted by time instead, it
+// landed in the middle of the history it summarises, and anything older than
+// it folded against objects that did not exist yet and was dropped in
+// silence. The cost of this choice is that a stale event can beat the
+// snapshot; losing sight of an article is worse than one flipping back to
+// unread.
+EventStore.IS_A_SNAPSHOT = (event) => event.collection === 'identities' && event.action === 'rollup'
+
+EventStore.SORT_FOR_FOLD = (a, b) => {
+  const snapshots = (EventStore.IS_A_SNAPSHOT(b) ? 1 : 0) - (EventStore.IS_A_SNAPSHOT(a) ? 1 : 0)
+
+  return snapshots || EventStore.SORT_BY_TIME(a, b)
+}
 
 EventStore.SORT_BY_TIME = (a, b) => {
   return (a.time || 0) - (b.time || 0)
