@@ -135,6 +135,10 @@ class MultipleEventStore extends EventStore {
       .reduce((total, db) => total + db.revisionFor(collections), 0)
   }
 
+  forget (dbId, ...args) {
+    return this._findDBs(dbId ? [dbId] : undefined).map((db) => db.forget.apply(db, args))
+  }
+
   findAllEvents (dbId, ...args) {
     const dbs = this._findDBs(dbId ? [dbId] : undefined)
 

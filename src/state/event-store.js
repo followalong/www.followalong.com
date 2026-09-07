@@ -252,6 +252,63 @@ class EventStore {
     this._pruneSuperseded()
   }
 
+  // Drop events by key, from memory and from the database. Deliberately not
+  // superseding: superseding decides for itself which event wins, and two
+  // snapshots can each hold objects the other does not, so nothing may drop
+  // one except code that has just written a replacement holding everything
+  // they held.
+  forget (keys) {
+    const doomed = new Set(keys)
+
+    if (!doomed.size) {
+      return
+    }
+
+    const kept = []
+
+    for (let i = 0; i < this._events.length; i++) {
+      const event = this._events[i]
+
+      if (!doomed.has(event.key)) {
+        kept.push(event)
+
+        continue
+      }
+
+      this._keys.delete(event.key)
+      this._db.removeItem(event.key)
+    }
+
+    this._events.splice(0)
+
+    for (let i = 0; i < kept.length; i++) {
+      this._events.push(kept[i])
+    }
+
+    this._supersedable.forEach((bucket) => doomed.forEach((key) => bucket.delete(key)))
+
+    this._resetCollections()
+
+    this._events
+      .slice(0)
+      .sort(EventStore.SORT_FOR_FOLD)
+      .forEach((event) => this._refold(event))
+  }
+
+  // Folding an event that is already held, without recording it again.
+  _refold (event) {
+    const runner = this._findSpecificRunnerForEvent(event) || this._runners[`${event.collection}.${event.action}`]
+
+    if (!runner) {
+      return
+    }
+
+    runner(this, event)
+
+    this.revision++
+    this._revisions[event.collection] = (this._revisions[event.collection] || 0) + 1
+  }
+
   findAllEvents () {
     return this._events
       .slice(0)

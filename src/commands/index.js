@@ -11,6 +11,15 @@ import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT
 // other device put there.
 const NOTHING_THERE = /nosuchkey|notfound|no data returned|404/i
 
+// What a rollup holds, and where. Mirrors the runner that folds one.
+const INSIDE_A_ROLLUP = [
+  { collection: 'identities', of: (data) => (data.identity ? [data.identity] : []) },
+  { collection: 'feeds', of: (data) => data.feeds || [] },
+  { collection: 'entries', of: (data) => data.entries || [] },
+  { collection: 'signals', of: (data) => data.signals || [] },
+  { collection: 'addons', of: (data) => data.addons || [] }
+]
+
 const NOT_MODIFIED = 304
 const SYNC_DEBOUNCE = 1500
 
@@ -318,6 +327,7 @@ class Commands {
         this.queries.allIdentities().forEach((identity) => {
           this.releaseUnrefusedFailuresForIdentity(identity)
           this.mergeDuplicateEntriesForIdentity(identity)
+          this.unifyRollupsForIdentity(identity)
         })
       })
   }
@@ -830,6 +840,51 @@ class Commands {
 
     return this.state.importRaw(id, data)
       .then(() => this.queries.allIdentities().find((identity) => identity.id === id))
+  }
+
+  // Two snapshots in one log, which happens when one arrives in a merge. They
+  // are keyed by object id, so folding both already unions them - but both
+  // are then kept for good, and one reader is carrying 4.28MB of them.
+  //
+  // Dropping the older one is what must not happen: snapshots can each hold
+  // objects the other does not, and one reader's older rollup holds 131 feeds
+  // that exist in no other event anywhere. So a replacement is written from
+  // the folded state, which holds everything all of them held, and only then
+  // are they let go.
+  unifyRollupsForIdentity (identity) {
+    const rollups = this.queries.findAllEvents(identity)
+      .filter((event) => event.collection === 'identities' && event.action === 'rollup')
+
+    if (rollups.length < 2) {
+      return
+    }
+
+    // Uncapped: standing in for other snapshots is not the moment to decide
+    // what to throw away, because they are the only copy of what they hold.
+    const replacement = this.projectionOfIdentity(identity, this.queries.entriesForIdentity(identity))
+
+    if (!this.holdsEverythingIn(replacement, rollups)) {
+      return console.warn('Not unifying the rollups: the replacement does not hold everything they do')
+    }
+
+    this.track(identity, 'identities', identity.id, 'rollup', replacement)
+    this.state.forget(identity.id, rollups.map((event) => event.key))
+  }
+
+  // Every object those snapshots introduce has to be in the one replacing
+  // them, or letting them go loses it.
+  holdsEverythingIn (replacement, rollups) {
+    const held = new Set()
+
+    INSIDE_A_ROLLUP.forEach(({ collection, of }) => {
+      of(replacement).forEach((object) => object && held.add(`${collection}/${object.id}`))
+    })
+
+    return rollups.every((rollup) => {
+      return INSIDE_A_ROLLUP.every(({ collection, of }) => {
+        return of(rollup.data || {}).every((object) => !object || !object.id || held.has(`${collection}/${object.id}`))
+      })
+    })
   }
 
   // The tidy-up: replace the whole log with one event describing where the
