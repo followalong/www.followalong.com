@@ -114,6 +114,13 @@
         @click="restoreOpen = true"
       />
       <ListRow
+        title="Import feeds"
+        meta="an OPML file from another reader"
+        action
+        aria-label="Import feeds"
+        @click="importOpen = true"
+      />
+      <ListRow
         title="Roll up this identity"
         meta="fold the log into what it says now"
         action
@@ -413,6 +420,45 @@
         </Button>
       </template>
     </Sheet>
+
+    <Sheet
+      :open="importOpen"
+      title="Import feeds from OPML"
+      @close="closeImport"
+    >
+      <p class="text-body text-ink-secondary">
+        Choose the OPML file another reader exported, or paste its contents.
+        Each feed in it is followed here. Folders are not kept.
+      </p>
+
+      <input
+        type="file"
+        aria-label="Choose an OPML file"
+        accept=".opml,.xml,text/xml,text/x-opml"
+        class="block w-full mt-3 text-body text-ink"
+        @change="readOpmlFile"
+      >
+
+      <TextField
+        v-model="opml"
+        multiline
+        aria-label="OPML to import"
+        class="mt-3"
+        placeholder="<opml>…"
+        :invalid="!!importError"
+        :hint="importError || importReport"
+      />
+
+      <template #footer>
+        <Button
+          class="flex-1"
+          aria-label="Follow these feeds"
+          @click="importOpml"
+        >
+          Follow these feeds
+        </Button>
+      </template>
+    </Sheet>
   </PageBody>
 </template>
 
@@ -471,6 +517,10 @@ export default {
     restoreOpen: false,
     restoreError: '',
     pasted: '',
+    importOpen: false,
+    importError: '',
+    importReport: '',
+    opml: '',
     handoffOpen: false,
     handoffLink: '',
     handoffError: '',
@@ -699,6 +749,35 @@ export default {
           this.$router.push('/')
         })
         .catch((e) => { this.restoreError = e.message })
+    },
+
+    closeImport () {
+      this.importOpen = false
+      this.importError = ''
+      this.importReport = ''
+      this.opml = ''
+    },
+
+    readOpmlFile (e) {
+      const file = e.target.files[0]
+
+      if (!file) return
+
+      return file.text().then((text) => { this.opml = text })
+    },
+
+    importOpml () {
+      this.importError = ''
+      this.importReport = ''
+
+      try {
+        const { followed, skipped } = this.app.commands.importOpmlForIdentity(this.identity, this.opml)
+
+        this.importReport = `Followed ${this.plural(followed, 'feed')}${skipped ? `, ${skipped} already followed` : ''}`
+        this.opml = ''
+      } catch (e) {
+        this.importError = e.message
+      }
     },
 
     forgetIdentity () {

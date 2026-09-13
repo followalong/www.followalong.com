@@ -1,6 +1,7 @@
 import VERSION from '../state/version.js'
 import { encrypt, decrypt } from '../queries/crypt.js'
 import { encodeHandoff } from '../queries/handoff.js'
+import feedsFromOpml from '../queries/opml.js'
 import UnkeyableEntryError from '../queries/unkeyable-entry-error.js'
 import fingerprint from './fingerprint.js'
 import { sessionsIn, started, closed, resumed, nowPlaying } from '../queries/sessions.js'
@@ -56,6 +57,26 @@ class Commands {
     entries.forEach((entry) => {
       this.upsertEntryForIdentity(identity, feed, entry)
     })
+  }
+
+  // Only the feeds are taken. The poll loop fetches their entries later, as
+  // it would for a feed followed by hand.
+  importOpmlForIdentity (identity, text) {
+    const known = new Set(this.queries.feedsForIdentity(identity).map((feed) => this.queries.urlForFeed(feed)))
+    const report = { followed: 0, skipped: 0 }
+
+    feedsFromOpml(text).forEach(({ url, title }) => {
+      if (known.has(url)) {
+        report.skipped++
+        return
+      }
+
+      known.add(url)
+      report.followed++
+      this.addFeedToIdentity(identity, url, { title })
+    })
+
+    return report
   }
 
   removeFeedFromIdentity (identity, feed) {
