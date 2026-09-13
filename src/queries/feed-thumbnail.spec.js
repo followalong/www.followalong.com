@@ -22,6 +22,13 @@ describe('thumbnailForFeed', () => {
     queries = new Queries({ state })
   })
 
+  test('prefers the channel icon a lookup found', () => {
+    state.track(identity.id, 'feeds', 'f1', 'create', { url: 'https://a.example', data: { image: { url: 'https://a.example/cover.png' } } })
+    state.track(identity.id, 'feeds', 'f1', 'iconFound', { url: 'https://yt3.example/icon.jpg' })
+
+    expect(queries.thumbnailForFeed(identity, queries.feedForIdentity(identity, 'f1'))).toEqual('https://yt3.example/icon.jpg')
+  })
+
   test('keeps the image a feed names for itself', () => {
     state.track(identity.id, 'feeds', 'f1', 'create', { url: 'https://a.example', data: { image: { url: 'https://a.example/cover.png' } } })
     state.track(identity.id, 'entries', 'e1', 'create', entry('f1', 'g1', 'Mon, 01 May 2023 00:00:00 GMT', 'https://i.ytimg.com/vi/one/hqdefault.jpg'))

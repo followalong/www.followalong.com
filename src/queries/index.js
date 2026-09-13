@@ -9,6 +9,7 @@ import sanitizeContent from './presenters/sanitize-content.js'
 import UnkeyableEntryError from './unkeyable-entry-error.js'
 import excerpt from './presenters/excerpt.js'
 import { sessionsIn, deaths } from './sessions.js'
+import { isVideoFeedUrl } from './channel-icon.js'
 
 // How long a feed is considered fresh. The poll ticks more often than this
 // so a feed that just came out of backoff is picked up promptly.
@@ -25,6 +26,9 @@ import { sessionsIn, deaths } from './sessions.js'
 const KEEP_READ_PER_FEED = 15
 
 const OUTDATED_MINUTES = 15
+// How long a channel icon lookup stands, hit or miss. The same as the image
+// cache keeps the picture.
+const ICON_LOOKUP_DAYS = 30
 const BACKOFF_BASE_MINUTES = 15
 const BACKOFF_MAX_MINUTES = 24 * 60
 
@@ -640,16 +644,29 @@ class Queries {
     return sanitizeContent(content)
   }
 
+  // Only a video host's feed, and only once per ICON_LOOKUP_DAYS, hit or miss.
+  feedNeedsIconLookup (feed) {
+    if (!isVideoFeedUrl(this.urlForFeed(feed))) {
+      return false
+    }
+
+    const lookedUpAt = feed.iconLookedUpAt || 0
+
+    return lookedUpAt < Date.now() - ICON_LOOKUP_DAYS * 24 * 60 * 60 * 1000
+  }
+
   imageForFeed (feed) {
     return getAttr(feed, 'image.url') ||
       getAttr(feed, 'webfeeds:icon')
   }
 
-  // What the Feeds page shows for a feed. Video channels name no picture of
-  // their own, so the freshest entry's thumbnail stands in. entriesForFeed is
-  // memoised and unread-first, so the picture is the newest thing waiting.
+  // What the Feeds page shows for a feed: the channel icon a lookup found,
+  // else what the feed names for itself. Video channels name no picture of
+  // their own, so until the icon is known the freshest entry's thumbnail
+  // stands in. entriesForFeed is memoised and unread-first, so that picture
+  // is the newest thing waiting.
   thumbnailForFeed (identity, feed) {
-    const own = this.imageForFeed(feed)
+    const own = (feed || {}).icon || this.imageForFeed(feed)
 
     if (own) {
       return own

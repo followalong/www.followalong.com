@@ -16,6 +16,9 @@ const SUPERSEDING = [
   'feeds.fetched',
   'feeds.fetchFailed',
   'feeds.skippedEntries',
+  // A feed has one icon, so the last lookup is the whole record.
+  'feeds.iconFound',
+  'feeds.iconNotFound',
   // The whole entry, every time, so the edit before it decides nothing the
   // latest does not decide again. A feed that rewrites a post keeps one record
   // of what it now says rather than one of every wording it ever had.

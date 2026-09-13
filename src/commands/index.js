@@ -3,6 +3,7 @@ import { encrypt, decrypt } from '../queries/crypt.js'
 import { encodeHandoff } from '../queries/handoff.js'
 import feedsFromOpml from '../queries/opml.js'
 import UnkeyableEntryError from '../queries/unkeyable-entry-error.js'
+import { channelUrlForFeed, ogImage } from '../queries/channel-icon.js'
 import fingerprint from './fingerprint.js'
 import { sessionsIn, started, closed, resumed, nowPlaying } from '../queries/sessions.js'
 import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT_SIGNALS, SAVED_SIGNAL } from './seed.js'
@@ -443,12 +444,41 @@ class Commands {
     )
   }
 
-  fetchUrl (identity, action, url, options = {}) {
+  // The body as the adapter hands it back, through whatever proxy the
+  // identity uses. fetchUrl reads it as a feed; a channel page is not one.
+  fetchBody (identity, action, url, options = {}) {
     const adapter = this.queries.addonAdapterForActionForIdentity(identity, action)
 
     return adapter[action](url, options)
+  }
+
+  fetchUrl (identity, action, url, options = {}) {
+    return this.fetchBody(identity, action, url, options)
       .then((response) => {
         return Object.assign({}, response, { data: this.queries.jsonFromXml(response.body) })
+      })
+  }
+
+  // A video host's feed names no picture of the channel; its channel page
+  // does, as og:image. Asked once per feed, on the poll that follows a feed
+  // being fetched, and dated either way so a page with nothing to say is not
+  // asked on every sweep. A refusal counts as nothing to say for the same
+  // reason. Never records a feed failure: the feed itself answered.
+  lookUpIconForFeed (identity, feed) {
+    if (!this.queries.feedNeedsIconLookup(feed)) {
+      return Promise.resolve()
+    }
+
+    const url = channelUrlForFeed(feed.data)
+
+    return (url ? this.fetchBody(identity, 'rss', url) : Promise.resolve({}))
+      .then((response) => ogImage(response.body), () => undefined)
+      .then((icon) => {
+        if (icon) {
+          return this.track(identity, 'feeds', feed.id, 'iconFound', { url: icon })
+        }
+
+        this.track(identity, 'feeds', feed.id, 'iconNotFound', {})
       })
   }
 
@@ -520,6 +550,7 @@ class Commands {
 
         this.trackSkippedEntriesForIdentity(identity, feed, skipped)
       })
+      .then(() => this.lookUpIconForFeed(identity, feed))
   }
 
   trackFetchedForIdentity (identity, feed, { etag, lastModified } = {}) {

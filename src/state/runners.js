@@ -92,6 +92,30 @@ const FETCH_FAILED = (store, event) => {
   existing.failureReason = reason
 }
 
+// A feed has one icon, read once from its channel page. Both outcomes date
+// the lookup so it is not repeated; only a hit changes the picture, so a
+// later miss does not throw away one already found.
+const ICON_FOUND = (store, event) => {
+  const existing = store.findByIdWithDeleted(event.collection, event.objectId)
+
+  if (!existing) {
+    return console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+  }
+
+  existing.iconLookedUpAt = event.time
+  existing.icon = (event.data || {}).url
+}
+
+const ICON_NOT_FOUND = (store, event) => {
+  const existing = store.findByIdWithDeleted(event.collection, event.objectId)
+
+  if (!existing) {
+    return console.warn(`Object not found for event: ${JSON.stringify(event)}`)
+  }
+
+  existing.iconLookedUpAt = event.time
+}
+
 // Items the last body carried that we could not store. The count rides in the
 // event rather than being counted here, because this action supersedes and a
 // runner that incremented would replay every time as the first one.
@@ -176,6 +200,8 @@ export default {
   'feeds.fetched': FETCHED,
   'feeds.fetchFailed': FETCH_FAILED,
   'feeds.skippedEntries': SKIPPED_ENTRIES,
+  'feeds.iconFound': ICON_FOUND,
+  'feeds.iconNotFound': ICON_NOT_FOUND,
   // Forgiving a failure without claiming a fetch: the feed keeps its
   // validators, its last-polled time and its failure count, so it is polled
   // once more and, if it fails again, resumes the backoff it had earned.
