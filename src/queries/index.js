@@ -94,6 +94,16 @@ const hrefOf = (value) => {
   return value['@_href'] || ''
 }
 
+// An element that carries an attribute folds to an object, and its words are
+// under #text. Atom titles do this whenever they say what type they are.
+const textOf = (value) => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return value['#text']
+  }
+
+  return value
+}
+
 const stripHTML = (html) => {
   const doc = new DOMParser().parseFromString(html, 'text/html')
   return doc.body.textContent || ''
@@ -561,7 +571,7 @@ class Queries {
   }
 
   titleForEntry (entry) {
-    return getAttr(entry, 'title')
+    return textOf(getAttr(entry, 'title'))
   }
 
   urlForFeed (feed) {
@@ -575,7 +585,7 @@ class Queries {
   }
 
   titleForFeed (feed) {
-    return getAttr(feed, 'title') ||
+    return textOf(getAttr(feed, 'title')) ||
       this.urlForFeed(feed) ||
       'Untitled feed'
   }
