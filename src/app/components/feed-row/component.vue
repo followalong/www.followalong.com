@@ -61,7 +61,7 @@ export default {
     },
 
     image () {
-      return this.app.queries.imageForFeed(this.feed)
+      return this.app.queries.thumbnailForFeed(this.identity, this.feed)
     },
 
     initial () {

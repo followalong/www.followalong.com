@@ -645,6 +645,25 @@ class Queries {
       getAttr(feed, 'webfeeds:icon')
   }
 
+  // What the Feeds page shows for a feed. Video channels name no picture of
+  // their own, so the freshest entry's thumbnail stands in. entriesForFeed is
+  // memoised and unread-first, so the picture is the newest thing waiting.
+  thumbnailForFeed (identity, feed) {
+    const own = this.imageForFeed(feed)
+
+    if (own) {
+      return own
+    }
+
+    for (const entry of this.entriesForFeed(identity, feed)) {
+      const image = this.imageForEntry(entry)
+
+      if (image) {
+        return image
+      }
+    }
+  }
+
   feedChanged (feed, newData) {
     newData = Object.assign({}, newData)
 
