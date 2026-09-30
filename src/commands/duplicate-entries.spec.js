@@ -135,7 +135,7 @@ describe('duplicates that are already stored', () => {
     expect(app.queries.isEntrySaved(survivor)).toEqual(true)
   })
 
-  test('does not run twice on the same device', () => {
+  test('writes nothing when there is nothing left to merge', () => {
     app.commands.mergeDuplicateEntriesForIdentity(app.identity)
 
     const events = app.state.findAllEvents(app.identity.id).length

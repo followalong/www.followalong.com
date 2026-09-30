@@ -324,6 +324,7 @@ class Commands {
     }
 
     return Promise.resolve(this.state.importRaw(identity.id, response.body))
+      .then(() => this.mergeDuplicateEntriesForIdentity(identity))
       .then(() => this.rememberRemoteVersion(identity, response.etag))
   }
 
@@ -377,21 +378,16 @@ class Commands {
   }
 
   // Articles stored twice because two devices each created one before ids
-  // were derived from the article itself. Once per device: what it does is
-  // recorded as events, so every other device gets the result through the
-  // merge rather than repeating the work.
+  // were derived from the article itself. After every fold from outside,
+  // because a second copy can arrive in any of them, and the poll cannot
+  // mend it: the lookup finds one copy and stores nothing. A log with no
+  // pairs writes nothing, so repeating it is free.
   //
   // The survivor is the lowest id, which every device agrees on without
   // asking. Choosing by anything local - whichever was folded first, whichever
   // is read - would have two devices delete each other's survivor and lose the
   // article from both.
   mergeDuplicateEntriesForIdentity (identity) {
-    if (this.state.getConfig(identity.id).mergedDuplicateEntries) {
-      return
-    }
-
-    this.state.updateConfig(identity.id, { mergedDuplicateEntries: true })
-
     const byKey = {}
 
     this.queries.entriesForIdentity(identity).forEach((entry) => {
@@ -897,6 +893,11 @@ class Commands {
 
     return this.state.importRaw(id, data)
       .then(() => this.queries.allIdentities().find((identity) => identity.id === id))
+      .then((identity) => {
+        this.mergeDuplicateEntriesForIdentity(identity)
+
+        return identity
+      })
   }
 
   // Two snapshots in one log, which happens when one arrives in a merge. They
