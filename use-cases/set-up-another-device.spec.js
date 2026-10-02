@@ -25,6 +25,7 @@ describe('Set up another device', () => {
 
     await app.click('[aria-label="You"]')
     await app.click('[aria-label="Back up now"]')
+    await app.click('[aria-label="Your own storage"]')
     await app.click('[aria-label="Show setup code"]')
   }
 

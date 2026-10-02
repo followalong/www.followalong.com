@@ -25,7 +25,8 @@ describe('Know my backup status', () => {
     })
 
     story('offers a way to set it up', () => {
-      expect(app.find('[aria-label="Set up backups"]').exists()).toEqual(true)
+      expect(app.find('[aria-label="Send code"]').exists()).toEqual(true)
+      expect(app.find('[aria-label="Your own storage"]').exists()).toEqual(true)
     })
 
     story('does not claim a successful sync', () => {

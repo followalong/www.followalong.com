@@ -131,7 +131,10 @@ export default {
     save () {
       this.app.commands.saveAddonForIdentity(this.identity, this.newAdapterConfig)
       this.modalOpen = false
-      this.$router.push('/add-ons')
+
+      // From the marketplace, to what is now installed. Anywhere else the
+      // form sits on, the reader stays.
+      if (this.$route.path === '/marketplace') this.$router.push('/add-ons')
     },
 
     uninstall () {

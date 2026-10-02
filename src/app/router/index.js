@@ -7,6 +7,7 @@ import About from '../views/about/component.vue'
 import Settings from '../views/settings/component.vue'
 import Signal from '../views/signal/component.vue'
 import Marketplace from '../views/marketplace/component.vue'
+import Storage from '../views/storage/component.vue'
 
 const routes = [
   {
@@ -27,6 +28,11 @@ const routes = [
   {
     path: '/marketplace',
     component: Marketplace,
+    props: true
+  },
+  {
+    path: '/storage',
+    component: Storage,
     props: true
   },
   {

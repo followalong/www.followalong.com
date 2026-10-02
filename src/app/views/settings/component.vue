@@ -1,53 +1,40 @@
 <template>
   <PageBody>
-    <Card :tone="sync.status === 'failed' ? 'danger' : sync.status === 'off' ? 'default' : 'success'">
-      <div class="flex items-start justify-between gap-3">
-        <div class="min-w-0">
-          <h2
-            :class="`text-sm font-bold ${
-              sync.status === 'failed'
-                ? 'text-danger'
-                : sync.status === 'off' ? 'text-ink' : 'text-following'
-            }`"
-          >
-            {{ SYNC_TITLES[sync.status] }}
-          </h2>
-          <p class="text-meta text-ink-secondary mt-1">
-            <span v-if="sync.status === 'off'">
-              This device is the only copy. If you lose it, you lose everything.
-            </span>
-            <span v-else-if="sync.status === 'failed'">{{ sync.error }}</span>
-            <span v-else-if="sync.at">Last saved to {{ sync.target }} {{ syncedAgo }}</span>
-            <span v-else>Saving to {{ sync.target }}…</span>
-          </p>
-          <p class="text-meta text-ink-muted mt-1.5">
-            {{ plural(contents.feeds, 'feed') }} ·
-            {{ plural(contents.entries, 'entry', 'entries') }} ·
-            {{ plural(contents.events, 'event') }} in the log
-          </p>
-        </div>
-      </div>
+    <BackupCard
+      :app="app"
+      :identity="identity"
+    >
+      <template #details>
+        <p class="text-meta text-ink-muted mt-1.5">
+          {{ plural(contents.feeds, 'feed') }} ·
+          {{ plural(contents.entries, 'entry', 'entries') }} ·
+          {{ plural(contents.events, 'event') }} in the log
+        </p>
+      </template>
 
-      <div class="flex gap-2 mt-3">
-        <Button
-          v-if="sync.status === 'off'"
-          aria-label="Set up backups"
-          class="!py-1.5 !px-3 !text-chip"
-          @click="$router.push('/marketplace')"
+      <!-- Two targets, never both at once. An account is the one a reader is
+ offered; a device syncing to a bucket is sent to the bucket's own page and
+ offered no sign in. -->
+      <AccountPanel
+        v-if="account || sync.status === 'off'"
+        :app="app"
+        :identity="identity"
+        @identity="app.setIdentity($event)"
+      />
+      <p
+        v-if="!account"
+        class="text-meta text-ink-muted mt-3"
+      >
+        <span v-if="sync.status !== 'off'">This device syncs to your own storage.</span>
+        <router-link
+          to="/storage"
+          aria-label="Your own storage"
+          class="underline"
         >
-          Set up backups
-        </Button>
-        <Button
-          v-else
-          :variant="sync.status === 'failed' ? 'destructive' : 'secondary'"
-          aria-label="Back up now"
-          class="!py-1.5 !px-3 !text-chip"
-          @click="backUpNow"
-        >
-          {{ sync.status === 'syncing' ? 'Backing up…' : 'Back up now' }}
-        </Button>
-      </div>
-    </Card>
+          {{ sync.status === 'off' ? 'Want to manage your own storage?' : 'Manage your own storage' }}
+        </router-link>
+      </p>
+    </BackupCard>
 
     <Card :padded="false">
       <ListRow
@@ -58,6 +45,7 @@
         @click="openRename"
       />
       <ListRow
+        v-if="!account"
         title="Backup password"
         :meta="passwordMeta"
         action
@@ -98,14 +86,6 @@
           <span class="text-meta font-semibold text-primary flex-none">{{ copied ? 'Copied' : 'Copy' }}</span>
         </template>
       </ListRow>
-      <ListRow
-        v-if="sync.status !== 'off'"
-        title="Set up another device"
-        meta="show it a code to scan"
-        action
-        aria-label="Show setup code"
-        @click="openHandoff"
-      />
       <ListRow
         title="Paste an identity"
         meta="a copy from another device"
@@ -338,59 +318,6 @@
     </Sheet>
 
     <Sheet
-      :open="handoffOpen"
-      title="Set up another device"
-      @close="handoffOpen = false"
-    >
-      <p class="text-body text-ink-secondary">
-        Point the other device's camera at this. It opens Follow Along there
-        and pulls this identity down from your backup, so nothing has to be
-        typed or pasted.
-      </p>
-
-      <QrCode
-        v-if="handoffLink"
-        :value="handoffLink"
-        alt="Setup code"
-        aria-label="Setup code"
-        class="mt-4"
-      />
-
-      <p class="mt-4 text-body text-danger">
-        Anyone who scans this can read your backup. Show it to your own camera,
-        do not photograph it for anyone else.
-      </p>
-
-      <TextField
-        :model-value="handoffLink"
-        readonly
-        multiline
-        :rows="3"
-        aria-label="Handoff link"
-        class="mt-3"
-        hint="The same thing as a link, for a device that cannot scan."
-      />
-
-      <p
-        v-if="handoffError"
-        class="mt-3 text-body text-danger"
-      >
-        {{ handoffError }}
-      </p>
-
-      <template #footer>
-        <Button
-          class="flex-1"
-          variant="secondary"
-          aria-label="Copy setup link"
-          @click="copyHandoff"
-        >
-          {{ handoffCopied ? 'Copied' : 'Copy the link' }}
-        </Button>
-      </template>
-    </Sheet>
-
-    <Sheet
       :open="restoreOpen"
       title="Paste an identity"
       @close="closeRestore"
@@ -469,17 +396,10 @@ import Button from '../../components/button/component.vue'
 import PageBody from '../../components/page-body/component.vue'
 import Card from '../../components/card/component.vue'
 import TextField from '../../components/text-field/component.vue'
-import QrCode from '../../components/qr-code/component.vue'
+import BackupCard from '../../components/backup-card/component.vue'
+import AccountPanel from '../../components/account-panel/component.vue'
 
 const CHANGELOG_PATH = '/https://changelog.followalong.com/feed.xml'
-
-const SYNC_TITLES = {
-  off: 'Not backed up',
-  idle: 'Backup configured',
-  syncing: 'Backing up…',
-  saved: 'Backed up',
-  failed: 'Backup failed'
-}
 
 const PLAYING_LABELS = {
   youtube: 'a YouTube video',
@@ -507,7 +427,8 @@ export default {
     PageBody,
     Card,
     TextField,
-    QrCode
+    BackupCard,
+    AccountPanel
   },
 
   props: ['app', 'identity'],
@@ -521,14 +442,9 @@ export default {
     importError: '',
     importReport: '',
     opml: '',
-    handoffOpen: false,
-    handoffLink: '',
-    handoffError: '',
-    handoffCopied: false,
     encryptionOpen: false,
     strategy: 'none',
     STRATEGY_LABELS,
-    SYNC_TITLES,
     now: Date.now(),
     STRATEGY_HINTS,
     renameOpen: false,
@@ -547,6 +463,13 @@ export default {
       return this.app.queries.syncStatusForIdentity(this.identity)
     },
 
+    // The hosted account this device is signed in to, if it syncs to one.
+    account () {
+      return this.sync.status !== 'off' && !this.app.queries.remoteAdapterForIdentity(this.identity).data.bucket
+        ? this.app.queries.accountForIdentity(this.identity)
+        : null
+    },
+
     contents () {
       return this.app.queries.backupContentsForIdentity(this.identity)
     },
@@ -558,7 +481,8 @@ export default {
     backupName () {
       const remote = this.app.queries.remoteAdapterForIdentity(this.identity)
 
-      return (remote && (remote.data.bucket || remote.title)) || ''
+      // An account's log holds no keys: the token never enters it.
+      return (!this.account && remote && (remote.data.bucket || remote.title)) || ''
     },
 
     // A password with nothing to protect yet should say so, rather than
@@ -567,15 +491,6 @@ export default {
       const label = STRATEGY_LABELS[this.strategy]
 
       return this.sync.status === 'off' ? `${label} · not in use yet` : label
-    },
-
-    syncedAgo () {
-      const seconds = Math.max(0, Math.round((this.now - this.sync.at) / 1000))
-
-      if (seconds < 60) return 'just now'
-      if (seconds < 3600) return `${Math.round(seconds / 60)} min ago`
-
-      return new Date(this.sync.at).toLocaleString()
     },
 
     identities () {
@@ -639,13 +554,6 @@ export default {
 
     plural (count, one, many) {
       return `${count} ${count === 1 ? one : (many || `${one}s`)}`
-    },
-
-    backUpNow () {
-      this.now = Date.now()
-
-      return this.app.commands.syncIdentity(this.identity)
-        .then(() => { this.now = Date.now() })
     },
 
     readStrategy () {
@@ -712,24 +620,6 @@ export default {
       return this.app.confirm('Are you sure you want to roll up this identity?')
         .then(() => this.app.commands.createProjectionForIdentity(this.identity))
         .then(() => this.$router.push('/'))
-        .catch(() => {})
-    },
-
-    openHandoff () {
-      this.handoffOpen = true
-      this.handoffError = ''
-      this.handoffCopied = false
-
-      return this.app.commands.handoffForIdentity(this.identity)
-        .then((setup) => {
-          this.handoffLink = setup ? `${window.location.origin}/#${setup}` : ''
-        })
-        .catch((e) => { this.handoffError = e.message })
-    },
-
-    copyHandoff () {
-      return Promise.resolve(this.app.commands.copyToClipboard(this.handoffLink))
-        .then(() => { this.handoffCopied = true })
         .catch(() => {})
     },
 

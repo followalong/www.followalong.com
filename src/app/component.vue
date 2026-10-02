@@ -173,7 +173,8 @@ const PAGES = {
   '/settings': { title: 'You' },
   '/help': { title: 'Help', back: '/settings' },
   '/about': { title: 'About', back: '/settings' },
-  '/add-ons': { title: 'Add-ons', back: '/settings' }
+  '/add-ons': { title: 'Add-ons', back: '/settings' },
+  '/storage': { title: 'Your own storage', back: '/settings' }
 }
 
 export default {
@@ -240,6 +241,24 @@ export default {
     },
     // How often an open window asks the bucket what another device wrote, and
     // how long it rests after an answer before asking again.
+    // The browser's own fetch, for the hosted account. Not `fetch` above,
+    // which answers in the shape a feed poll reads.
+    hostedFetch: {
+      type: Function,
+      default: (url, init) => window.fetch(url, init)
+    },
+    // Opens a page of somebody else's (the checkout, the billing page) beside
+    // the app, and answers whether it opened: a blocker can refuse.
+    openPage: {
+      type: Function,
+      default: (url) => {
+        const opened = window.open(url, '_blank')
+
+        if (opened) opened.opener = null
+
+        return !!opened
+      }
+    },
     pullEveryMs: {
       type: Number,
       default: 60000
@@ -255,7 +274,8 @@ export default {
     const queries = new Queries({
       fetch: this.fetch,
       state: this.state,
-      awsClient: this.awsClient
+      awsClient: this.awsClient,
+      hostedFetch: this.hostedFetch
     })
     const commands = new Commands({
       fetch: this.fetch,
@@ -265,6 +285,7 @@ export default {
       scrollTo: this.scrollTo,
       wakeLock: this.wakeLock,
       copyToClipboard: this.copyToClipboard,
+      hostedFetch: this.hostedFetch,
       pullEveryMs: this.pullEveryMs,
       pullGapMs: this.pullGapMs
     })

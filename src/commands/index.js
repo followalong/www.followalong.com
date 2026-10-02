@@ -5,6 +5,7 @@ import feedsFromOpml from '../queries/opml.js'
 import UnkeyableEntryError from '../queries/unkeyable-entry-error.js'
 import { channelUrlForFeed, ogImage } from '../queries/channel-icon.js'
 import fingerprint from './fingerprint.js'
+import account from './account.js'
 import { sessionsIn, started, closed, resumed, nowPlaying } from '../queries/sessions.js'
 import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT_SIGNALS, SAVED_SIGNAL } from './seed.js'
 
@@ -29,6 +30,10 @@ const MOVED = (e) => e.status === 412 || e.status === 409
 // CORS policy that does not allow the header fails the preflight, which
 // reaches us as a bare TypeError, and the rest answer 501 or a 400 about it.
 const CANNOT = (e) => e.name === 'TypeError' || e.status === 501 || (e.status === 400 && /implemented|supported/i.test(e.message))
+
+// A refusal about the account is not a refusal about the copy. Wrapping one
+// in "could not read" would bury the only sentence the reader can act on.
+const ACCOUNT = (e) => e.status === 401 || e.status === 402 || e.status === 413 || e.status === 429
 
 const NOT_MODIFIED = 304
 const SYNC_DEBOUNCE = 1500
@@ -76,10 +81,16 @@ class Commands {
   // Only the feeds are taken. The poll loop fetches their entries later, as
   // it would for a feed followed by hand.
   importOpmlForIdentity (identity, text) {
+    return this.followFeedsForIdentity(identity, feedsFromOpml(text))
+  }
+
+  // Each address once: one the identity already follows, or that comes twice,
+  // is counted and skipped.
+  followFeedsForIdentity (identity, feeds) {
     const known = new Set(this.queries.feedsForIdentity(identity).map((feed) => this.queries.urlForFeed(feed)))
     const report = { followed: 0, skipped: 0 }
 
-    feedsFromOpml(text).forEach(({ url, title }) => {
+    feeds.forEach(({ url, title }) => {
       if (known.has(url)) {
         report.skipped++
         return
@@ -190,11 +201,14 @@ class Commands {
     let resting = null
     let wanted = false
 
-    const pull = () => {
+    const pull = (clock) => {
       const identity = current()
 
       if (document.visibilityState === 'hidden') return
       if (!identity || !this.queries.remoteAdapterForIdentity(identity) || (this._syncing || {})[identity.id]) return
+      // A refusal with a reason (not paid, out of space) is asked about again
+      // on coming back, not every minute.
+      if (clock && this.state.getConfig(identity.id).syncReason) return
 
       if (resting) {
         wanted = true
@@ -219,15 +233,16 @@ class Commands {
     }
 
     const events = [[document, 'visibilitychange'], [window, 'focus'], [window, 'online']]
-    const every = this.pullEveryMs && setInterval(pull, this.pullEveryMs)
+    const back = () => pull()
+    const every = this.pullEveryMs && setInterval(() => pull(true), this.pullEveryMs)
 
-    events.forEach(([target, name]) => target.addEventListener(name, pull))
+    events.forEach(([target, name]) => target.addEventListener(name, back))
 
     return () => {
       wanted = false
       clearTimeout(resting)
       clearInterval(every)
-      events.forEach(([target, name]) => target.removeEventListener(name, pull))
+      events.forEach(([target, name]) => target.removeEventListener(name, back))
     }
   }
 
@@ -285,15 +300,25 @@ class Commands {
         this.state.updateConfig(identity.id, {
           syncStatus: 'saved',
           syncedAt: Date.now(),
-          syncError: ''
+          syncError: '',
+          syncReason: ''
         })
       })
       .catch((e) => {
+        // A dead token is not a request to retry: every later one fails the
+        // same way, and the reader has to sign in again either way.
+        if (e && e.status === 401 && this.queries.accountForIdentity(identity)) {
+          return this.signOutOfAccount(identity, e.message)
+        }
+
         // Recorded rather than rethrown: this runs on a debounce from every
-        // tracked event, and a rejection there has nobody to catch it.
+        // tracked event, and a rejection there has nobody to catch it. The
+        // reason is what the service called it, so the screen can offer a
+        // renewal for a lapse and nothing for an account that was closed.
         this.state.updateConfig(identity.id, {
           syncStatus: 'failed',
-          syncError: (e && e.message) || 'Could not save'
+          syncError: (e && e.message) || 'Could not save',
+          syncReason: (e && e.reason) || ''
         })
       })
       .then(() => this.queries.syncStatusForIdentity(identity))
@@ -331,6 +356,8 @@ class Commands {
         return etag ? { 'if-match': etag } : {}
       })
       .catch((e) => {
+        if (e && ACCOUNT(e)) throw e
+
         if (!NOTHING_THERE.test((e && e.message) || '')) {
           throw new Error(`Could not read the copy already there: ${(e && e.message) || 'unknown'}`)
         }
@@ -382,7 +409,9 @@ class Commands {
   // longer reach its bucket goes on saying it is backed up, and for somebody
   // who only reads, no write ever follows to find out.
   restoreIdentityFromRemote (identity) {
-    const adapter = this.queries.addonAdapterForActionForIdentity(identity, 'get')
+    const adapter = this.queries.remoteAdapterForIdentity(identity)
+
+    if (!adapter) return Promise.resolve()
 
     return this.keyForIdentity(identity)
       .then((key) => adapter.get(identity, decrypt(key), this.remoteVersionForIdentity(identity)))
@@ -1060,5 +1089,7 @@ class Commands {
     }
   }
 }
+
+Object.assign(Commands.prototype, account)
 
 export default Commands

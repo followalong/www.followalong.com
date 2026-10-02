@@ -59,7 +59,9 @@ const mountApp = (options) => {
         // runs out of them.
         pullEveryMs: 0,
         pullGapMs: options.pullGapMs || 0,
-        awsClient: options.awsClient || (() => ({ fetch: () => Promise.resolve(s3Response({ status: 404, body: '<Error><Code>NoSuchKey</Code></Error>' })) }))
+        awsClient: options.awsClient || (() => ({ fetch: () => Promise.resolve(s3Response({ status: 404, body: '<Error><Code>NoSuchKey</Code></Error>' })) })),
+        hostedFetch: options.hostedFetch || (() => Promise.reject(new TypeError('Failed to fetch'))),
+        openPage: options.openPage || vi.fn(() => true)
       }
     })
 
@@ -188,6 +190,110 @@ const s3Bucket = ({ answer, objects = {} } = {}) => {
   return bucket
 }
 
+// The hosted service, as far as the app can tell: accounts by email, one log
+// each, a new ETag on every write, a write refused unless it names the copy it
+// replaces, and a code by email to get a token. `refuse` answers every
+// /v1/log request with what a spec puts there, `refuseWrites` only the writes.
+// `subscribed` and `source` are what /v1/account says; `portal` and `remove`
+// make those two answer a given refusal.
+const hostedService = () => {
+  const service = { accounts: new Map(), requests: [], code: '123456', writes: 0, refuse: null, refuseWrites: null, subscribed: true, source: 'stripe', portal: null, remove: null }
+
+  const answer = ({ etag, ...rest }) => s3Response(Object.assign(rest, { headers: Object.assign({ etag }, rest.headers) }))
+
+  const signin = (path, sent) => {
+    if (path === '/v1/signin/codes') {
+      if (!sent.email) return answer({ status: 400, body: '{"error":"email_required"}' })
+      if (!/@/.test(sent.email)) return answer({ status: 400, body: '{"error":"email_invalid"}' })
+
+      return answer({ status: 202, body: '{"result":"sent"}' })
+    }
+
+    // A wrong code answers the same whether or not the address has an account.
+    if (sent.code !== service.code) return answer({ status: 401, body: '{"error":"bad_code"}' })
+
+    if (!service.accounts.has(sent.email)) service.accounts.set(sent.email, { id: `acc_${service.accounts.size + 1}`, log: null })
+
+    return answer({ status: 201, body: JSON.stringify({ id: service.accounts.get(sent.email).id, token: `tok_${sent.email}` }) })
+  }
+
+  const respond = (path, { method = 'GET', body, headers = {} }) => {
+    if (path.startsWith('/v1/signin/')) return signin(path, JSON.parse(body))
+
+    const held = service.accounts.get(`${headers.authorization || ''}`.replace('Bearer tok_', ''))
+
+    if (!held) return answer({ status: 401, body: '{"error":"unauthorized"}' })
+
+    if (path === '/v1/checkout') {
+      if (service.subscribed) return answer({ status: 409, body: '{"error":"already_subscribed"}' })
+
+      return answer({ status: 201, body: '{"url":"https://checkout.stripe.com/c/pay/cs_1"}' })
+    }
+
+    if (path === '/v1/portal') {
+      if (service.portal) return answer(service.portal)
+      if (service.source !== 'stripe') return answer({ status: 409, body: '{"error":"no_subscription"}' })
+
+      return answer({ status: 201, body: '{"url":"https://billing.stripe.com/p/session/ps_1"}' })
+    }
+
+    // Deleting takes the account, its log and its token with it.
+    if (path === '/v1/account' && method === 'DELETE') {
+      if (service.remove) return answer(service.remove)
+
+      service.accounts.forEach((each, email) => { if (each === held) service.accounts.delete(email) })
+
+      return answer({ status: 204 })
+    }
+
+    // Never paid is the epoch, as the service writes it.
+    if (path === '/v1/account') {
+      return answer({
+        body: JSON.stringify({
+          id: held.id,
+          plan: service.subscribed ? 'plus' : 'none',
+          status: 'active',
+          source: service.subscribed ? service.source : 'manual',
+          expires_at: service.subscribed ? '2099-01-01T00:00:00Z' : '1970-01-01T00:00:00Z'
+        })
+      })
+    }
+
+    if (service.refuse) return answer(service.refuse)
+    if (method === 'PUT' && service.refuseWrites) return answer(service.refuseWrites)
+
+    if (method === 'PUT') {
+      if (!headers['if-match'] && !headers['if-none-match']) return answer({ status: 428, body: '{"error":"condition_required"}' })
+
+      if ((headers['if-match'] && headers['if-match'] !== (held.log || {}).etag) || (headers['if-none-match'] === '*' && held.log)) {
+        return answer({ status: 412, body: '{"error":"version_conflict"}' })
+      }
+
+      held.log = { body, etag: `"v${++service.writes}"` }
+
+      return answer({ status: 204, etag: held.log.etag })
+    }
+
+    if (!held.log) return answer({ status: 404, body: '{"error":"no_log"}' })
+    if (headers['if-none-match'] === held.log.etag) return answer({ status: 304 })
+
+    return answer(held.log)
+  }
+
+  service.fetch = (url, init = {}) => {
+    const request = { url: `${url}`, path: new URL(url).pathname, method: init.method || 'GET', body: init.body, headers: init.headers || {} }
+
+    service.requests.push(request)
+
+    return service.offline ? Promise.reject(new TypeError('Failed to fetch')) : Promise.resolve(respond(request.path, init))
+  }
+
+  service.logs = () => service.requests.filter((request) => request.path === '/v1/log')
+  service.body = () => ([...service.accounts.values()][0].log || {}).body || null
+
+  return service
+}
+
 // Roll up is retired, so nothing in the app makes one of these any more. Logs
 // written while it existed still arrive, and every object inside one exists
 // only in that event, so the specs that cover them build one themselves.
@@ -299,6 +405,7 @@ export {
   rollUp,
   s3Bucket,
   s3Response,
+  hostedService,
   story,
   event,
   vi

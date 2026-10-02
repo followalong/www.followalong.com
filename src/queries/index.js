@@ -1,6 +1,7 @@
 import { XMLParser } from 'fast-xml-parser'
 import linkifyHtml from 'linkify-html'
 import { ADAPTERS, None } from './addons.js'
+import HostedAdapter from '../adapters/hosted.js'
 import SORT_BY_ORDER from './sorters/sort-by-order.js'
 import SORT_BY_TIME from './sorters/sort-by-time.js'
 import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
@@ -738,10 +739,23 @@ class Queries {
 
   // The None adapter answers save() by resolving and doing nothing, so an
   // identity with no add-on would otherwise look permanently backed up.
+  // A bucket of the reader's own, else the account this device signed in to.
+  // The bucket first: its keys are in the log, and that log must not go to a
+  // service that can read it.
   remoteAdapterForIdentity (identity) {
     const adapter = this.addonAdapterForActionForIdentity(identity, 'save')
 
-    return adapter && adapter.adapter !== 'none' ? adapter : null
+    if (adapter && adapter.adapter !== 'none') return adapter
+
+    const account = this.accountForIdentity(identity)
+
+    return account ? new HostedAdapter({ fetch: this.hostedFetch }, { id: 'account', data: account }) : null
+  }
+
+  // { email, accountId, token }, or null. Out of the device's own config,
+  // never the log.
+  accountForIdentity (identity) {
+    return (identity && this.state.getConfig(identity.id).account) || null
   }
 
   // Only the runs that ended without saying goodbye. Never throws: a broken
@@ -762,7 +776,9 @@ class Queries {
     const config = this.state.getConfig(identity.id) || {}
     const remote = this.remoteAdapterForIdentity(identity)
 
-    if (!remote) return { status: 'off', at: 0, error: '', target: '' }
+    // Signed out by the service rather than by the reader: said where the
+    // sign in is.
+    if (!remote) return { status: 'off', at: 0, error: config.accountError || '', target: '' }
 
     return {
       // 'off' describes having nowhere to sync to, so a remote being
@@ -770,6 +786,7 @@ class Queries {
       status: !config.syncStatus || config.syncStatus === 'off' ? 'idle' : config.syncStatus,
       at: config.syncedAt || 0,
       error: config.syncError || '',
+      reason: config.syncReason || '',
       // Not a failed backup, and it must not be shown as one: what was saved
       // is still saved. It is this device having lost sight of the bucket,
       // which is worth knowing before the next write finds out the hard way.
