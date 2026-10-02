@@ -1,37 +1,20 @@
 export default (s) => {
-  // s = new DOMParser().parseFromString(s, 'text/html').documentElement.textContent
-
-  var div = document.createElement('div')
-  var scripts; var i
+  const div = document.createElement('div')
 
   div.innerHTML = s
 
-  scripts = div.getElementsByTagName('script')
+  // meta and base send the whole page elsewhere without a click.
+  div.querySelectorAll('script, style, meta, base').forEach(($el) => $el.remove())
 
-  for (i = scripts.length - 1; i >= 0; i--) {
-    scripts[i].parentNode.removeChild(scripts[i])
-  }
+  div.querySelectorAll('*').forEach(($el) => {
+    $el.removeAttribute('style')
+    $el.removeAttribute('width')
+    $el.removeAttribute('height')
+    $el.removeAttribute('class')
+  })
 
-  scripts = div.getElementsByTagName('style')
-
-  for (i = scripts.length - 1; i >= 0; i--) {
-    scripts[i].parentNode.removeChild(scripts[i])
-  }
-
-  const $els = div.querySelectorAll('*')
-
-  for (i = $els.length - 1; i >= 0; i--) {
-    $els[i].removeAttribute('style')
-    $els[i].removeAttribute('width')
-    $els[i].removeAttribute('height')
-    $els[i].removeAttribute('class')
-  }
-
-  const $as = div.querySelectorAll('a')
-
-  for (i = $as.length - 1; i >= 0; i--) {
-    $as[i].target = '_blank'
-  }
+  // Whatever leaves, leaves the app: the native shell has one webview.
+  div.querySelectorAll('a, area, form').forEach(($el) => { $el.target = '_blank' })
 
   return div.innerHTML
 }

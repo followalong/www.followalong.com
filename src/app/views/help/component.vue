@@ -8,6 +8,7 @@
         Email us at
         <a
           href="mailto:followalong@protonmail.com"
+          target="_blank"
           class="text-primary font-semibold"
         >followalong@protonmail.com</a>
         for a quick response.
