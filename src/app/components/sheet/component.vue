@@ -13,7 +13,7 @@
     <div
       v-if="open"
       data-sheet-scrim
-      class="fixed inset-y-0 left-0 w-full max-w-app z-50 bg-chrome/70 flex flex-col justify-end"
+      class="fixed inset-0 mx-auto w-full max-w-app z-50 bg-chrome/70 flex flex-col justify-end"
       @click.self="$emit('close')"
     >
       <Transition

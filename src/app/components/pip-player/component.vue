@@ -1,7 +1,7 @@
 <template>
   <div
     data-pip
-    class="fixed bottom-tab-bar left-0 w-full max-w-app z-40 px-3 flex justify-end pointer-events-none"
+    class="fixed bottom-tab-bar inset-x-0 mx-auto w-full max-w-app z-40 px-3 flex justify-end pointer-events-none"
   >
     <div class="w-pip rounded-xl overflow-hidden shadow-2xl pointer-events-auto">
       <div

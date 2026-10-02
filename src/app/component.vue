@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="!isLoading"
-    class="min-h-screen w-full max-w-app flex flex-col bg-page"
+    class="min-h-screen w-full max-w-app mx-auto flex flex-col bg-page"
   >
     <AppBar
       :title="title"
@@ -137,7 +137,7 @@
     <!-- One nav, in one place, whatever the screen. -->
     <NavTabs
       on="surface"
-      class="fixed bottom-0 left-0 w-full max-w-app z-30 border-t border-hairline-strong bg-white pt-3 pb-6"
+      class="fixed bottom-0 inset-x-0 mx-auto w-full max-w-app z-30 border-t border-hairline-strong bg-white pt-3 pb-6"
     />
   </div>
 </template>

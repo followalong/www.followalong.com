@@ -1,7 +1,7 @@
 <template>
   <div
     data-search-panel
-    class="fixed inset-y-0 left-0 w-full max-w-app z-50 bg-chrome flex flex-col"
+    class="fixed inset-0 mx-auto w-full max-w-app z-50 bg-chrome flex flex-col"
   >
     <div class="w-full flex items-center gap-3 px-4 py-3">
       <button
