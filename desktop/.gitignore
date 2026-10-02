@@ -1,0 +1,4 @@
+# Generated: the Rust build, Tauri's capability schemas, and the simulator build.
+src-tauri/target/
+src-tauri/gen/schemas/
+.ios-sim/

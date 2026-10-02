@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Follow Along",
+  "version": "../../package.json",
+  "identifier": "com.followalong.reader",
+  "build": {
+    "frontendDist": "../../dist",
+    "beforeBuildCommand": "yarn --cwd .. build"
+  },
+  "app": {
+    "windows": [],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "app",
+      "dmg"
+    ],
+    "category": "News",
+    "shortDescription": "Follow the people and communities you care about.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    },
+    "iOS": {
+      "developmentTeam": "L22C9S8VZ7",
+      "minimumSystemVersion": "15.0"
+    }
+  }
+}
