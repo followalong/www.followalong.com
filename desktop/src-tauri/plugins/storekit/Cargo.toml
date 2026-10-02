@@ -1,0 +1,14 @@
+[package]
+name = "tauri-plugin-storekit"
+version = "0.1.0"
+edition = "2021"
+publish = false
+# tauri-plugin's build helper requires `links` to match the name.
+links = "tauri-plugin-storekit"
+
+[dependencies]
+tauri = { version = "2", default-features = false, features = ["wry"] }
+
+[build-dependencies]
+# =2.6.3: a newer one drags tauri-utils past what rustc 1.88 builds (see Cargo.lock).
+tauri-plugin = { version = "=2.6.3", features = ["build"] }

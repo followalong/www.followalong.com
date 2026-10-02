@@ -2,3 +2,5 @@
 src-tauri/target/
 src-tauri/gen/schemas/
 .ios-sim/
+# The root .gitignore drops Vim swap files with *.sw*, which also drops every Swift file.
+!*.swift

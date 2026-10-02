@@ -1,0 +1,90 @@
+{
+  "identifier" : "2F1A7C4E",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6740216983",
+    "_developerTeamID" : "L22C9S8VZ7",
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21700001",
+      "localizations" : [
+
+      ],
+      "name" : "Follow Along Sync",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "2.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6740300001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Keep your feeds on every device.",
+              "displayName" : "Sync, monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.followalong.reader.sync.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Sync monthly",
+          "subscriptionGroupID" : "21700001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "24.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6740300002",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Keep your feeds on every device.",
+              "displayName" : "Sync, yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.followalong.reader.sync.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Sync yearly",
+          "subscriptionGroupID" : "21700001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

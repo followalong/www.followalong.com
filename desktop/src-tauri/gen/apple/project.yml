@@ -58,12 +58,33 @@ targets:
         # which is exempt. Declared so App Store Connect does not ask on every upload.
         # `ios init` drops this key; ios-project.test.sh fails until it is back.
         ITSAppUsesNonExemptEncryption: false
+        # The app bar is blue, so the clock and battery are white. The web page owns nothing
+        # above the safe area, and Tauri's view controller sets no style of its own.
+        # `ios init` drops these too; ios-project.test.sh fails until they are back.
+        UIViewControllerBasedStatusBarAppearance: false
+        UIStatusBarStyle: UIStatusBarStyleLightContent
+        # followalong:// opens the app where a Universal Link cannot (no AASA yet, or a
+        # handoff from another app). `ios init` drops it; ios-project.test.sh fails until it is back.
+        CFBundleURLTypes:
+          - CFBundleURLName: com.followalong.reader
+            CFBundleURLSchemes: [followalong]
+    # https://www.followalong.com/... opens the app once the site serves
+    # .well-known/apple-app-site-association for it. xcodegen writes the file from these
+    # properties. `ios init` drops them; ios-project.test.sh fails until they are back.
     entitlements:
       path: follow-along_iOS/follow-along_iOS.entitlements
+      properties:
+        com.apple.developer.associated-domains:
+          - applinks:www.followalong.com
     scheme:
       environmentVariables:
         RUST_BACKTRACE: full
         RUST_LOG: info
+      # Xcode's Run action sells the two placeholder subscriptions without App Store Connect.
+      # ios-storekit.test.sh does the same from a terminal through the test target.
+      # `ios init` drops both; ios-project.test.sh fails until they are back.
+      storeKitConfiguration: FollowAlong.storekit
+      testTargets: [follow-along_iOSTests]
     settings:
       base:
         ENABLE_BITCODE: false
@@ -73,6 +94,10 @@ targets:
         LIBRARY_SEARCH_PATHS[arch=arm64]: $(inherited) $(PROJECT_DIR)/Externals/arm64/$(CONFIGURATION) $(SDKROOT)/usr/lib/swift $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/$(PLATFORM_NAME) $(DEVELOPER_DIR)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0/$(PLATFORM_NAME)
         ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: true
         EXCLUDED_ARCHS[sdk=iphoneos*]: x86_64
+        # storekitd takes a StoreKit test session only from an app "installed for development",
+        # which is one whose entitlements carry get-task-allow. Xcode does not add it to a
+        # simulator build of this project, so the simulator gets it here. A device build does not.
+        CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]: Tests/Simulator.entitlements
       groups: [app]
     dependencies:
       - framework: libapp.a
@@ -99,3 +124,22 @@ targets:
       - script: sh "$SRCROOT/../../../ios-build-number.sh"
         name: Set Build Number
         basedOnDependencyAnalysis: false
+  # Simulator only, never shipped: buys a subscription against FollowAlong.storekit from inside
+  # the app. See Tests/ and ios-storekit.test.sh.
+  follow-along_iOSTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+      - path: FollowAlong.storekit
+        buildPhase: resources
+    dependencies:
+      - target: follow-along_iOS
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.followalong.reader.tests
+        GENERATE_INFOPLIST_FILE: true
+        # xcodegen derives this from the target name, and the product is named differently.
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Follow Along.app/Follow Along
+        ARCHS: [arm64]
+        VALID_ARCHS: arm64

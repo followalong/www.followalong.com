@@ -9,6 +9,7 @@
   },
   "app": {
     "windows": [],
+    "withGlobalTauri": true,
     "security": {
       "csp": null
     }
@@ -28,7 +29,8 @@
       "icons/icon.icns"
     ],
     "macOS": {
-      "minimumSystemVersion": "11.0"
+      "minimumSystemVersion": "11.0",
+      "entitlements": "Entitlements.plist"
     },
     "iOS": {
       "developmentTeam": "L22C9S8VZ7",

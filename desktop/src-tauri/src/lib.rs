@@ -2,6 +2,7 @@
 // tauri://localhost. That origin holds every reader's IndexedDB and is keyed by `identifier`
 // in tauri.conf.json, so the identifier and `useHttpsScheme` never change after a release.
 
+mod links_in;
 mod probe;
 
 // A webview has no tabs: a link with target="_blank" goes nowhere, so the page hands it to
@@ -39,7 +40,14 @@ fn open_url(app: tauri::AppHandle, url: tauri::Url) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+
+    // iOS buys through In-App Purchase. Only iOS builds the plugin, so only iOS has
+    // window.__TAURI__.storekit, and that is how the page tells the iOS build apart.
+    #[cfg(target_os = "ios")]
+    let builder = builder.plugin(tauri_plugin_storekit::init());
+
+    builder
         .invoke_handler(tauri::generate_handler![open_url])
         .register_uri_scheme_protocol("probe", |_ctx, req| {
             probe::report(&req.uri().to_string());
@@ -48,7 +56,14 @@ pub fn run() {
         .setup(|app| {
             let window =
                 tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::default())
-                    .initialization_script(LINKS_OUT);
+                    .initialization_script(LINKS_OUT)
+                    .on_page_load(|window, payload| links_in::on_page_load(&window, payload.event()));
+            #[cfg(any(target_os = "macos", target_os = "ios"))]
+            let window = if probe::requested() {
+                window.initialization_script(probe::OPEN_URL_LISTENER)
+            } else {
+                window
+            };
 
             // iOS honours a size and clips the page to it, so only desktop gets one.
             #[cfg(desktop)]
@@ -63,6 +78,11 @@ pub fn run() {
             }
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running Follow Along");
+        .build(tauri::generate_context!())
+        .expect("error while building Follow Along")
+        .run(|app, event| {
+            if let tauri::RunEvent::Opened { urls } = event {
+                links_in::opened(app, urls);
+            }
+        });
 }

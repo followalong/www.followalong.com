@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Merged into the Mac bundle's Info.plist by the bundler. iOS has its own in gen/apple/project.yml. -->
+<plist version="1.0">
+<dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.followalong.reader</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>followalong</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

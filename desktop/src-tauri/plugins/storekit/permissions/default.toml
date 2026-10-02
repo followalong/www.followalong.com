@@ -1,0 +1,5 @@
+"$schema" = "schemas/schema.json"
+
+[default]
+description = "Everything the reader needs to buy and restore the sync subscription through StoreKit."
+permissions = ["allow-products", "allow-purchase", "allow-entitlements", "allow-manage"]
