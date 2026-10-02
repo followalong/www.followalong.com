@@ -1,5 +1,5 @@
 import { describe, test, expect, vi } from 'vitest'
-import HostedAdapter, { HOSTED_URL, TIMEOUT_MS, sendCode, signIn, checkout, portal, account, deleteAccount } from './hosted.js'
+import HostedAdapter, { HOSTED_URL, TIMEOUT_MS, sendCode, signIn, checkout, portal, account, deleteAccount, appleTransaction } from './hosted.js'
 
 const SIGNED_IN = { token: 'tok_abc', email: 'reader@example.com', accountId: 'acc_1' }
 
@@ -222,5 +222,25 @@ describe('the account', () => {
     const { fetch } = refuses({ status: 502, body: '{"error":"delete_failed"}' })
 
     await expect(deleteAccount({ fetch, token: 'tok_abc' })).rejects.toThrow('We could not delete your account. Nothing was removed. Try again in a minute.')
+  })
+})
+
+describe('an App Store purchase', () => {
+  test('hands the signed transaction over and answers the account as it now stands', async () => {
+    const { requests, fetch } = service(() => response({ body: '{"id":"acc_1","plan":"plus","status":"active","source":"apple","expires_at":"2099-01-01T00:00:00Z"}' }))
+
+    expect(await appleTransaction({ fetch, token: 'tok_abc', signedTransaction: 'jws.acc_1.1' })).toMatchObject({ source: 'apple' })
+    expect(requests[0]).toMatchObject({ url: `${HOSTED_URL}/v1/apple/transactions`, method: 'POST', body: '{"signed_transaction":"jws.acc_1.1"}' })
+    expect(requests[0].headers.authorization).toEqual('Bearer tok_abc')
+  })
+
+  test('says each refusal in a sentence', async () => {
+    const say = (status, body) => appleTransaction({ fetch: refuses({ status, body }).fetch, token: 'tok_abc', signedTransaction: 'jws' }).catch((e) => e.message)
+
+    expect(await say(400, '{"error":"bad_payload"}')).toEqual('We could not read that purchase. Try Restore purchases.')
+    expect(await say(400, '{"error":"bad_signature"}')).toEqual('We could not confirm that purchase with Apple. Try Restore purchases.')
+    expect(await say(400, '{"error":"wrong_bundle"}')).toEqual('That purchase was made in a different app.')
+    expect(await say(403, '{"error":"wrong_account"}')).toEqual('That purchase belongs to a different account. Sign in with the email you subscribed with.')
+    expect(await say(503, '{"error":"apple_disabled"}')).toEqual('This service is not taking App Store subscriptions right now.')
   })
 })

@@ -150,6 +150,7 @@ import PipPlayer from './components/pip-player/component.vue'
 import Sheet from './components/sheet/component.vue'
 import Button from './components/button/component.vue'
 import { decodeHandoff } from '../queries/handoff.js'
+import openPage from './open-page.js'
 import Commands from '../commands/index.js'
 import MultiEventStore from '../state/multi-event-store.js'
 import VERSION from '../state/version.js'
@@ -247,17 +248,15 @@ export default {
       type: Function,
       default: (url, init) => window.fetch(url, init)
     },
-    // Opens a page of somebody else's (the checkout, the billing page) beside
-    // the app, and answers whether it opened: a blocker can refuse.
     openPage: {
       type: Function,
-      default: (url) => {
-        const opened = window.open(url, '_blank')
-
-        if (opened) opened.opener = null
-
-        return !!opened
-      }
+      default: openPage
+    },
+    // The App Store, where the iOS build's StoreKit plugin puts it. Its
+    // presence is how the app knows it is the iOS build; everywhere else null.
+    storekit: {
+      type: Object,
+      default: () => (window.__TAURI__ && window.__TAURI__.storekit) || null
     },
     pullEveryMs: {
       type: Number,
@@ -286,6 +285,7 @@ export default {
       wakeLock: this.wakeLock,
       copyToClipboard: this.copyToClipboard,
       hostedFetch: this.hostedFetch,
+      storekit: this.storekit,
       pullEveryMs: this.pullEveryMs,
       pullGapMs: this.pullGapMs
     })

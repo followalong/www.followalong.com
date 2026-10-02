@@ -7,6 +7,7 @@ import { routes } from '../src/app/router/index.js'
 import runners from '../src/state/runners.js'
 import MultiEventStore from '../src/state/multi-event-store.js'
 import App from '../src/app/component.vue'
+import { PRODUCTS } from '../src/adapters/storekit.js'
 
 const mountApp = (options) => {
   return new Promise(async (resolve) => {
@@ -61,7 +62,9 @@ const mountApp = (options) => {
         pullGapMs: options.pullGapMs || 0,
         awsClient: options.awsClient || (() => ({ fetch: () => Promise.resolve(s3Response({ status: 404, body: '<Error><Code>NoSuchKey</Code></Error>' })) })),
         hostedFetch: options.hostedFetch || (() => Promise.reject(new TypeError('Failed to fetch'))),
-        openPage: options.openPage || vi.fn(() => true)
+        openPage: options.openPage || vi.fn(() => true),
+        // The web, unless a spec hands it the iOS build's App Store.
+        storekit: options.storekit || null
       }
     })
 
@@ -194,12 +197,22 @@ const s3Bucket = ({ answer, objects = {} } = {}) => {
 // each, a new ETag on every write, a write refused unless it names the copy it
 // replaces, and a code by email to get a token. `refuse` answers every
 // /v1/log request with what a spec puts there, `refuseWrites` only the writes.
-// `subscribed` and `source` are what /v1/account says; `portal` and `remove`
-// make those two answer a given refusal.
+// `subscribed` and `source` are what /v1/account says; `portal`, `remove` and
+// `apple` make those requests answer a given refusal.
 const hostedService = () => {
-  const service = { accounts: new Map(), requests: [], code: '123456', writes: 0, refuse: null, refuseWrites: null, subscribed: true, source: 'stripe', portal: null, remove: null }
+  const service = { accounts: new Map(), requests: [], code: '123456', writes: 0, refuse: null, refuseWrites: null, subscribed: true, source: 'stripe', portal: null, remove: null, apple: null, transactions: [] }
 
   const answer = ({ etag, ...rest }) => s3Response(Object.assign(rest, { headers: Object.assign({ etag }, rest.headers) }))
+
+  // The account as /v1/account shows it. Never paid is the epoch, as the
+  // service writes it.
+  const view = (held) => JSON.stringify({
+    id: held.id,
+    plan: service.subscribed ? 'plus' : 'none',
+    status: 'active',
+    source: service.subscribed ? service.source : 'manual',
+    expires_at: service.subscribed ? '2099-01-01T00:00:00Z' : '1970-01-01T00:00:00Z'
+  })
 
   const signin = (path, sent) => {
     if (path === '/v1/signin/codes') {
@@ -246,17 +259,22 @@ const hostedService = () => {
       return answer({ status: 204 })
     }
 
-    // Never paid is the epoch, as the service writes it.
-    if (path === '/v1/account') {
-      return answer({
-        body: JSON.stringify({
-          id: held.id,
-          plan: service.subscribed ? 'plus' : 'none',
-          status: 'active',
-          source: service.subscribed ? service.source : 'manual',
-          expires_at: service.subscribed ? '2099-01-01T00:00:00Z' : '1970-01-01T00:00:00Z'
-        })
-      })
+    if (path === '/v1/account') return answer({ body: view(held) })
+
+    // An App Store purchase. The fake's JWS names the account it was bought
+    // for, as a real one carries appAccountToken, and paying lifts whatever
+    // refusal the log was answering.
+    if (path === '/v1/apple/transactions') {
+      if (service.apple) return answer(service.apple)
+
+      const signed = JSON.parse(body).signed_transaction
+
+      if (!`${signed}`.startsWith(`jws.${held.id}.`)) return answer({ status: 403, body: '{"error":"wrong_account"}' })
+
+      service.transactions.push(signed)
+      Object.assign(service, { subscribed: true, refuse: null, source: 'apple' })
+
+      return answer({ body: view(held) })
     }
 
     if (service.refuse) return answer(service.refuse)
@@ -292,6 +310,48 @@ const hostedService = () => {
   service.body = () => ([...service.accounts.values()][0].log || {}).body || null
 
   return service
+}
+
+const PRICES = { month: '$2.99', year: '$24.99' }
+
+// StoreKit as the iOS plugin answers it. `shelf` is what App Store Connect
+// sells, `answer` is how the next purchase sheet ends, and `owned` is what
+// the Apple Account holds: a JWS naming the account it was bought for.
+const fakeStoreKit = ({ shelf = Object.entries(PRODUCTS).map(([id, every]) => ({ id, displayName: 'Follow Along Sync', displayPrice: PRICES[every] })) } = {}) => {
+  const store = { shelf, answer: 'purchased', owned: [], calls: [] }
+  const called = (...call) => store.calls.push(call)
+
+  store.products = (ids) => {
+    called('products', ids)
+
+    return Promise.resolve(store.shelf.filter((product) => ids.includes(product.id)))
+  }
+
+  store.purchase = (productId, appAccountToken) => {
+    called('purchase', productId, appAccountToken)
+
+    if (store.answer !== 'purchased') return Promise.resolve({ status: store.answer })
+
+    const signedTransaction = `jws.${appAccountToken}.${store.owned.length + 1}`
+
+    store.owned.push(signedTransaction)
+
+    return Promise.resolve({ status: 'purchased', signedTransaction })
+  }
+
+  store.entitlements = () => {
+    called('entitlements')
+
+    return Promise.resolve([...store.owned])
+  }
+
+  store.manage = () => {
+    called('manage')
+
+    return Promise.resolve()
+  }
+
+  return store
 }
 
 // Roll up is retired, so nothing in the app makes one of these any more. Logs
@@ -406,6 +466,7 @@ export {
   s3Bucket,
   s3Response,
   hostedService,
+  fakeStoreKit,
   story,
   event,
   vi

@@ -40,7 +40,12 @@ const SAYS = {
   portal_disabled: 'This service cannot manage subscriptions right now.',
   portal_failed: 'We could not open your billing page. Try again in a minute.',
   // Stripe would not cancel, so the service stopped before erasing anything.
-  delete_failed: 'We could not delete your account. Nothing was removed. Try again in a minute.'
+  delete_failed: 'We could not delete your account. Nothing was removed. Try again in a minute.',
+  bad_payload: 'We could not read that purchase. Try Restore purchases.',
+  bad_signature: 'We could not confirm that purchase with Apple. Try Restore purchases.',
+  wrong_bundle: 'That purchase was made in a different app.',
+  wrong_account: 'That purchase belongs to a different account. Sign in with the email you subscribed with.',
+  apple_disabled: 'This service is not taking App Store subscriptions right now.'
 }
 
 const reason = (text) => {
@@ -136,6 +141,15 @@ const account = ({ fetch, token }) => send(fetch, '/v1/account', { headers: auth
 // Erases the account, its log and the token itself.
 const deleteAccount = ({ fetch, token }) => send(fetch, '/v1/account', { method: 'DELETE', headers: authorized(token) }).then(() => undefined)
 
+// On iOS the App Store takes the money, and the service learns of it from the
+// transaction Apple signed. Posting one twice is harmless. Answers the account
+// as it now stands.
+const appleTransaction = ({ fetch, token, signedTransaction }) => send(fetch, '/v1/apple/transactions', {
+  method: 'POST',
+  headers: Object.assign({ 'content-type': 'application/json' }, authorized(token)),
+  body: JSON.stringify({ signed_transaction: signedTransaction })
+}).then(parsed)
+
 // One account's log on the hosted service. The same shape the bucket adapter
 // has, so the read, merge and conditional write do not know which they hold.
 class HostedAdapter {
@@ -189,5 +203,5 @@ class HostedAdapter {
   }
 }
 
-export { HOSTED_URL, HOLDS_KEYS, TIMEOUT_MS, holdsStorageKeys, sendCode, signIn, checkout, portal, account, deleteAccount }
+export { HOSTED_URL, HOLDS_KEYS, TIMEOUT_MS, holdsStorageKeys, sendCode, signIn, checkout, portal, account, deleteAccount, appleTransaction }
 export default HostedAdapter

@@ -1,4 +1,5 @@
-import HostedAdapter, { HOLDS_KEYS, holdsStorageKeys, sendCode, signIn, account, checkout, portal, deleteAccount } from '../adapters/hosted.js'
+import HostedAdapter, { HOLDS_KEYS, holdsStorageKeys, sendCode, signIn, account, checkout, portal, deleteAccount, appleTransaction } from '../adapters/hosted.js'
+import { shelf } from '../adapters/storekit.js'
 import { DEFAULT_ADDONS } from './seed.js'
 
 // The log's own keys are written against the identity that made it, so a log
@@ -29,7 +30,9 @@ export default {
       .then(({ id, token }) => {
         const account = { email, accountId: id, token }
 
-        return this._identityOfAccount(identity, account).then((signed) => {
+        // Before the first read, so a subscription this Apple Account
+        // already holds lets it through.
+        return this._postEntitlements(account).catch(() => {}).then(() => this._identityOfAccount(identity, account)).then((signed) => {
           // A different target is one this device has never read.
           this.state.updateConfig(signed.id, { account, accountError: '', remoteEtag: null, remoteFingerprint: null })
 
@@ -112,6 +115,37 @@ export default {
 
   billingPageForIdentity (identity) {
     return portal(this._asAccount(identity))
+  },
+
+  // What the App Store sells, priced for the reader. Empty off the iOS build.
+  subscriptionProducts () {
+    return this.storekit ? shelf(this.storekit) : Promise.resolve([])
+  },
+
+  // One App Store purchase, bought for this account: the service reads the
+  // account id back out of Apple's signed transaction. Answers { status },
+  // and the account once one was bought.
+  purchaseSubscriptionForIdentity (identity, productId) {
+    const held = this.queries.accountForIdentity(identity)
+
+    return this.storekit.purchase(productId, held.accountId).then(({ status, signedTransaction }) =>
+      status === 'purchased' ? this._postTransaction(held, signedTransaction).then((account) => ({ status, account })) : { status })
+  },
+
+  // Everything this Apple Account holds goes to the service. A renewal, or a
+  // purchase made while offline, is otherwise never heard of there.
+  restorePurchasesForIdentity (identity) {
+    return this._postEntitlements(this.queries.accountForIdentity(identity)).then(() => this.accountDetailsForIdentity(identity))
+  },
+
+  _postEntitlements (held) {
+    if (!this.storekit || !held) return Promise.resolve([])
+
+    return this.storekit.entitlements().then((signed) => Promise.all(signed.map((jws) => this._postTransaction(held, jws))))
+  },
+
+  _postTransaction ({ token }, signedTransaction) {
+    return appleTransaction({ fetch: this.hostedFetch, token, signedTransaction })
   },
 
   // Erases the account on the service, then forgets it here as signing out

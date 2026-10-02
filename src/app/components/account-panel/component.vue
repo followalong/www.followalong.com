@@ -8,24 +8,44 @@
         Your subscription is active.
       </p>
       <div
-        v-if="manageable || renewable || buyable"
+        v-if="manageable || selling || restorable"
         class="flex flex-wrap gap-2"
       >
+        <template v-if="inApp && selling">
+          <Button
+            v-for="product in products"
+            :key="product.id"
+            :aria-label="`${verb}, ${product.displayPrice} a ${product.every}`"
+            class="!py-1.5 !px-3 !text-chip"
+            @click="buy(product)"
+          >
+            {{ verb }}, {{ product.displayPrice }} a {{ product.every }}
+          </Button>
+          <Button
+            v-if="!products.length"
+            :aria-label="verb"
+            class="!py-1.5 !px-3 !text-chip"
+            @click="buy()"
+          >
+            {{ verb }}
+          </Button>
+        </template>
         <Button
-          v-if="renewable"
-          aria-label="Renew"
+          v-else-if="selling"
+          :aria-label="verb"
           class="!py-1.5 !px-3 !text-chip"
           @click="subscribe"
         >
-          Renew
+          {{ verb }}
         </Button>
         <Button
-          v-if="buyable"
-          aria-label="Subscribe"
+          v-if="restorable"
+          variant="secondary"
+          aria-label="Restore purchases"
           class="!py-1.5 !px-3 !text-chip"
-          @click="subscribe"
+          @click="restore"
         >
-          Subscribe
+          Restore purchases
         </Button>
         <Button
           v-if="manageable"
@@ -158,7 +178,9 @@ const POLLS = 180
 
 // The hosted account: an email, then the six digit code mailed to it. A code
 // and not a link, so it works wherever the app is installed. Signed in, what
-// the account is paid up for and the ways to change that.
+// the account is paid up for and the ways to change that. In the iOS build
+// the App Store sells it and the web checkout is never linked to (guideline
+// 3.1.1).
 export default {
   components: { Button, TextField },
 
@@ -173,11 +195,17 @@ export default {
     working: false,
     error: '',
     notice: '',
-    // The account as the service last answered it.
-    held: null
+    // The account as the service last answered it, and what the App Store
+    // sells.
+    held: null,
+    products: []
   }),
 
   computed: {
+    inApp () {
+      return !!this.app.storekit
+    },
+
     account () {
       return this.app.queries.accountForIdentity(this.identity)
     },
@@ -210,9 +238,23 @@ export default {
       return !this.paid && !this.renewable && this.sync.reason !== 'account_cancelled' && (!!this.held || this.sync.reason === 'no_subscription')
     },
 
-    // Only what the billing page sold has a billing page.
+    selling () {
+      return this.renewable || this.buyable
+    },
+
+    verb () {
+      return this.renewable ? 'Renew' : 'Subscribe'
+    },
+
+    // The Apple Account may hold a subscription this account has not heard of.
+    restorable () {
+      return this.inApp && !this.paid
+    },
+
+    // Only the storefront that sold it can manage it: the App Store there,
+    // the billing page here.
     manageable () {
-      return !!this.held && this.held.source === 'stripe'
+      return !!this.held && (this.inApp ? this.paid && this.held.source === 'apple' : this.held.source === 'stripe')
     }
   },
 
@@ -221,6 +263,10 @@ export default {
     // is when the plan beside it has changed too.
     'sync.reason': { immediate: true, handler: 'shop' },
     'account.token': 'shop'
+  },
+
+  created () {
+    this.restock()
   },
 
   unmounted () {
@@ -290,7 +336,44 @@ export default {
       })
     },
 
+    // Quiet, and only what the store answers: an empty shelf is a plain
+    // Subscribe that asks again.
+    restock () {
+      return this.app.commands.subscriptionProducts().then((products) => { this.products = products })
+    },
+
+    // The App Store's purchase sheet. Closing it is the reader's own act, so
+    // it is answered with nothing.
+    buy (product) {
+      if (!product) {
+        return this.run(() => this.restock().then(() => {
+          if (!this.products.length) throw new Error('Subscriptions are not available right now. Try again later.')
+        }))
+      }
+
+      return this.run(() => this.app.commands.purchaseSubscriptionForIdentity(this.identity, product.id).then(({ status, account }) => {
+        if (account) return this.took(account)
+        if (status === 'pending') this.notice = 'Your purchase is waiting for approval. Sync starts once it is approved.'
+      }))
+    },
+
+    restore () {
+      return this.run(() => this.app.commands.restorePurchasesForIdentity(this.identity).then((account) => this.took(account)).then(() => {
+        if (!this.paid) this.notice = 'This Apple Account has no subscription to restore.'
+      }))
+    },
+
+    // A paid account can sync again, and the refusal on screen goes the
+    // moment it does.
+    took (held) {
+      this.held = held
+
+      if (this.paid) return this.app.commands.syncIdentity(this.identity)
+    },
+
     manage () {
+      if (this.inApp) return this.run(() => this.app.storekit.manage())
+
       return this.visit(() => this.app.commands.billingPageForIdentity(this.identity), 'billing')
     },
 
