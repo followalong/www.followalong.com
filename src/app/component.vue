@@ -67,7 +67,7 @@
       @search="onSearch"
     />
 
-    <main class="flex-1 w-full pb-24">
+    <main class="flex-1 w-full pb-tab-bar">
       <router-view
         :app="app"
         :identity="identity"
@@ -137,7 +137,7 @@
     <!-- One nav, in one place, whatever the screen. -->
     <NavTabs
       on="surface"
-      class="fixed bottom-0 inset-x-0 mx-auto w-full max-w-app z-30 border-t border-hairline-strong bg-white pt-3 pb-6"
+      class="fixed bottom-0 inset-x-0 mx-auto w-full max-w-app z-30 border-t border-hairline-strong bg-white pt-3 pb-tab-bar-foot"
     />
   </div>
 </template>

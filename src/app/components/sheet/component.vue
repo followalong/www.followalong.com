@@ -30,7 +30,7 @@
           aria-modal="true"
           :aria-label="title"
           :style="dragStyle"
-          class="bg-surface-sheet rounded-t-sheet max-h-sheet w-full flex flex-col px-5 pt-3.5"
+          :class="`bg-surface-sheet rounded-t-sheet max-h-sheet w-full flex flex-col px-5 pt-3.5 ${$slots.footer ? '' : 'pb-safe-bottom'}`"
         >
           <!-- The bar is 4px tall, which is nothing to aim a thumb at, so the
  grab area is the full width of the sheet and the padding either side of it.
@@ -75,7 +75,7 @@
 
             <footer
               v-if="$slots.footer"
-              class="flex gap-2.5 py-4 pb-7"
+              class="flex gap-2.5 pt-4 pb-sheet-foot"
             >
               <slot name="footer" />
             </footer>

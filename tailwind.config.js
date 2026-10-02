@@ -124,8 +124,15 @@ module.exports = {
         bar: '58px',
         icon: '18px',
         play: '26px',
-        // Clears the mobile tab bar.
-        'tab-bar': '100px',
+        // The status bar and the home indicator; 0px where there is neither.
+        'safe-top': 'env(safe-area-inset-top, 0px)',
+        'safe-bottom': 'env(safe-area-inset-bottom, 0px)',
+        // The gap under the tab bar's labels and under a sheet's buttons. The
+        // home indicator sits inside it; the two are never added together.
+        'tab-bar-foot': 'max(24px, env(safe-area-inset-bottom, 0px))',
+        'sheet-foot': 'max(28px, env(safe-area-inset-bottom, 0px))',
+        // Clears the tab bar, which is as tall as its foot makes it.
+        'tab-bar': 'calc(76px + max(24px, env(safe-area-inset-bottom, 0px)))',
         0.75: '3px',
         4.5: '18px'
       },

@@ -1,7 +1,7 @@
 <template>
   <div
     data-search-panel
-    class="fixed inset-0 mx-auto w-full max-w-app z-50 bg-chrome flex flex-col"
+    class="fixed inset-0 mx-auto w-full max-w-app z-50 bg-chrome flex flex-col pt-safe-top"
   >
     <div class="w-full flex items-center gap-3 px-4 py-3">
       <button
@@ -26,7 +26,10 @@
       </form>
     </div>
 
-    <div class="flex-1 bg-page overflow-y-auto">
+    <div
+      data-search-results
+      class="flex-1 bg-page overflow-y-auto pb-safe-bottom"
+    >
       <div>
         <p
           v-if="!q.trim()"

@@ -1,5 +1,5 @@
 <template>
-  <header class="bg-chrome sticky top-0 z-40">
+  <header class="bg-chrome sticky top-0 z-40 pt-safe-top">
     <div class="h-bar px-4 flex items-stretch gap-3">
       <router-link
         v-if="back"
