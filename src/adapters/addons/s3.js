@@ -26,10 +26,11 @@ class S3Adapter extends Adapter {
   }
 
   // Answers with the version it just wrote, so the next read can ask for
-  // anything but that and be told there is nothing to fetch.
-  save (data, encrypt) {
+  // anything but that and be told there is nothing to fetch. headers carries
+  // the condition to write on, for storage that honours one.
+  save (data, encrypt, headers = {}) {
     return Promise.resolve(encrypt(data))
-      .then((body) => this._send({ method: 'PUT', body }))
+      .then((body) => this._send({ method: 'PUT', body, headers }))
       .then((response) => ({ etag: response.headers.get('etag') || undefined }))
   }
 
@@ -96,7 +97,7 @@ class S3Adapter extends Adapter {
         return response.text().then((text) => {
           const found = `${text || ''}`.match(CODE)
 
-          throw new Error(`${response.status} ${found ? found[1] : 'request refused'}`)
+          throw Object.assign(new Error(`${response.status} ${found ? found[1] : 'request refused'}`), { status: response.status })
         })
       })
   }

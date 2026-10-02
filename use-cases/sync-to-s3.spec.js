@@ -321,11 +321,7 @@ describe('Sync to S3', () => {
 
       const before = sent()
 
-      real.answer = (request) => {
-        if (request.method === 'PUT') return real.store(request)
-
-        return s3Response({ status: 200, body: '9/entries/7777/create/v2.1 {"feedId":"543","data":{"guid":"999","title":"From the bucket"}}', headers: { etag: '"somebody-else"' } })
-      }
+      real.store({ url: URL_OF, headers: {}, body: '9/entries/7777/create/v2.1 {"feedId":"543","data":{"guid":"999","title":"From the bucket"}}' })
 
       await app.vm.commands.syncIdentity(app.vm.identity)
 

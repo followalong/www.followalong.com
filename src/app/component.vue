@@ -237,6 +237,16 @@ export default {
     awsClient: {
       type: Function,
       default: (config) => new AwsClient(config)
+    },
+    // How often an open window asks the bucket what another device wrote, and
+    // how long it rests after an answer before asking again.
+    pullEveryMs: {
+      type: Number,
+      default: 60000
+    },
+    pullGapMs: {
+      type: Number,
+      default: 5000
     }
   },
   data () {
@@ -254,7 +264,9 @@ export default {
       keychain,
       scrollTo: this.scrollTo,
       wakeLock: this.wakeLock,
-      copyToClipboard: this.copyToClipboard
+      copyToClipboard: this.copyToClipboard,
+      pullEveryMs: this.pullEveryMs,
+      pullGapMs: this.pullGapMs
     })
 
     return {
@@ -350,6 +362,15 @@ export default {
   // painted app rather than in front of it. Waiting on the network to confirm
   // a copy that is already here bought nothing and cost the whole load.
   mounted () {
+    // A merge re-folds the log, so the identity held here is re-pointed at
+    // the one that replaced it.
+    this.stopPulling = this.commands.pullWhileOpen(() => this.identity, () => {
+      const id = (this.identity || {}).id
+      const fresh = this.queries.allIdentities().find((identity) => identity.id === id)
+
+      if (fresh) this.setIdentity(fresh)
+    })
+
     return this.commands.restoreFromLocal()
       .then(() => {
         if (!this.queries.allIdentities().length) {
@@ -381,6 +402,7 @@ export default {
 
     document.removeEventListener('visibilitychange', this.onVisibility)
     window.removeEventListener('pagehide', this.onPageHide)
+    this.stopPulling()
   },
   methods: {
     // A run cannot report its own death, so it says goodbye on the way out and

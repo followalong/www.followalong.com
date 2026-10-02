@@ -191,6 +191,34 @@ describe('S3Adapter', () => {
 
       await expect(adapter(CONFIGURED, awsClient).save('the log', plain)).rejects.toThrow(/AccessDenied/)
     })
+
+    test('writes on no condition unless it is given one', async () => {
+      const { requests, awsClient } = bucket(() => response({ headers: { etag: '"written"' } }))
+
+      await adapter(CONFIGURED, awsClient).save('the log', plain)
+
+      expect(requests[0].headers).toEqual({})
+    })
+
+    // Handed to the signer with the request, so the condition is signed.
+    test('writes on the condition it is given', async () => {
+      const { requests, awsClient } = bucket(() => response({ headers: { etag: '"written"' } }))
+
+      const written = await adapter(CONFIGURED, awsClient).save('the log', plain, { 'if-match': '"held"' })
+
+      expect(requests[0].headers).toEqual({ 'if-match': '"held"' })
+      expect(written.etag).toEqual('"written"')
+    })
+
+    // Commands tells a copy that moved from a write that was refused by this.
+    test('says which status the bucket refused with', async () => {
+      const { awsClient } = bucket(() => response({ status: 412, body: '<Error><Code>PreconditionFailed</Code></Error>' }))
+
+      const refused = await adapter(CONFIGURED, awsClient).save('the log', plain, { 'if-match': '"held"' }).catch((e) => e)
+
+      expect(refused.status).toEqual(412)
+      expect(refused.message).toEqual('412 PreconditionFailed')
+    })
   })
 
   describe('#portableData', () => {

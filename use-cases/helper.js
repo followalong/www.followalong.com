@@ -55,6 +55,10 @@ const mountApp = (options) => {
         copyToClipboard: options.copyToClipboard || vi.fn(),
         handoffHash: options.handoffHash || '',
         wakeLock: options.wakeLock || { hold: vi.fn(), release: vi.fn() },
+        // No clock: `wait` runs every timer there is, and an interval never
+        // runs out of them.
+        pullEveryMs: 0,
+        pullGapMs: options.pullGapMs || 0,
         awsClient: options.awsClient || (() => ({ fetch: () => Promise.resolve(s3Response({ status: 404, body: '<Error><Code>NoSuchKey</Code></Error>' })) }))
       }
     })
@@ -117,8 +121,9 @@ const s3Response = ({ status = 200, body = '', headers = {} }) => ({
 
 // A bucket that answers signed requests the way S3 does: keyed by the URL the
 // adapter built, so a request to the wrong host or the wrong key misses
-// exactly as a real one would. `answer` takes it over for a spec that wants a
-// refusal or a hang.
+// exactly as a real one would, with a new ETag on every write and a 412 for a
+// write whose condition does not hold. `answer` takes it over for a spec that
+// wants a refusal or a hang.
 const s3Bucket = ({ answer, objects = {} } = {}) => {
   const bucket = {
     requests: [],
@@ -130,8 +135,15 @@ const s3Bucket = ({ answer, objects = {} } = {}) => {
 
   bucket.of = (request) => `${request.url}`
 
+  bucket.etagOf = (key) => typeof bucket.objects[key] === 'undefined' ? undefined : bucket.etags[key] || '"v0"'
+
   bucket.store = (request) => {
     const key = bucket.of(request)
+    const held = bucket.etagOf(key)
+
+    if ((request.headers['if-match'] && request.headers['if-match'] !== held) || (request.headers['if-none-match'] === '*' && held)) {
+      return s3Response({ status: 412, body: '<Error><Code>PreconditionFailed</Code></Error>' })
+    }
 
     bucket.objects[key] = `${request.body}`
     bucket.etags[key] = `"v${++bucket.version}"`
@@ -146,11 +158,11 @@ const s3Bucket = ({ answer, objects = {} } = {}) => {
       return s3Response({ status: 404, body: '<Error><Code>NoSuchKey</Code></Error>' })
     }
 
-    if (request.headers['if-none-match'] && request.headers['if-none-match'] === bucket.etags[key]) {
+    if (request.headers['if-none-match'] === bucket.etagOf(key)) {
       return s3Response({ status: 304 })
     }
 
-    return s3Response({ status: 200, body: bucket.objects[key], headers: { etag: bucket.etags[key] || '"v0"' } })
+    return s3Response({ status: 200, body: bucket.objects[key], headers: { etag: bucket.etagOf(key) } })
   }
 
   bucket.client = (config) => ({

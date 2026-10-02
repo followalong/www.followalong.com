@@ -22,8 +22,17 @@ const INSIDE_A_ROLLUP = [
   { collection: 'addons', of: (data) => data.addons || [] }
 ]
 
+// The copy we read is not the copy that is there any more.
+const MOVED = (e) => e.status === 412 || e.status === 409
+
+// Storage that does not do conditional writes says so in one of three ways: a
+// CORS policy that does not allow the header fails the preflight, which
+// reaches us as a bare TypeError, and the rest answer 501 or a 400 about it.
+const CANNOT = (e) => e.name === 'TypeError' || e.status === 501 || (e.status === 400 && /implemented|supported/i.test(e.message))
+
 const NOT_MODIFIED = 304
 const SYNC_DEBOUNCE = 1500
+const WRITE_ATTEMPTS = 3
 
 class Commands {
   constructor (options) {
@@ -35,6 +44,10 @@ class Commands {
     // video window is opened and closed over it, so this is more than one
     // thing at a time and the record has to survive the wrong one stopping.
     this._playing = new Map()
+
+    // Identities whose bucket will not take a conditional write. For the
+    // session only: a policy can be fixed, and the next run should find out.
+    this._unconditional = {}
   }
 
   addIdentity (identity) {
@@ -167,6 +180,57 @@ class Commands {
     }, SYNC_DEBOUNCE)
   }
 
+  // Another device's changes reach a window left open: on coming back to it,
+  // on coming back online, and every pullEveryMs while it shows (no clock
+  // without one). A pull is a sync, so a copy that has not moved costs a 304.
+  // Asks within pullGapMs of a pull landing become one pull when the gap ends.
+  // current: the identity being read now. folded: told when a pull re-folded
+  // the log, which replaces every projection object. Answers stop().
+  pullWhileOpen (current, folded = () => {}) {
+    let resting = null
+    let wanted = false
+
+    const pull = () => {
+      const identity = current()
+
+      if (document.visibilityState === 'hidden') return
+      if (!identity || !this.queries.remoteAdapterForIdentity(identity) || (this._syncing || {})[identity.id]) return
+
+      if (resting) {
+        wanted = true
+
+        return
+      }
+
+      const generation = this.state.generationFor(identity.id)
+
+      this.syncIdentity(identity).then(() => {
+        if (this.state.generationFor(identity.id) !== generation) folded()
+
+        resting = setTimeout(() => {
+          resting = null
+
+          if (wanted) {
+            wanted = false
+            pull()
+          }
+        }, this.pullGapMs)
+      })
+    }
+
+    const events = [[document, 'visibilitychange'], [window, 'focus'], [window, 'online']]
+    const every = this.pullEveryMs && setInterval(pull, this.pullEveryMs)
+
+    events.forEach(([target, name]) => target.addEventListener(name, pull))
+
+    return () => {
+      wanted = false
+      clearTimeout(resting)
+      clearInterval(every)
+      events.forEach(([target, name]) => target.removeEventListener(name, pull))
+    }
+  }
+
   // One write at a time. The log goes up whole, so a second sync starting
   // while the first is still in the air sends the same megabytes again and
   // races the read that built them; the debounce only stops a second timer,
@@ -216,12 +280,7 @@ class Commands {
     this.state.updateConfig(identity.id, { syncStatus: 'syncing', syncError: '' })
 
     return this.keyForIdentity(identity)
-      // Read, merge, then write the union. Writing the local log straight over
-      // the remote made two devices clobber each other: the log is only read
-      // at boot, so whichever one tracked an event last won, and the other's
-      // events were gone until it happened to restart.
-      .then((key) => this.mergeRemoteInto(identity, remote, key)
-        .then(({ unchanged }) => this.saveUnlessTheBucketHasIt(identity, remote, key, unchanged)))
+      .then((key) => this.mergeAndWrite(identity, remote, key, WRITE_ATTEMPTS))
       .then(() => {
         this.state.updateConfig(identity.id, {
           syncStatus: 'saved',
@@ -240,44 +299,81 @@ class Commands {
       .then(() => this.queries.syncStatusForIdentity(identity))
   }
 
-  // Answers whether the bucket still holds the copy this device last folded
-  // in, which is the half of "is there anything to write" that the log itself
-  // cannot say.
+  // Read, merge, then write the union. Writing the local log straight over
+  // the remote made two devices clobber each other: the log is only read
+  // at boot, so whichever one tracked an event last won, and the other's
+  // events were gone until it happened to restart.
+  //
+  // The write is on the condition that the bucket still holds the copy the
+  // merge read. When it does not, another device wrote in between, and the
+  // answer is to read that and merge again rather than to report anything.
+  mergeAndWrite (identity, remote, key, attempts) {
+    return this.mergeRemoteInto(identity, remote, key)
+      .then((condition) => this.saveUnlessTheBucketHasIt(identity, remote, key, condition))
+      .catch((e) => {
+        if (!MOVED(e)) throw e
+        if (attempts <= 1) throw new Error('The bucket kept changing while this device was writing to it.')
+
+        return this.mergeAndWrite(identity, remote, key, attempts - 1)
+      })
+  }
+
+  // Folds in whatever the bucket holds that this device has not seen, leaves
+  // the config describing the copy that is there now, and answers the
+  // condition a write built on this read has to make.
   mergeRemoteInto (identity, remote, key) {
     return Promise.resolve(remote.get(identity, decrypt(key), this.remoteVersionForIdentity(identity)))
-      .then((response) => {
-        return Promise.resolve(this.importRemoteResponse(identity, response))
-          .then(() => ({ unchanged: !!response && response.status === NOT_MODIFIED }))
+      .then((response) => Promise.resolve(this.importRemoteResponse(identity, response)))
+      .then(() => {
+        const { etag } = this.remoteVersionForIdentity(identity)
+
+        // A bucket that does not show its etag gives us nothing to hold it to.
+        return etag ? { 'if-match': etag } : {}
       })
       .catch((e) => {
+        if (!NOTHING_THERE.test((e && e.message) || '')) {
+          throw new Error(`Could not read the copy already there: ${(e && e.message) || 'unknown'}`)
+        }
+
         // An empty bucket is not a copy we are up to date with: there is
         // nothing there and the whole log has to go up.
-        if (NOTHING_THERE.test((e && e.message) || '')) return { unchanged: false }
-
-        throw new Error(`Could not read the copy already there: ${(e && e.message) || 'unknown'}`)
+        return Promise.resolve(this.state.updateConfig(identity.id, { remoteEtag: null, remoteFingerprint: null }))
+          .then(() => ({ 'if-none-match': '*' }))
       })
   }
 
   // Putting the log back when the bucket already holds exactly these bytes is
   // a megabyte of upload to arrive where it already is, and it ran 1.5
-  // seconds after every tracked event. Both halves have to hold: the object
-  // is still the one we wrote, and our log has not moved since we wrote it.
-  saveUnlessTheBucketHasIt (identity, remote, key, unchanged) {
+  // seconds after every tracked event. The read just before this is what
+  // makes the fingerprint one of the bucket as it is now, whether we wrote
+  // that copy or another device wrote the very log we hold.
+  saveUnlessTheBucketHasIt (identity, remote, key, condition) {
     const file = this.queries.eventsToFile(identity)
-    const stamp = fingerprint(file)
 
-    if (unchanged && stamp === this.state.getConfig(identity.id).remoteFingerprint) {
+    if (fingerprint(file) === this.state.getConfig(identity.id).remoteFingerprint) {
       return Promise.resolve()
     }
 
-    return Promise.resolve(remote.save(file, encrypt(key)))
-      .then((written) => {
-        // The copy we just wrote is one we obviously already hold, so the
-        // next read asks for anything but it instead of fetching it back.
-        this.rememberRemoteVersion(identity, written && written.etag)
+    const save = (headers) => Promise.resolve(remote.save(file, encrypt(key), headers))
 
-        return this.state.updateConfig(identity.id, { remoteFingerprint: stamp })
+    // The condition is a safeguard and never a requirement, so storage that
+    // will not take it is written to without it, as it always was. Remembered
+    // only once the plain write lands: being offline fails both the same way.
+    const written = this._unconditional[identity.id]
+      ? save({})
+      : save(condition).catch((e) => {
+        if (!CANNOT(e)) throw e
+
+        return save({}).then((written) => {
+          this._unconditional[identity.id] = true
+
+          return written
+        })
       })
+
+    // The copy we just wrote is one we obviously already hold, so the next
+    // read asks for anything but it instead of fetching it back.
+    return written.then((written) => this.rememberRemoteVersion(identity, written && written.etag, file))
   }
 
   // Failing quietly is right - the app is already painted and there is
@@ -325,17 +421,14 @@ class Commands {
 
     return Promise.resolve(this.state.importRaw(identity.id, response.body))
       .then(() => this.mergeDuplicateEntriesForIdentity(identity))
-      .then(() => this.rememberRemoteVersion(identity, response.etag))
+      .then(() => this.rememberRemoteVersion(identity, response.etag, response.body))
   }
 
   // Only ever recorded for a copy that is now folded in, so the read it
-  // skips next time is a read of something this device already has.
-  rememberRemoteVersion (identity, etag) {
-    if (!etag) {
-      return
-    }
-
-    return this.state.updateConfig(identity.id, { remoteEtag: etag })
+  // skips next time is a read of something this device already has, and the
+  // write it skips is of a log the bucket already says.
+  rememberRemoteVersion (identity, etag, file) {
+    return this.state.updateConfig(identity.id, { remoteEtag: etag || null, remoteFingerprint: fingerprint(file) })
   }
 
   // An identity with no keychain entry syncs unencrypted, which is what
@@ -865,7 +958,7 @@ class Commands {
         return this.importIdentity(response && response.body)
           // This device has just folded in that exact copy, so its first sync
           // has nothing to fetch back.
-          .then((identity) => Promise.resolve(this.rememberRemoteVersion(identity, response && response.etag)).then(() => identity))
+          .then((identity) => Promise.resolve(this.rememberRemoteVersion(identity, response && response.etag, response && response.body)).then(() => identity))
       })
       .then((identity) => this.keychain.addKnown(identity.id, payload.k).then(() => identity))
   }
