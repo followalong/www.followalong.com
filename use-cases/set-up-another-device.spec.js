@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { mountApp, describe, story, s3Bucket, s3Response } from './helper.js'
 import { decodeHandoff } from '../src/queries/handoff.js'
 
@@ -56,6 +57,21 @@ describe('Set up another device', () => {
 
   story('says out loud what scanning it gives away', () => {
     expect(app.text()).toContain('Anyone who scans')
+  })
+
+  // The native app's own address opens nothing on another device.
+  describe('From the native app', () => {
+    beforeEach(() => {
+      vi.stubGlobal('location', { origin: 'tauri://localhost' })
+
+      return firstDevice()
+    })
+
+    afterEach(() => vi.unstubAllGlobals())
+
+    story('hands out a link to the app on the web', () => {
+      expect(link()).toMatch(/^https:\/\/www\.followalong\.com\/#setup=/)
+    })
   })
 
   describe('On the second device', () => {
