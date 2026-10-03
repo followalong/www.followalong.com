@@ -131,15 +131,23 @@
       :padded="false"
     >
       <ListRow
-        v-for="restart in restarts"
-        :key="restart.at"
+        v-if="restarts.length === 1"
+        data-restart
         title="Restarted on its own"
-        :meta="storyOf(restart)"
+        :meta="storyOf(restarts[0])"
       >
         <template #trailing>
           <span />
         </template>
       </ListRow>
+      <ListRow
+        v-else
+        :title="`Restarted on its own ${restarts.length} times`"
+        :meta="`last ${whenOf(restarts[0].at)}`"
+        action
+        aria-label="Show restarts"
+        @click="restartsOpen = true"
+      />
       <ListRow
         title="Forget these"
         meta="clears the list on this device"
@@ -186,6 +194,24 @@
       </span>
       <span class="text-meta font-semibold text-danger flex-none">Forget me</span>
     </button>
+
+    <Sheet
+      :open="restartsOpen"
+      title="Restarts"
+      @close="restartsOpen = false"
+    >
+      <ListRow
+        v-for="restart in restarts"
+        :key="restart.at"
+        data-restart
+        title="Restarted on its own"
+        :meta="storyOf(restart)"
+      >
+        <template #trailing>
+          <span />
+        </template>
+      </ListRow>
+    </Sheet>
 
     <Sheet
       :open="copyOpen"
@@ -444,6 +470,7 @@ export default {
     renameOpen: false,
     switchOpen: false,
     copyOpen: false,
+    restartsOpen: false,
     name: '',
     copied: false
   }),

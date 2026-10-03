@@ -125,6 +125,50 @@ describe('See when the app restarted itself', () => {
     })
   })
 
+  // One row per death is a wall on a phone that dies often. The count and the
+  // latest are the sentence; the list waits behind a tap.
+  describe('when it has happened more than once', () => {
+    let third
+
+    beforeEach(async () => {
+      const second = await mountApp({ fetch: () => Promise.resolve({ status: 304, body: '' }), store: app.vm.state })
+      await second.wait()
+      third = await mountApp({ fetch: () => Promise.resolve({ status: 304, body: '' }), store: second.vm.state })
+      await third.wait()
+      third.vm.$router.push('/settings')
+      await third.wait()
+    })
+
+    story('folds the restarts into one line with the count and the latest', () => {
+      expect(third.vm.queries.restartsForIdentity(third.vm.identity)).toHaveLength(2)
+      expect(third.findAll('[data-restart]')).toHaveLength(0)
+      expect(third.find('[aria-label="Show restarts"]').text()).toContain('Restarted on its own 2 times')
+      expect(third.find('[aria-label="Show restarts"]').text()).toContain('last Today at')
+    })
+
+    story('keeps the list behind a tap', async () => {
+      await third.click('[aria-label="Show restarts"]')
+
+      expect(third.findAll('[data-restart]')).toHaveLength(2)
+    })
+
+    story('still offers to forget them', async () => {
+      await third.click('[aria-label="Forget restarts"]')
+
+      expect(third.find('[aria-label="Show restarts"]').exists()).toEqual(false)
+    })
+  })
+
+  story('one restart stays a row of its own', async () => {
+    const next = await mountApp({ fetch: () => Promise.resolve({ status: 304, body: '' }), store: app.vm.state })
+    await next.wait()
+    next.vm.$router.push('/settings')
+    await next.wait()
+
+    expect(next.findAll('[data-restart]')).toHaveLength(1)
+    expect(next.find('[aria-label="Show restarts"]').exists()).toEqual(false)
+  })
+
   story('stopping playback stops it being blamed', async () => {
     const entry = app.vm.queries.entriesForIdentity(app.vm.identity)
       .find((e) => app.vm.queries.titleForEntry(e) === 'A youtube video')
