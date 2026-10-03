@@ -125,9 +125,12 @@ import Card from '../../components/card/component.vue'
 import EmptyState from '../../components/empty-state/component.vue'
 import Button from '../../components/button/component.vue'
 import PullToRefresh from 'pulltorefreshjs'
+import { RIVER_PAGE } from '../../../queries/index.js'
 
 const DISTANCE_FROM_BOTTOM = 500
-const LIMIT = 4
+// Shared with the data layer, which reads it to decide whether a sweep may
+// show what it brought.
+const LIMIT = RIVER_PAGE
 
 export default {
   components: {

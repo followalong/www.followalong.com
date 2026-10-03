@@ -696,6 +696,8 @@ class Commands {
 
         this.upsertFeedForIdentity(identity, feed, data, response)
 
+        const firstFill = !this.queries.entriesForFeed(identity, feed).length
+
         let skipped = 0
 
         entries.forEach((e) => {
@@ -720,6 +722,8 @@ class Commands {
         })
 
         this.trackSkippedEntriesForIdentity(identity, feed, skipped)
+
+        if (firstFill) this.catchUpOnFeedForIdentity(identity, feed, { keep: BACKLOG_KEEP })
       })
       .then(() => this.lookUpIconForFeed(identity, feed))
   }
@@ -843,10 +847,15 @@ class Commands {
     }
   }
 
+  // The new-items bar keeps a sweep from moving the page under a reader. A
+  // river short of a page has no reader down it, only someone waiting to see
+  // their first articles, so the sweep shows what it brought.
   fetchOutdatedFeeds (identity) {
     const feeds = this.queries.findOutdatedFeedsForIdentity(identity)
 
-    return this._fetchFeedsInSeries(identity, feeds)
+    return this._fetchFeedsInSeries(identity, feeds).then(() => {
+      if (this.queries.riverIsShortForIdentity(identity)) this.showNewEntries(identity)
+    })
   }
 
   fetchFeedsForIdentity (identity) {

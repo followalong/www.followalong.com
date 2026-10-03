@@ -27,6 +27,10 @@ import { isVideoFeedUrl } from './channel-icon.js'
 const KEEP_READ_PER_FEED = 15
 
 const OUTDATED_MINUTES = 15
+// One page of the river: what the signal view draws before scrolling asks for
+// more. A river showing less than this has nobody reading down it, so a sweep
+// may show what it brought instead of holding it behind the new-items bar.
+export const RIVER_PAGE = 4
 // How long a channel icon lookup stands, hit or miss. The same as the image
 // cache keeps the picture.
 const ICON_LOOKUP_DAYS = 30
@@ -828,6 +832,10 @@ class Queries {
 
     return entries
       .filter((e) => e.createdAt <= since)
+  }
+
+  riverIsShortForIdentity (identity) {
+    return this.filterNonNewEntries(identity, this.entriesForIdentity(identity)).length < RIVER_PAGE
   }
 
   videoForEntry (entry) {
