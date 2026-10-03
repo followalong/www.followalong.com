@@ -37,6 +37,9 @@ const CANNOT = (e) => e.name === 'TypeError' || e.status === 501 || (e.status ==
 const ACCOUNT = (e) => e.status === 401 || e.status === 402 || e.status === 413 || e.status === 429
 
 const NOT_MODIFIED = 304
+// What a feed's first fill leaves unread.
+const BACKLOG_KEEP = 10
+const NO_FEED_FOUND = 'No feed found at this address.'
 const SYNC_DEBOUNCE = 1500
 const WRITE_ATTEMPTS = 3
 
@@ -77,6 +80,19 @@ class Commands {
     entries.forEach((entry) => {
       this.upsertEntryForIdentity(identity, feed, entry)
     })
+
+    if (entries.length) this.catchUpOnFeedForIdentity(identity, feed, { keep: BACKLOG_KEEP })
+  }
+
+  // Marks the feed's unread entries read, oldest first, keeping the newest
+  // `keep` as they are. Catch me up keeps nothing; a feed's first fill keeps
+  // BACKLOG_KEEP, so a podcast's years of episodes do not land in the river.
+  catchUpOnFeedForIdentity (identity, feed, { keep = 0 } = {}) {
+    this.queries.sortEntriesByTime(this.queries.entriesForFeed(identity, feed))
+      .slice(keep)
+      .reverse()
+      .filter((entry) => !this.queries.isEntryRead(entry))
+      .forEach((entry) => this.markEntryAsReadForIdentity(identity, entry))
   }
 
   // Only the feeds are taken. The poll loop fetches their entries later, as
@@ -597,22 +613,6 @@ class Commands {
       })
   }
 
-  // A video host's feed names no picture of the channel; its channel page
-  // does, as og:image. Asked once per feed, on the poll that follows a feed
-  // being fetched, and dated either way so a page with nothing to say is not
-  // asked on every sweep. A refusal counts as nothing to say for the same
-  // reason. Never records a feed failure: the feed itself answered.
-  lookUpIconForFeed (identity, feed) {
-    if (!this.queries.feedNeedsIconLookup(feed)) {
-      return Promise.resolve()
-    }
-
-    const url = channelUrlForFeed(feed.data)
-
-    return (url ? this.fetchBody(identity, 'rss', url) : Promise.resolve({}))
-      .then((response) => ogImage(response.body), () => undefined)
-      .then((icon) => {
-        if (icon) {
   // The feed at an address: the address itself when it answers as a feed,
   // else the first feed its page names, a YouTube page's channel included.
   // A response already in hand for the address is read rather than asked for
@@ -630,6 +630,22 @@ class Commands {
       })
   }
 
+  // A video host's feed names no picture of the channel; its channel page
+  // does, as og:image. Asked once per feed, on the poll that follows a feed
+  // being fetched, and dated either way so a page with nothing to say is not
+  // asked on every sweep. A refusal counts as nothing to say for the same
+  // reason. Never records a feed failure: the feed itself answered.
+  lookUpIconForFeed (identity, feed) {
+    if (!this.queries.feedNeedsIconLookup(feed)) {
+      return Promise.resolve()
+    }
+
+    const url = channelUrlForFeed(feed.data)
+
+    return (url ? this.fetchBody(identity, 'rss', url) : Promise.resolve({}))
+      .then((response) => ogImage(response.body), () => undefined)
+      .then((icon) => {
+        if (icon) {
           return this.track(identity, 'feeds', feed.id, 'iconFound', { url: icon })
         }
 
