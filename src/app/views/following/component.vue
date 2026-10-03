@@ -19,7 +19,15 @@
     </Card>
 
     <EmptyState v-if="!allFeeds.length">
-      You are not following any feeds yet. Use search to paste an RSS URL.
+      You follow nothing yet. Paste a feed link to start.
+      <template #action>
+        <Button
+          aria-label="Paste a feed link"
+          @click="app.searching = true"
+        >
+          Paste a feed link
+        </Button>
+      </template>
     </EmptyState>
 
     <EmptyState v-else-if="!feeds.length">
@@ -34,6 +42,7 @@ import PageBody from '../../components/page-body/component.vue'
 import Card from '../../components/card/component.vue'
 import EmptyState from '../../components/empty-state/component.vue'
 import SearchBox from '../../components/search-box/component.vue'
+import Button from '../../components/button/component.vue'
 
 export default {
   components: {
@@ -41,7 +50,8 @@ export default {
     PageBody,
     Card,
     EmptyState,
-    SearchBox
+    SearchBox,
+    Button
   },
 
   props: ['app', 'identity'],

@@ -5,12 +5,15 @@ const DESTINATIONS = [
   { to: '/settings', label: 'You', icon: 'you' }
 ]
 
-// A feed page is a sub-page of Feeds, so it keeps that tab lit.
+// A sub-page keeps its parent tab lit: a feed page is Feeds, and everything
+// reached from You is You.
+const UNDER_YOU = ['/settings', '/help', '/about', '/terms', '/privacy', '/storage']
+
 const OWNED_BY = {
   '/': (path) => path === '/' || path.startsWith('/signals'),
   '/following': (path) => path.startsWith('/following') || path.startsWith('/http'),
   '/marketplace': (path) => path.startsWith('/marketplace') || path.startsWith('/add-ons'),
-  '/settings': (path) => path.startsWith('/settings') || path.startsWith('/help') || path.startsWith('/storage')
+  '/settings': (path) => UNDER_YOU.some((prefix) => path.startsWith(prefix))
 }
 
 export default DESTINATIONS

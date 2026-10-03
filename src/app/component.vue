@@ -150,6 +150,7 @@ import PipPlayer from './components/pip-player/component.vue'
 import Sheet from './components/sheet/component.vue'
 import Button from './components/button/component.vue'
 import { decodeHandoff } from '../queries/handoff.js'
+import links from '../queries/links.js'
 import openPage from './open-page.js'
 import Commands from '../commands/index.js'
 import MultiEventStore from '../state/multi-event-store.js'
@@ -174,6 +175,8 @@ const PAGES = {
   '/settings': { title: 'You' },
   '/help': { title: 'Help', back: '/settings' },
   '/about': { title: 'About', back: '/settings' },
+  '/terms': { title: 'Terms', back: '/settings' },
+  '/privacy': { title: 'Privacy', back: '/settings' },
   '/add-ons': { title: 'Add-ons', back: '/settings' },
   '/storage': { title: 'Your own storage', back: '/settings' }
 }
@@ -290,6 +293,10 @@ export default {
       pullGapMs: this.pullGapMs
     })
 
+    // A pending account takeover can finish behind the page, on a pull or at
+    // boot, and the identity it adopts is the one to read from then on.
+    commands.onAdopt = (identity) => this.setIdentity(identity)
+
     return {
       app: this,
       queries,
@@ -301,6 +308,7 @@ export default {
       searching: false,
       handoff: decodeHandoff(this.handoffHash),
       handoffError: '',
+      links,
       settingUp: false,
       playing: null,
       playHistory: [],
@@ -358,6 +366,16 @@ export default {
   watch: {
     '$route.path' () {
       this.pageTitle = ''
+    },
+
+    // A setup link that arrives while the app runs, read once, like the one
+    // the app booted with.
+    'links.handoff' (hash) {
+      if (!hash) return
+
+      this.handoff = decodeHandoff(hash)
+      this.handoffError = ''
+      links.handoff = ''
     },
 
     identity (val) {

@@ -62,6 +62,27 @@ describe('the feed view when a feed refuses', () => {
     expect(app.pageTitle).toContain(stranger)
   })
 
+  // Most people paste a site's address, not its feed's. A feed someone
+  // follows worked once, so only the stranger gets told where to look.
+  test('tells a stranger where a feed link is usually found', async () => {
+    const wrapper = render('https://example.com/nothing-here.xml')
+
+    await flush()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.text()).toContain('No feed answered at this address')
+    expect(wrapper.text()).toContain('/feed, /rss or .xml')
+  })
+
+  test('does not lecture about a feed already followed', async () => {
+    const wrapper = render()
+
+    await flush()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.text()).not.toContain('No feed answered')
+  })
+
   test('still says so after a reload, from the recorded failure', async () => {
     await commands.fetchFeed(identity, queries.feedForIdentity(identity, 'f1')).catch(() => {})
 

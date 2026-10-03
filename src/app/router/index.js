@@ -8,6 +8,8 @@ import Settings from '../views/settings/component.vue'
 import Signal from '../views/signal/component.vue'
 import Marketplace from '../views/marketplace/component.vue'
 import Storage from '../views/storage/component.vue'
+import Terms from '../views/terms/component.vue'
+import Privacy from '../views/privacy/component.vue'
 
 const routes = [
   {
@@ -23,6 +25,16 @@ const routes = [
   {
     path: '/help',
     component: Help,
+    props: true
+  },
+  {
+    path: '/terms',
+    component: Terms,
+    props: true
+  },
+  {
+    path: '/privacy',
+    component: Privacy,
     props: true
   },
   {

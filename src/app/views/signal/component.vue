@@ -8,7 +8,7 @@
 
     <section
       v-if="showIntro"
-      class=""
+      data-intro
     >
       <Card>
         <div class="flex items-start justify-between gap-3">
@@ -28,13 +28,25 @@
           A place to follow the things you care about directly, with nothing in
           between. Everything stays on this device.
         </p>
-        <router-link
-          to="/about"
-          aria-label="About Follow Along"
-          class="inline-block mt-3 text-body font-semibold text-primary"
-        >
-          Read more &raquo;
-        </router-link>
+        <p class="text-body text-ink-secondary mt-1.5">
+          To start, paste a feed link. Blogs, YouTube channels and podcasts all
+          have one.
+        </p>
+        <div class="mt-3 flex items-center gap-4">
+          <Button
+            aria-label="Paste a feed link"
+            @click="app.searching = true"
+          >
+            Paste a feed link
+          </Button>
+          <router-link
+            to="/about"
+            aria-label="About Follow Along"
+            class="text-body font-semibold text-primary"
+          >
+            Read more &raquo;
+          </router-link>
+        </div>
       </Card>
     </section>
 
@@ -86,7 +98,21 @@
       There is nothing here.
     </EmptyState>
 
-    <EmptyState v-else-if="!signalCards.length">
+    <!-- Nothing followed is not caught up: nothing has started. The intro
+ says the same thing while it is up, so it says it alone. -->
+    <EmptyState v-else-if="!followsAnything && !showIntro">
+      You follow nothing yet. Paste a feed link to start.
+      <template #action>
+        <Button
+          aria-label="Paste a feed link"
+          @click="app.searching = true"
+        >
+          Paste a feed link
+        </Button>
+      </template>
+    </EmptyState>
+
+    <EmptyState v-else-if="!signalCards.length && followsAnything">
       You're all caught up!
     </EmptyState>
   </div>
@@ -97,6 +123,7 @@ import FeedEntry from '../../components/feed-entry/component.vue'
 import NewBar from '../../components/new-bar/component.vue'
 import Card from '../../components/card/component.vue'
 import EmptyState from '../../components/empty-state/component.vue'
+import Button from '../../components/button/component.vue'
 import PullToRefresh from 'pulltorefreshjs'
 
 const DISTANCE_FROM_BOTTOM = 500
@@ -104,6 +131,7 @@ const LIMIT = 4
 
 export default {
   components: {
+    Button,
     Card,
     EmptyState,
     FeedEntry,
@@ -149,8 +177,13 @@ export default {
       return this.riverEntries.slice(0, this.limit)
     },
 
+    // On the river only: a saved list is not where someone meets the app.
     showIntro () {
-      return this.app.queries.hintIsShown(this.identity, 'intro')
+      return this.$route.params.signal === 'home' && this.app.queries.hintIsShown(this.identity, 'intro')
+    },
+
+    followsAnything () {
+      return this.app.queries.feedsForIdentity(this.identity).length > 0
     },
 
     signalCards () {

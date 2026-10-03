@@ -27,6 +27,25 @@ describe('Dismiss the intro', () => {
     expect(app.text()).toContain('decentraliz')
   })
 
+  // The intro is on screen exactly when a reader has nothing followed but the
+  // changelog, so it is where the way to start belongs.
+  story('offers the way to start', async () => {
+    await app.click('[data-intro] [aria-label="Paste a feed link"]')
+
+    expect(app.find('[data-search-panel]').exists()).toEqual(true)
+  })
+
+  story('offers it once, even with nothing followed', () => {
+    expect(app.findAll('[aria-label="Paste a feed link"]')).toHaveLength(1)
+  })
+
+  story('stays off the saved list', async () => {
+    app.vm.$router.push('/signals/saved')
+    await app.wait()
+
+    expect(app.text()).not.toContain('What is Follow Along?')
+  })
+
   describe('Dismissing it', () => {
     beforeEach(async () => {
       await app.click('[aria-label="Dismiss intro"]')

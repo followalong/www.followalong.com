@@ -12,7 +12,21 @@
         role="status"
         class="rounded-card border border-danger-border bg-danger-bg px-3 py-2 text-meta text-danger"
       >
+        <!-- Most people paste a site's address, not its feed's. A followed
+ feed worked once, so only a stranger is told where to look. -->
+        <span
+          v-if="!existingFeed"
+          class="block mb-1"
+        >No feed answered at this address. Paste the feed's own link. It often ends in /feed, /rss or .xml.</span>
         {{ fetchError }}
+      </p>
+
+      <p
+        v-else-if="fetching && !feed"
+        role="status"
+        class="text-meta text-ink-muted"
+      >
+        Looking for a feed at this address…
       </p>
 
       <!-- A shared link lands here on a feed nobody follows, and following it

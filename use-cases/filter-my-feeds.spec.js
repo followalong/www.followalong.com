@@ -43,7 +43,7 @@ describe('Filter my feeds', () => {
     await app.wait()
 
     expect(app.text()).toContain('No feeds match')
-    expect(app.text()).not.toContain('not following any feeds yet')
+    expect(app.text()).not.toContain('follow nothing yet')
   })
 
   story('gives every feed back when I clear it', async () => {

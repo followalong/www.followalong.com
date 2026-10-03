@@ -17,6 +17,7 @@
       <path d="M10.5 10.5 14 14" />
     </svg>
     <input
+      ref="input"
       v-bind="$attrs"
       :value="modelValue"
       :placeholder="PLACEHOLDERS[scope]"
@@ -71,6 +72,11 @@ export default {
     }
   },
   emits: ['update:modelValue'],
-  data: () => ({ PLACEHOLDERS })
+  data: () => ({ PLACEHOLDERS }),
+  methods: {
+    focus () {
+      this.$refs.input.focus()
+    }
+  }
 }
 </script>

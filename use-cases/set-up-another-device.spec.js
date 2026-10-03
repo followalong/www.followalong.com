@@ -1,6 +1,7 @@
 import { vi } from 'vitest'
 import { mountApp, describe, story, s3Bucket, s3Response } from './helper.js'
 import { decodeHandoff } from '../src/queries/handoff.js'
+import links, { follow } from '../src/queries/links.js'
 
 const IDENTITY = (data) => `
   0/identities/abc123/create/v2.1 {"name":"My Account"}
@@ -32,6 +33,9 @@ describe('Set up another device', () => {
 
   beforeEach(() => firstDevice())
 
+  // Every mounted shell hears a link, so none may outlive its story.
+  afterEach(() => app.unmount())
+
   story('hands out a link back to the app', () => {
     expect(link()).toContain('#setup=')
   })
@@ -62,6 +66,7 @@ describe('Set up another device', () => {
   // The native app's own address opens nothing on another device.
   describe('From the native app', () => {
     beforeEach(() => {
+      app.unmount()
       vi.stubGlobal('location', { origin: 'tauri://localhost' })
 
       return firstDevice()
@@ -77,6 +82,8 @@ describe('Set up another device', () => {
   describe('On the second device', () => {
     let second
 
+    afterEach(() => second && second.unmount())
+
     const arrive = async () => {
       second = await mountApp({ handoffHash: `#${link().split('#')[1]}`, awsClient: bucket.client })
 
@@ -87,6 +94,22 @@ describe('Set up another device', () => {
       await arrive()
 
       expect(second.text()).toContain('Set up this device')
+    })
+
+    // The link can also arrive while the app is already open: pasted into the
+    // tab, or handed to the native shell. Same sheet, and the link is read once.
+    story('offers it for a link that arrives while the app runs', async () => {
+      const setup = link()
+
+      // Every mounted shell hears the link, and the first to hear it takes it.
+      app.unmount()
+      app = second = await mountApp({ awsClient: bucket.client })
+
+      follow(setup, second.vm.$router)
+      await second.wait()
+
+      expect(second.text()).toContain('Set up this device')
+      expect(links.handoff).toEqual('')
     })
 
     story('brings the identity over when accepted', async () => {

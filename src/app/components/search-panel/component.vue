@@ -19,6 +19,7 @@
         @submit.prevent="$emit('search', q)"
       >
         <SearchBox
+          ref="box"
           v-model="q"
           scope="global"
           aria-label="Search input"
@@ -42,11 +43,11 @@
         <template v-else>
           <template v-if="looksLikeUrl">
             <h2 :class="HEADING">
-              Feed found at this URL
+              Open as a feed
             </h2>
             <ListRow
               :title="q.trim()"
-              meta="Open this feed"
+              meta="Try this address"
               :to="`/${q.trim()}`"
               @click="$emit('close')"
             />
@@ -146,6 +147,10 @@ export default {
 
       return found
     }
+  },
+  // Opened to be typed into, so the keyboard comes up with it.
+  mounted () {
+    this.$refs.box.focus()
   },
   methods: {
     feedFor (entry) {

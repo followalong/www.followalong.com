@@ -47,15 +47,30 @@ describe('SearchPanel', () => {
     expect(input.attributes('placeholder')).toEqual('Search or RSS URL…')
   })
 
+  // The panel opens so something can be typed, so the keyboard comes with it.
+  test('puts the cursor in the field when it opens', () => {
+    const wrapper = mount(SearchPanel, {
+      props: { app, identity: { id: 'i1' } },
+      global: { stubs },
+      attachTo: document.body
+    })
+
+    expect(document.activeElement).toBe(wrapper.get('input').element)
+
+    wrapper.unmount()
+  })
+
   test('explains itself before anything is typed', () => {
     expect(panel().text()).toContain('Paste an RSS URL')
     expect(panel().findAll('[data-row]')).toHaveLength(0)
   })
 
-  test('offers the URL itself as a feed to open', async () => {
+  // Nothing has been fetched yet, so it is an address to try, not a feed found.
+  test('offers the typed address as a feed to open', async () => {
     const wrapper = await searchFor('https://foo.bar/rss.xml')
 
-    expect(wrapper.text()).toContain('Feed found at this URL')
+    expect(wrapper.text()).toContain('Open as a feed')
+    expect(wrapper.text()).not.toContain('found')
     expect(wrapper.text()).toContain('https://foo.bar/rss.xml')
   })
 

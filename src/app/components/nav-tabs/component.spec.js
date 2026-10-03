@@ -33,6 +33,15 @@ describe('NavTabs', () => {
     expect(active[0].props('label')).toEqual('Feeds')
   })
 
+  // Every page reached from You keeps You lit, so the way back is visible.
+  test('treats the pages under You as You', () => {
+    ['/help', '/about', '/terms', '/privacy', '/storage'].forEach((path) => {
+      const active = tabs(path).findAllComponents({ name: 'NavItem' }).filter((item) => item.props('active'))
+
+      expect(active.map((item) => item.props('label'))).toEqual(['You'])
+    })
+  })
+
   test('keeps Home active only on the river itself', () => {
     expect(tabs('/').findAllComponents({ name: 'NavItem' })[0].props('active')).toBe(true)
     expect(tabs('/settings').findAllComponents({ name: 'NavItem' })[0].props('active')).toBe(false)

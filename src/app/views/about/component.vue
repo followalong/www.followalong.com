@@ -1,23 +1,6 @@
 <template>
   <PageBody>
-    <Card as="article">
-      <section
-        v-for="(part, index) in PARTS"
-        :key="part.title"
-        :class="index ? 'mt-6 pt-6 border-t border-hairline-soft' : ''"
-      >
-        <h2 class="text-card font-bold text-ink">
-          {{ part.title }}
-        </h2>
-        <p
-          v-for="(paragraph, i) in part.body"
-          :key="i"
-          class="text-body text-ink-secondary mt-2 leading-relaxed max-w-read"
-        >
-          {{ paragraph }}
-        </p>
-      </section>
-    </Card>
+    <ArticleCard :parts="PARTS" />
 
     <p class="px-4 text-meta text-ink-muted">
       Follow Along is open source.
@@ -26,13 +9,28 @@
         target="_blank"
         class="text-primary font-semibold"
       >Read the code</a>.
+      <router-link
+        to="/terms"
+        aria-label="Terms"
+        class="text-primary font-semibold"
+      >
+        Terms
+      </router-link>
+      ·
+      <router-link
+        to="/privacy"
+        aria-label="Privacy"
+        class="text-primary font-semibold"
+      >
+        Privacy
+      </router-link>
     </p>
   </PageBody>
 </template>
 
 <script>
 import PageBody from '../../components/page-body/component.vue'
-import Card from '../../components/card/component.vue'
+import ArticleCard from '../../components/article-card/component.vue'
 
 const PARTS = [
   {
@@ -66,7 +64,7 @@ const PARTS = [
 ]
 
 export default {
-  components: { PageBody, Card },
+  components: { PageBody, ArticleCard },
   props: ['app', 'identity'],
   data: () => ({ PARTS })
 }
