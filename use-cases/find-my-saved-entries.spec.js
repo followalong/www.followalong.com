@@ -19,18 +19,22 @@ describe('Find my saved entries', () => {
     app = await mountApp({ state: { abc123: { config: {}, data: seed } } })
   })
 
-  story('offers a way in from You once something is saved', async () => {
-    await save()
+  story('is a tab of its own, and the You page does not repeat it', async () => {
+    expect(app.find('[aria-label="Saved"][aria-current="page"]').exists()).toEqual(false)
+
+    await app.click('[aria-label="Saved"]')
+
+    expect(app.find('[aria-label="Saved"][aria-current="page"]').exists()).toEqual(true)
+    expect(app.find('[aria-label="Home"][aria-current="page"]').exists()).toEqual(false)
+
     await app.click('[aria-label="You"]')
 
-    expect(app.find('[aria-label="Saved entries"]').exists()).toEqual(true)
-    expect(app.find('[aria-label="Saved entries"]').text()).toContain('1')
+    expect(app.find('[aria-label="Saved entries"]').exists()).toEqual(false)
   })
 
   story('shows what was saved and nothing else', async () => {
     await save()
-    await app.click('[aria-label="You"]')
-    await app.click('[aria-label="Saved entries"]')
+    await app.click('[aria-label="Saved"]')
 
     const titles = app.findAll('[aria-label="Entry title"]').map((el) => el.text())
 

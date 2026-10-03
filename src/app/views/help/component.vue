@@ -53,7 +53,7 @@ const PARTS = [
   {
     title: 'Reading and keeping',
     body: [
-      'Tap a title to read the entry here. Done marks it read and takes it off Home. The bookmark keeps it under Saved on the You page.',
+      'Tap a title to read the entry here. Done marks it read and takes it off Home. The bookmark keeps it under Saved.',
       'A feed\'s own page has a menu in the top bar: fetch it now, catch up on everything unread, pause it, or unfollow it.'
     ]
   },

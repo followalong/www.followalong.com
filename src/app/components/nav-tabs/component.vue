@@ -7,7 +7,7 @@
       v-for="destination in DESTINATIONS"
       :key="destination.to"
       :to="destination.to"
-      :label="on === 'chrome' && destination.short ? destination.short : destination.label"
+      :label="destination.label"
       :icon="destination.icon"
       :active="OWNED_BY[destination.to]($route.path)"
       :on="on"

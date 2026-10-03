@@ -171,7 +171,7 @@ let POLL_IN_FLIGHT = null
 const PAGES = {
   '/': { title: 'Follow Along' },
   '/following': { title: 'Feeds you follow' },
-  '/marketplace': { title: 'Marketplace' },
+  '/marketplace': { title: 'Add-ons', back: '/settings' },
   '/settings': { title: 'You' },
   '/help': { title: 'Help', back: '/settings' },
   '/about': { title: 'About', back: '/settings' },

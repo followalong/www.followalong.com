@@ -35,8 +35,7 @@ describe('Roll up an identity with something saved', () => {
   })
 
   story('keeps an entry that was saved even though it had been read', async () => {
-    await app.click('[aria-label="You"]')
-    await app.click('[aria-label="Saved entries"]')
+    await app.click('[aria-label="Saved"]')
 
     expect(app.findAll('[aria-label="Entry title"]').map((el) => el.text())).toEqual(['Kept entry'])
   })

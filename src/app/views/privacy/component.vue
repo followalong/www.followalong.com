@@ -47,7 +47,7 @@ const PARTS = [
     title: 'Fetching feeds',
     body: [
       'Most sites do not let a browser fetch a feed directly, so by default the app fetches feeds through our proxy. The proxy sees the address of each feed it fetches. It does not use that to identify you or build a profile.',
-      'You can switch to a proxy of your own in the Marketplace.',
+      'You can switch to a proxy of your own under Add-ons on the You page.',
       'Pictures, audio and video in an entry load from the site that published them. That site sees the request, as it would in any browser.'
     ]
   },

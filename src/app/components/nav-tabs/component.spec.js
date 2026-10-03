@@ -12,49 +12,42 @@ const tabs = (path = '/', props = {}) => {
   })
 }
 
+const lit = (path) => tabs(path).findAllComponents({ name: 'NavItem' })
+  .filter((item) => item.props('active'))
+  .map((item) => item.props('label'))
+
 describe('NavTabs', () => {
   test('offers exactly the four destinations', () => {
-    expect(DESTINATIONS.map((d) => d.label)).toEqual(['Home', 'Feeds', 'Marketplace', 'You'])
+    expect(DESTINATIONS.map((d) => d.label)).toEqual(['Home', 'Feeds', 'Saved', 'You'])
     expect(tabs().findAllComponents({ name: 'NavItem' })).toHaveLength(4)
   })
 
   test('marks the destination matching the route', () => {
-    const active = tabs('/marketplace').findAllComponents({ name: 'NavItem' })
-      .filter((item) => item.props('active'))
-
-    expect(active).toHaveLength(1)
-    expect(active[0].props('label')).toEqual('Marketplace')
+    expect(lit('/following')).toEqual(['Feeds'])
+    expect(lit('/signals/saved')).toEqual(['Saved'])
   })
 
   test('treats a feed page as Feeds', () => {
-    const active = tabs('/https://changelog.followalong.com/feed.xml')
-      .findAllComponents({ name: 'NavItem' }).filter((item) => item.props('active'))
-
-    expect(active[0].props('label')).toEqual('Feeds')
+    expect(lit('/https://changelog.followalong.com/feed.xml')).toEqual(['Feeds'])
   })
 
   // Every page reached from You keeps You lit, so the way back is visible.
   test('treats the pages under You as You', () => {
-    ['/help', '/about', '/terms', '/privacy', '/storage'].forEach((path) => {
-      const active = tabs(path).findAllComponents({ name: 'NavItem' }).filter((item) => item.props('active'))
-
-      expect(active.map((item) => item.props('label'))).toEqual(['You'])
+    ['/help', '/about', '/terms', '/privacy', '/storage', '/marketplace', '/add-ons'].forEach((path) => {
+      expect(lit(path)).toEqual(['You'])
     })
   })
 
-  test('keeps Home active only on the river itself', () => {
-    expect(tabs('/').findAllComponents({ name: 'NavItem' })[0].props('active')).toBe(true)
-    expect(tabs('/settings').findAllComponents({ name: 'NavItem' })[0].props('active')).toBe(false)
+  test('keeps Home active on the river and its signals, not on Saved', () => {
+    expect(lit('/')).toEqual(['Home'])
+    expect(lit('/signals/home')).toEqual(['Home'])
+    expect(lit('/signals/watch')).toEqual(['Home'])
+    expect(lit('/settings')).toEqual(['You'])
   })
 
   test('passes the ground through to every item', () => {
     tabs('/', { on: 'chrome' }).findAllComponents({ name: 'NavItem' }).forEach((item) => {
       expect(item.props('on')).toEqual('chrome')
     })
-  })
-
-  test('shortens Marketplace on the chrome bar where space is tight', () => {
-    expect(tabs('/', { on: 'chrome' }).text()).toContain('Market')
-    expect(tabs('/', { on: 'surface' }).text()).toContain('Marketplace')
   })
 })

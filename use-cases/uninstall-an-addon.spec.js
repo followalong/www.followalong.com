@@ -24,6 +24,13 @@ describe('Uninstall an add-on', () => {
     expect(app.text()).toContain('CORSAnywhere Proxy')
   })
 
+  story('is a page under You, not a tab', () => {
+    expect(app.find('[aria-label="Page title"]').text()).toEqual('Add-ons')
+    expect(app.find('[aria-label="You"][aria-current="page"]').exists()).toEqual(true)
+    expect(app.find('[aria-label="Back"]').exists()).toEqual(true)
+    expect(app.findAll('nav[aria-label="Primary"] a').map((a) => a.text())).toEqual(['Home', 'Feeds', 'Saved', 'You'])
+  })
+
   describe('Removing it', () => {
     beforeEach(async () => {
       await app.click('[aria-label="Configure CORSAnywhere"]')

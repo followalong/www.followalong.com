@@ -63,12 +63,6 @@
 
     <Card :padded="false">
       <ListRow
-        title="Saved"
-        :meta="savedCount ? `${plural(savedCount, 'entry', 'entries')} kept` : 'nothing saved yet'"
-        to="/signals/saved"
-        aria-label="Saved entries"
-      />
-      <ListRow
         title="Add-ons"
         :meta="`${addonCount} installed`"
         to="/add-ons"
@@ -496,10 +490,6 @@ export default {
 
     identities () {
       return this.app.queries.allIdentities()
-    },
-
-    savedCount () {
-      return this.app.queries.savedEntriesForIdentity(this.identity).length
     },
 
     addonCount () {
