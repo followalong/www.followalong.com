@@ -7,6 +7,12 @@
       >
         Your subscription is active.
       </p>
+      <p
+        v-else-if="account.pending"
+        class="text-meta text-ink-secondary"
+      >
+        {{ sync.error }}
+      </p>
       <div
         v-if="manageable || selling || restorable"
         class="flex flex-wrap gap-2"
@@ -57,6 +63,27 @@
           Manage subscription
         </Button>
       </div>
+      <p
+        v-if="inApp && selling && products.length"
+        class="text-meta text-ink-muted"
+      >
+        Follow Along Sync renews automatically at {{ priced }} until you cancel it in your Apple Account.
+        <router-link
+          to="/terms"
+          aria-label="Terms of Use"
+          class="underline"
+        >
+          Terms of Use
+        </router-link>
+        ·
+        <router-link
+          to="/privacy"
+          aria-label="Privacy Policy"
+          class="underline"
+        >
+          Privacy Policy
+        </router-link>
+      </p>
 
       <p class="text-meta text-ink-secondary">
         Signed in as {{ account.email }}.
@@ -167,6 +194,7 @@
 <script>
 import Button from '../button/component.vue'
 import TextField from '../text-field/component.vue'
+import links from '../../../queries/links.js'
 
 // What the reader sees beside this device in their account.
 const deviceName = () => (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || 'This device'
@@ -189,6 +217,7 @@ export default {
   emits: ['identity'],
 
   data: () => ({
+    linked: links,
     email: '',
     code: '',
     sent: false,
@@ -246,6 +275,11 @@ export default {
       return this.renewable ? 'Renew' : 'Subscribe'
     },
 
+    // "$2.99 a month or $24.99 a year", in the reader's own storefront.
+    priced () {
+      return this.products.map((product) => `${product.displayPrice} a ${product.every}`).join(' or ')
+    },
+
     // The Apple Account may hold a subscription this account has not heard of.
     restorable () {
       return this.inApp && !this.paid
@@ -262,7 +296,23 @@ export default {
     // Asked again whenever the service changes its mind about the log, which
     // is when the plan beside it has changed too.
     'sync.reason': { immediate: true, handler: 'shop' },
-    'account.token': 'shop'
+    'account.token': 'shop',
+    // The link in the sign in email, however it arrived. Taken once, by a
+    // device that is signed out; the same sign in a typed code makes.
+    'linked.signin': {
+      immediate: true,
+      handler (signin) {
+        if (!signin) return
+
+        links.signin = null
+
+        if (this.account) return
+
+        Object.assign(this, { email: signin.email, code: signin.code, sent: true })
+
+        return this.signIn()
+      }
+    }
   },
 
   created () {
@@ -308,8 +358,10 @@ export default {
         return
       }
 
+      // Paid since signing in, perhaps on the web: the account's log can be
+      // taken over now.
       return this.app.commands.accountDetailsForIdentity(this.identity)
-        .then((held) => { this.held = held }, () => {})
+        .then((held) => { this.held = held; if (this.paid && (this.account || {}).pending) return this.took(held) }, () => {})
     },
 
     // Opened beside the app rather than navigated to, so a reader who leaves
@@ -331,7 +383,7 @@ export default {
         this.polling = setInterval(() => {
           if (!--left || this.paid || !this.account) return clearInterval(this.polling)
 
-          Promise.resolve(this.shop()).then(() => this.paid && this.app.commands.syncIdentity(this.identity))
+          Promise.resolve(this.shop()).then(() => this.paid && this.took(this.held))
         }, POLL_MS)
       })
     },
@@ -364,11 +416,22 @@ export default {
     },
 
     // A paid account can sync again, and the refusal on screen goes the
-    // moment it does.
+    // moment it does. That sync may take the account's identity over, and
+    // then the page is told which one this device reads now.
     took (held) {
       this.held = held
 
-      if (this.paid) return this.app.commands.syncIdentity(this.identity)
+      if (!this.paid) return
+
+      return this.app.commands.syncIdentity(this.identity).then(() => {
+        const adopted = this.app.queries.allIdentities().find((identity) => {
+          const account = this.app.queries.accountForIdentity(identity)
+
+          return account && !account.pending && account.accountId === held.id
+        })
+
+        if (adopted && adopted.id !== this.identity.id) this.$emit('identity', adopted)
+      })
     },
 
     manage () {

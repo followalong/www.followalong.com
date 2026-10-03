@@ -76,6 +76,11 @@ const verify = () => {
     problems.push('.nojekyll is missing — Pages would fail the build and take the site down')
   }
 
+  // Universal Links: iOS reads this to let the native app open www links.
+  if (!fs.existsSync(path.join(target, '.well-known', 'apple-app-site-association'))) {
+    problems.push('.well-known/apple-app-site-association is missing — Universal Links would stop opening the app')
+  }
+
   return problems
 }
 

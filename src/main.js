@@ -1,8 +1,8 @@
 import { createApp } from 'vue'
 import App from './app/component.vue'
 import router from './app/router/index.js'
-import { takeHandoffFromLocation } from './queries/handoff.js'
+import { bootWithLinks } from './queries/links.js'
 
-const handoffHash = takeHandoffFromLocation(window.location, window.history)
-
-createApp(App, { handoffHash }).use(router).mount('#app')
+// The address may carry credentials (a setup link) or a sign in code. Both
+// leave the address bar before the app mounts and the router looks.
+bootWithLinks({ window, router }, (handoffHash) => createApp(App, { handoffHash }).use(router).mount('#app'))

@@ -1,5 +1,5 @@
-import { describe, test, expect, vi } from 'vitest'
-import { encodeHandoff, decodeHandoff, takeHandoffFromLocation } from './handoff.js'
+import { describe, test, expect } from 'vitest'
+import { encodeHandoff, decodeHandoff } from './handoff.js'
 
 describe('handoff', () => {
   const payload = { t: 'S3Adapter', d: { bucket: 'b' }, k: 'hunter2' }
@@ -25,29 +25,5 @@ describe('handoff', () => {
 
   test('is nothing for a code that does not decode', () => {
     expect(decodeHandoff('#setup=not-base64-json')).toBeNull()
-  })
-
-  describe('taking it off the URL', () => {
-    const location = (hash) => ({ hash, pathname: '/signals/home', search: '' })
-
-    test('hands back the fragment', () => {
-      expect(takeHandoffFromLocation(location('#setup=abc'), { replaceState: vi.fn() })).toEqual('#setup=abc')
-    })
-
-    // Credentials do not get to sit in the address bar, or in history.
-    test('wipes it from the address bar', () => {
-      const history = { replaceState: vi.fn() }
-
-      takeHandoffFromLocation(location('#setup=abc'), history)
-
-      expect(history.replaceState).toHaveBeenCalledWith(null, '', '/signals/home')
-    })
-
-    test('leaves a URL with no fragment alone', () => {
-      const history = { replaceState: vi.fn() }
-
-      expect(takeHandoffFromLocation(location(''), history)).toEqual('')
-      expect(history.replaceState).not.toHaveBeenCalled()
-    })
   })
 })

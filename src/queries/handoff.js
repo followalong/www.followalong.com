@@ -35,17 +35,4 @@ const decodeHandoff = (hash) => {
   }
 }
 
-// Read once, at boot, and wiped from the address bar in the same breath. The
-// app's first navigation throws the fragment away, and it carries the bucket's
-// credentials, so neither the router nor the URL bar gets to keep it.
-const takeHandoffFromLocation = (location, history) => {
-  const hash = `${location.hash || ''}`
-
-  if (!hash) return ''
-
-  history.replaceState(null, '', `${location.pathname}${location.search || ''}`)
-
-  return hash
-}
-
-export { encodeHandoff, decodeHandoff, takeHandoffFromLocation }
+export { encodeHandoff, decodeHandoff }

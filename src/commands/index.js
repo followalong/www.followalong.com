@@ -289,6 +289,16 @@ class Commands {
     if (!remote) {
       this.state.updateConfig(identity.id, { syncStatus: 'off', syncError: '' })
 
+    const account = this.queries.accountForIdentity(identity)
+
+    // Signed in to an account that is not paid up: the only flight is the
+    // takeover read, and the log it lands on is the one that then syncs.
+    if (account && account.pending) {
+      return this._completeTakeover(identity, account)
+        .then((signed) => this._syncNow(signed), (e) => this._recordFailedSync(identity, e))
+        .then(() => this.queries.syncStatusForIdentity(identity))
+    }
+
       return Promise.resolve(this.queries.syncStatusForIdentity(identity))
     }
 
@@ -304,23 +314,25 @@ class Commands {
           syncReason: ''
         })
       })
-      .catch((e) => {
-        // A dead token is not a request to retry: every later one fails the
-        // same way, and the reader has to sign in again either way.
-        if (e && e.status === 401 && this.queries.accountForIdentity(identity)) {
-          return this.signOutOfAccount(identity, e.message)
-        }
+      .catch((e) => this._recordFailedSync(identity, e))
+  // Recorded rather than rethrown: this runs on a debounce from every tracked
+  // event, and a rejection there has nobody to catch it. The reason is what
+  // the service called it, so the screen can offer a renewal for a lapse and
+  // nothing for an account that was closed.
+  _recordFailedSync (identity, e) {
+    // A dead token is not a request to retry: every later one fails the
+    // same way, and the reader has to sign in again either way.
+    if (e && e.status === 401 && this.queries.accountForIdentity(identity)) {
+      return this.signOutOfAccount(identity, e.message)
+    }
 
-        // Recorded rather than rethrown: this runs on a debounce from every
-        // tracked event, and a rejection there has nobody to catch it. The
-        // reason is what the service called it, so the screen can offer a
-        // renewal for a lapse and nothing for an account that was closed.
-        this.state.updateConfig(identity.id, {
-          syncStatus: 'failed',
-          syncError: (e && e.message) || 'Could not save',
-          syncReason: (e && e.reason) || ''
-        })
-      })
+    this.state.updateConfig(identity.id, {
+      syncStatus: 'failed',
+      syncError: (e && e.message) || 'Could not save',
+      syncReason: (e && e.reason) || ''
+    })
+  }
+
       .then(() => this.queries.syncStatusForIdentity(identity))
   }
 
@@ -413,7 +425,17 @@ class Commands {
 
     if (!adapter) return Promise.resolve()
 
-    return this.keyForIdentity(identity)
+    // What the Apple Account holds goes to the service before the first read,
+    // in case it is what lets the read through. Nothing without StoreKit or
+    // an account.
+    const account = adapter.type === 'HostedAdapter' ? this.queries.accountForIdentity(identity) : null
+
+    // Paid since the last run, perhaps: the takeover read is the only read
+    // while the account is pending, and it is a sync.
+    if (account && account.pending) return this._postEntitlements(account).catch(() => {}).then(() => this.syncIdentity(identity))
+
+    return this._postEntitlements(account).catch(() => {})
+      .then(() => this.keyForIdentity(identity))
       .then((key) => adapter.get(identity, decrypt(key), this.remoteVersionForIdentity(identity)))
       .then((response) => this.importRemoteResponse(identity, response))
       .catch((e) => {

@@ -1,7 +1,7 @@
 import { XMLParser } from 'fast-xml-parser'
 import linkifyHtml from 'linkify-html'
 import { ADAPTERS, None } from './addons.js'
-import HostedAdapter from '../adapters/hosted.js'
+import HostedAdapter, { SAYS } from '../adapters/hosted.js'
 import SORT_BY_ORDER from './sorters/sort-by-order.js'
 import SORT_BY_TIME from './sorters/sort-by-time.js'
 import SORT_BY_FEED_TITLE from './sorters/sort-by-feed-title.js'
@@ -779,6 +779,12 @@ class Queries {
     // Signed out by the service rather than by the reader: said where the
     // sign in is.
     if (!remote) return { status: 'off', at: 0, error: config.accountError || '', target: '' }
+
+    // Signed in, waiting on the account to be paid: nothing is synced and
+    // nothing has failed. The reason is what the service called it.
+    const pending = (config.account || {}).pending
+
+    if (pending) return { status: 'off', at: 0, error: SAYS[pending] || '', reason: pending, checkError: '', target: remote.title }
 
     return {
       // 'off' describes having nowhere to sync to, so a remote being

@@ -1,4 +1,4 @@
-import { mountApp, describe, story, test, hostedService, fakeStoreKit, vi } from './helper.js'
+import { mountApp, describe, story, test, hostedService, accountId, fakeStoreKit, vi } from './helper.js'
 
 const EMAIL = 'reader@example.com'
 const MONTHLY = 'com.followalong.reader.sync.monthly'
@@ -62,11 +62,26 @@ describe('Subscribe through the App Store', () => {
     await app.click('[aria-label="Subscribe, $24.99 a year"]')
     await settle()
 
-    expect(storekit.calls).toContainEqual(['purchase', YEARLY, 'acc_1'])
-    expect(service.transactions).toEqual(['jws.acc_1.1'])
+    expect(storekit.calls).toContainEqual(['purchase', YEARLY, accountId(1)])
+    expect(service.transactions).toEqual([`jws.${accountId(1)}.1`])
     expect(app.text()).toContain('Your subscription is active.')
     expect(app.text()).not.toContain('Your feeds are not syncing.')
     expect(service.body()).toContain('https://foo.bar/rss.xml')
+  })
+
+  // Guideline 3.1.2: what is sold, for how long, at what price, and that it
+  // renews, beside the terms and the privacy policy.
+  story('says what the subscription costs and that it renews, with the terms beside it', async () => {
+    await open()
+
+    expect(app.text()).toContain('Follow Along Sync renews automatically at $2.99 a month or $24.99 a year until you cancel it in your Apple Account.')
+    expect(app.find('[aria-label="Terms of Use"]').attributes('href')).toEqual('/terms')
+    expect(app.find('[aria-label="Privacy Policy"]').attributes('href')).toEqual('/privacy')
+
+    await app.click('[aria-label="Subscribe, $2.99 a month"]')
+    await settle()
+
+    expect(app.text()).not.toContain('renews automatically')
   })
 
   story('never links to the web checkout or billing page', async () => {
@@ -81,7 +96,7 @@ describe('Subscribe through the App Store', () => {
     expect(openPage).not.toHaveBeenCalled()
     expect(asked('/v1/checkout')).toEqual(false)
     expect(asked('/v1/portal')).toEqual(false)
-    expect(storekit.calls).toContainEqual(['purchase', MONTHLY, 'acc_1'])
+    expect(storekit.calls).toContainEqual(['purchase', MONTHLY, accountId(1)])
   })
 
   story('renews a lapsed subscription through the App Store too', async () => {
@@ -146,12 +161,12 @@ describe('Subscribe through the App Store', () => {
     // Bought on another device, or before the device was signed out.
     story('is restored: every entitlement goes to the service, and the log syncs', async () => {
       await open()
-      storekit.owned.push('jws.acc_1.1', 'jws.acc_1.2')
+      storekit.owned.push(`jws.${accountId(1)}.1`, `jws.${accountId(1)}.2`)
 
       await app.click('[aria-label="Restore purchases"]')
       await settle()
 
-      expect(service.transactions).toEqual(['jws.acc_1.1', 'jws.acc_1.2'])
+      expect(service.transactions).toEqual([`jws.${accountId(1)}.1`, `jws.${accountId(1)}.2`])
       expect(app.text()).toContain('Your subscription is active.')
       expect(has('Restore purchases')).toEqual(false)
       expect(service.body()).toContain('https://foo.bar/rss.xml')
@@ -168,11 +183,34 @@ describe('Subscribe through the App Store', () => {
       expect(has('Restore purchases')).toEqual(true)
     })
 
+    // A renewal, or a purchase approved while the app was closed, reaches the
+    // service from this device before the service is asked for anything.
+    story('is posted at launch, before the first read of the log', async () => {
+      await open({ refuse: null })
+      const store = app.vm.state
+
+      app.unmount()
+      Object.assign(service, { refuse: NEVER_PAID, subscribed: false, requests: [] })
+      storekit.owned.push(`jws.${accountId(1)}.1`)
+
+      app = await mountApp({ hostedFetch: service.fetch, storekit, openPage, store })
+      await settle()
+
+      expect(service.transactions).toEqual([`jws.${accountId(1)}.1`])
+      expect(service.requests.findIndex((request) => request.path === '/v1/apple/transactions')).toBeLessThan(service.requests.findIndex((request) => request.path === '/v1/log'))
+      expect(app.vm.queries.syncStatusForIdentity(app.vm.identity).checkError).toEqual('')
+
+      await app.click('[aria-label="You"]')
+      await settle()
+
+      expect(app.text()).toContain('Your subscription is active.')
+    })
+
     // Before the first read of the account's log, so the service does not
     // answer the sign in with a 402.
     story('lets the first sync through when signing in', async () => {
       Object.assign(service, { refuse: NEVER_PAID, subscribed: false })
-      storekit.owned.push('jws.acc_1.1')
+      storekit.owned.push(`jws.${accountId(1)}.1`)
 
       app = await mountApp({ hostedFetch: service.fetch, storekit, openPage, state: { abc123: { config: {}, data: SEED } } })
       await app.click('[aria-label="You"]')
@@ -183,7 +221,7 @@ describe('Subscribe through the App Store', () => {
       await app.click('[aria-label="Sign in"]')
       await settle()
 
-      expect(service.transactions).toEqual(['jws.acc_1.1'])
+      expect(service.transactions).toEqual([`jws.${accountId(1)}.1`])
       expect(service.body()).toContain('https://foo.bar/rss.xml')
       expect(app.text()).toContain('Your subscription is active.')
       expect(app.text()).not.toContain('Your feeds are not syncing.')

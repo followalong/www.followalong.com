@@ -203,5 +203,5 @@ class HostedAdapter {
   }
 }
 
-export { HOSTED_URL, HOLDS_KEYS, TIMEOUT_MS, holdsStorageKeys, sendCode, signIn, checkout, portal, account, deleteAccount, appleTransaction }
+export { HOSTED_URL, HOLDS_KEYS, TIMEOUT_MS, SAYS, holdsStorageKeys, sendCode, signIn, checkout, portal, account, deleteAccount, appleTransaction }
 export default HostedAdapter

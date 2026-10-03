@@ -7,6 +7,10 @@ import { DEFAULT_ADDONS } from './seed.js'
 // no create left, only the rollup.
 const IDENTITY_IN_LOG = /\/identities\/([^/\s]+)\/(?:create|rollup)/
 
+// The account is there but the service will not read it for this device
+// until it is paid again. Never paid is not this: it was never written.
+const SHUT = (e) => !!e && (e.reason === 'subscription_expired' || e.reason === 'account_cancelled')
+
 // The hosted account, mixed into Commands. Everything about it lives in the
 // identity's config on this device and never in the log: the log is what
 // every device and the service read, and a token belongs to one device.
@@ -32,15 +36,45 @@ export default {
 
         // Before the first read, so a subscription this Apple Account
         // already holds lets it through.
-        return this._postEntitlements(account).catch(() => {}).then(() => this._identityOfAccount(identity, account)).then((signed) => {
-          // A different target is one this device has never read.
-          this.state.updateConfig(signed.id, { account, accountError: '', remoteEtag: null, remoteFingerprint: null })
+        return this._postEntitlements(account).catch(() => {})
+          .then(() => this._identityOfAccount(identity, account))
+          .catch((e) => {
+            if (!SHUT(e)) throw e
 
-          // Signed in once the token is kept. What the first sync met is the
-          // status line's to tell.
-          return this.syncIdentity(signed).then(() => signed)
-        })
+            // Signed in all the same, to this device's own identity. The
+            // account's log is taken over once it is paid.
+            account.pending = e.reason
+
+            return identity
+          })
+          .then((signed) => {
+            // A different target is one this device has never read.
+            this.state.updateConfig(signed.id, { account, accountError: '', remoteEtag: null, remoteFingerprint: null })
+
+            // Signed in once the token is kept. What the first sync met is
+            // the status line's to tell.
+            return this.syncIdentity(signed).then(() => signed)
+          })
       })
+  },
+
+  // The only flight while the account is not paid up: the takeover read, and
+  // nothing goes up. Once it lands the device reads the account's identity
+  // from now on, and the one it signed in with is signed out behind it
+  // (unless it held nothing and is being forgotten). Answers the identity.
+  _completeTakeover (identity, account) {
+    return this._identityOfAccount(identity, account).then((signed) => {
+      const { pending, ...paid } = account
+
+      this.state.updateConfig(signed.id, { account: paid, accountError: '', remoteEtag: null, remoteFingerprint: null })
+
+      if (signed.id !== identity.id) {
+        if (!this._holdsNothingElse(identity)) this.signOutOfAccount(identity)
+        if (this.onAdopt) this.onAdopt(signed)
+      }
+
+      return signed
+    })
   },
 
   // An account that already holds a log names the identity it was written

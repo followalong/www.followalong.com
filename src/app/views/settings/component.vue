@@ -463,11 +463,12 @@ export default {
       return this.app.queries.syncStatusForIdentity(this.identity)
     },
 
-    // The hosted account this device is signed in to, if it syncs to one.
+    // The hosted account this device is signed in to, if it syncs to one. A
+    // bucket takes over from an account, so the remote in use decides.
     account () {
-      return this.sync.status !== 'off' && !this.app.queries.remoteAdapterForIdentity(this.identity).data.bucket
-        ? this.app.queries.accountForIdentity(this.identity)
-        : null
+      const remote = this.app.queries.remoteAdapterForIdentity(this.identity)
+
+      return remote && !remote.data.bucket ? this.app.queries.accountForIdentity(this.identity) : null
     },
 
     contents () {

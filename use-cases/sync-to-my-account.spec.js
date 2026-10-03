@@ -1,5 +1,5 @@
 import { flushPromises } from '@vue/test-utils'
-import { mountApp, describe, story, test, hostedService, vi } from './helper.js'
+import { mountApp, describe, story, test, hostedService, accountId, vi } from './helper.js'
 
 const EMAIL = 'reader@example.com'
 
@@ -135,7 +135,7 @@ describe('Sync to my account', () => {
 
     expect(log).not.toContain('tok_')
     expect(log).not.toContain(EMAIL)
-    expect(log).not.toContain('acc_1')
+    expect(log).not.toContain(accountId(1))
     expect(service.body()).not.toContain('tok_')
   })
 

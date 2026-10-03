@@ -213,6 +213,12 @@ const hostedService = () => {
     source: service.subscribed ? service.source : 'manual',
     expires_at: service.subscribed ? '2099-01-01T00:00:00Z' : '1970-01-01T00:00:00Z'
   })
+// The service issues UUIDs, because StoreKit's appAccountToken has to be one.
+// The nth account signed in gets the nth of these, so a spec knows it ahead.
+const accountId = (n) => `00000000-0000-4000-8000-${`${n}`.padStart(12, '0')}`
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 
   const signin = (path, sent) => {
     if (path === '/v1/signin/codes') {
@@ -225,7 +231,7 @@ const hostedService = () => {
     // A wrong code answers the same whether or not the address has an account.
     if (sent.code !== service.code) return answer({ status: 401, body: '{"error":"bad_code"}' })
 
-    if (!service.accounts.has(sent.email)) service.accounts.set(sent.email, { id: `acc_${service.accounts.size + 1}`, log: null })
+    if (!service.accounts.has(sent.email)) service.accounts.set(sent.email, { id: accountId(service.accounts.size + 1), log: null })
 
     return answer({ status: 201, body: JSON.stringify({ id: service.accounts.get(sent.email).id, token: `tok_${sent.email}` }) })
   }
@@ -350,6 +356,8 @@ const fakeStoreKit = ({ shelf = Object.entries(PRODUCTS).map(([id, every]) => ({
 
     return Promise.resolve()
   }
+    // As the Swift plugin does: UUID(uuidString:) or nothing.
+    if (!UUID.test(appAccountToken)) return Promise.reject(new Error('appAccountToken is not a UUID'))
 
   return store
 }
@@ -471,3 +479,4 @@ export {
   event,
   vi
 }
+  accountId,

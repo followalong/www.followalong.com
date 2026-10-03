@@ -143,17 +143,18 @@ describe('Sign in on a second device', () => {
     expect(app.text()).toContain('Your feeds are not syncing. Subscribe to keep them on every device.')
   })
 
-  // Whose log it holds cannot be read, so there is no knowing which identity
-  // to sign in.
-  test('does not sign in to an account that lapsed, and says why', async () => {
+  // Whose log it holds cannot be read yet, so this device keeps its own
+  // identity and the token, and takes the account over once it is paid
+  // (use-cases/sign-in-to-a-lapsed-account.spec.js).
+  test('signs in to an account that lapsed, and waits', async () => {
     await first()
-    service.refuse = { status: 402, body: '{"error":"subscription_expired"}' }
+    Object.assign(service, { refuse: { status: 402, body: '{"error":"subscription_expired"}' }, subscribed: false })
 
     await second()
     await signIn()
 
     expect(app.vm.identity.id).toEqual('xyz789')
-    expect(app.vm.queries.accountForIdentity(app.vm.identity)).toEqual(null)
+    expect(app.vm.queries.accountForIdentity(app.vm.identity)).toMatchObject({ pending: 'subscription_expired' })
     expect(app.text()).toContain('Your subscription has lapsed. Renew it to sync again.')
   })
 })
