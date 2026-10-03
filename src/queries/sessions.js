@@ -11,11 +11,7 @@
 // boot — it has to stay one small object rather than something that grows.
 const KEPT = 10
 
-const sessionsIn = (config) => {
-  const list = config && config.sessions
-
-  return Array.isArray(list) ? list : []
-}
+const sessionsIn = (list) => Array.isArray(list) ? list : []
 
 const patchLast = (list, patch) => {
   if (!list.length) return list

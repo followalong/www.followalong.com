@@ -1,4 +1,4 @@
-import { mountApp, describe, story } from './helper.js'
+import { mountApp, reloadApp, describe, story } from './helper.js'
 
 const seed = `
   0/identities/abc123/create/v2.1 {"name":"My Account"}
@@ -37,11 +37,19 @@ describe('See when the app restarted itself', () => {
     expect(app.vm.queries.restartsForIdentity(app.vm.identity)).toEqual([])
   })
 
-  story('writes the diagnostics beside the sync status, not into the log', () => {
-    const config = app.vm.state.getConfig(app.vm.identity.id)
+  story('writes the diagnostics on the device, not into the log', () => {
+    expect(app.vm.state.getNote(app.vm.identity.id, 'runs')).toHaveLength(1)
+    expect(app.vm.queries.eventsToFile(app.vm.identity)).not.toContain('closedAt')
+  })
 
-    expect(config.sessions.length).toEqual(1)
-    expect(app.vm.queries.eventsToFile(app.vm.identity)).not.toContain('sessions')
+  // The browser gives `pagehide` and then takes the page; a write still in
+  // flight never lands. Nine reloads once read as nine restarts.
+  story('a reload is not a restart', async () => {
+    const again = await reloadApp(app, { fetch: () => Promise.resolve({ status: 304, body: '' }) })
+    await again.wait()
+
+    expect(again.vm.queries.restartsForIdentity(again.vm.identity)).toEqual([])
+    expect(again.vm.state.getNote(again.vm.identity.id, 'runs')).toHaveLength(2)
   })
 
   describe('when the app is put away properly', () => {
@@ -139,7 +147,7 @@ describe('See when the app restarted itself', () => {
   })
 
   story('survives a store that cannot be written to', async () => {
-    app.vm.state.updateConfig = () => { throw new Error('no room') }
+    app.vm.state.setNote = () => { throw new Error('no room') }
 
     expect(() => app.vm.commands.noteRunEnded(app.vm.identity)).not.toThrow()
     expect(app.vm.queries.restartsForIdentity(app.vm.identity)).toEqual([])

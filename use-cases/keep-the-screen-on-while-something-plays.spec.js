@@ -104,9 +104,9 @@ describe('Keep the screen on while something plays', () => {
     let realLock
 
     const playingNow = () => {
-      const { sessions } = app.vm.state.getConfig(app.vm.identity.id)
+      const runs = app.vm.state.getNote(app.vm.identity.id, 'runs')
 
-      return sessions[sessions.length - 1].playing
+      return runs[runs.length - 1].playing
     }
 
     beforeEach(async () => {

@@ -1,3 +1,4 @@
+/* global globalThis */
 import { v4 as uuidv4 } from 'uuid'
 import EventStore from './event-store.js'
 
@@ -6,6 +7,7 @@ class MultipleEventStore extends EventStore {
     super(name, version, runners)
     this._config = this._db
     this._configs = {}
+    this._notes = {}
     this._dbs = {}
     this.startedAt = Date.now()
 
@@ -49,11 +51,60 @@ class MultipleEventStore extends EventStore {
     delete this._dbs[dbId]
 
     delete this._configs[dbId]
+    this._forgetNotes(dbId)
 
     return Promise.all([
       db ? db.teardown() : Promise.resolve(),
       this._config.removeItem(dbId)
     ])
+  }
+
+  // A device's notes about an identity: device-local like the config, but on
+  // disk the moment they are written. The config goes through localforage,
+  // and a write issued from `pagehide` never commits, because the page is
+  // gone first; localStorage writes before it returns. Mirrored in `_notes`
+  // like `_configs`, which is what the views see change. Never throws: a note
+  // is diagnostics, and a blocked store costs the note and nothing else.
+  getNote (dbId, name) {
+    const key = this._noteKey(dbId, name)
+
+    if (!(key in this._notes)) {
+      try {
+        this._notes[key] = JSON.parse(globalThis.localStorage.getItem(key))
+      } catch (e) {
+        this._notes[key] = null
+      }
+    }
+
+    return this._notes[key]
+  }
+
+  setNote (dbId, name, value) {
+    const key = this._noteKey(dbId, name)
+
+    this._notes[key] = value
+
+    try {
+      globalThis.localStorage.setItem(key, JSON.stringify(value))
+    } catch (e) {}
+  }
+
+  _forgetNotes (dbId) {
+    const prefix = this._noteKey(dbId, '')
+
+    try {
+      Object.keys(globalThis.localStorage)
+        .filter((key) => key.startsWith(prefix))
+        .forEach((key) => globalThis.localStorage.removeItem(key))
+    } catch (e) {}
+
+    Object.keys(this._notes)
+      .filter((key) => key.startsWith(prefix))
+      .forEach((key) => delete this._notes[key])
+  }
+
+  _noteKey (dbId, name) {
+    return `${this._name}/${dbId}/${name}`
   }
 
   teardownDBs () {

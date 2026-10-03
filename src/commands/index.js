@@ -112,20 +112,17 @@ class Commands {
     })
   }
 
-  // Diagnostics only, and this device's alone: they go in the config beside
-  // syncStatus and remoteEtag, never through track(), so they never reach the
-  // log and never reach another device. Nothing here may break the app, so a
-  // storage failure costs the diagnostics and nothing else.
+  // Diagnostics only, and this device's alone: a note on the device, never
+  // through track(), so they never reach the log or another device. A note
+  // because the goodbye is written from `pagehide` and has to be on disk
+  // before the page goes; the config is not. Nothing here may break the app,
+  // so a storage failure costs the diagnostics and nothing else.
   _rememberRun (identity, change) {
     try {
-      const config = this.state.getConfig(identity.id)
+      const runs = sessionsIn(this.state.getNote(identity.id, 'runs'))
 
-      return Promise.resolve(this.state.updateConfig(identity.id, {
-        sessions: change(sessionsIn(config), config)
-      })).catch(() => {})
-    } catch (e) {
-      return Promise.resolve()
-    }
+      this.state.setNote(identity.id, 'runs', change(runs, this.state.getConfig(identity.id)))
+    } catch (e) {}
   }
 
   noteRunStarted (identity, route) {
@@ -289,6 +286,9 @@ class Commands {
     if (!remote) {
       this.state.updateConfig(identity.id, { syncStatus: 'off', syncError: '' })
 
+      return Promise.resolve(this.queries.syncStatusForIdentity(identity))
+    }
+
     const account = this.queries.accountForIdentity(identity)
 
     // Signed in to an account that is not paid up: the only flight is the
@@ -297,9 +297,6 @@ class Commands {
       return this._completeTakeover(identity, account)
         .then((signed) => this._syncNow(signed), (e) => this._recordFailedSync(identity, e))
         .then(() => this.queries.syncStatusForIdentity(identity))
-    }
-
-      return Promise.resolve(this.queries.syncStatusForIdentity(identity))
     }
 
     this.state.updateConfig(identity.id, { syncStatus: 'syncing', syncError: '' })
@@ -315,6 +312,9 @@ class Commands {
         })
       })
       .catch((e) => this._recordFailedSync(identity, e))
+      .then(() => this.queries.syncStatusForIdentity(identity))
+  }
+
   // Recorded rather than rethrown: this runs on a debounce from every tracked
   // event, and a rejection there has nobody to catch it. The reason is what
   // the service called it, so the screen can offer a renewal for a lapse and
@@ -331,9 +331,6 @@ class Commands {
       syncError: (e && e.message) || 'Could not save',
       syncReason: (e && e.reason) || ''
     })
-  }
-
-      .then(() => this.queries.syncStatusForIdentity(identity))
   }
 
   // Read, merge, then write the union. Writing the local log straight over

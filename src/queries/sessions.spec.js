@@ -2,10 +2,10 @@ import { describe, test, expect } from 'vitest'
 import { KEPT, sessionsIn, started, closed, resumed, nowPlaying, deaths } from './sessions.js'
 
 describe('sessions', () => {
-  test('reads nothing out of a config that has never held one', () => {
-    expect(sessionsIn({})).toEqual([])
+  test('reads nothing out of a note that has never held one', () => {
+    expect(sessionsIn(null)).toEqual([])
     expect(sessionsIn(undefined)).toEqual([])
-    expect(sessionsIn({ sessions: 'rubbish' })).toEqual([])
+    expect(sessionsIn('rubbish')).toEqual([])
   })
 
   test('opens a run', () => {

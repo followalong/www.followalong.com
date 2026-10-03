@@ -108,6 +108,26 @@ const mountApp = (options) => {
   })
 }
 
+// The browser reloading the page: `pagehide`, then the page is gone, then a
+// new one boots over the same disk. Disk is what it was the instant the page
+// went -- a write the old page still had in flight never landed -- so it is
+// snapshotted synchronously and put back after the in-flight writes settle.
+const reloadApp = async (app, options = {}) => {
+  window.dispatchEvent(new Event('pagehide'))
+
+  const disk = Object.assign({}, localStorage)
+
+  app.unmount()
+  await flushPromises()
+
+  localStorage.clear()
+  Object.keys(disk).forEach((key) => localStorage.setItem(key, disk[key]))
+
+  return mountApp(Object.assign({}, options, {
+    store: new MultiEventStore(app.vm.state._name, 'v2.1', runners)
+  }))
+}
+
 vi.useFakeTimers()
 
 const flushPromisesAndTimers = () => {
@@ -193,6 +213,12 @@ const s3Bucket = ({ answer, objects = {} } = {}) => {
   return bucket
 }
 
+// The service issues UUIDs, because StoreKit's appAccountToken has to be one.
+// The nth account signed in gets the nth of these, so a spec knows it ahead.
+const accountId = (n) => `00000000-0000-4000-8000-${`${n}`.padStart(12, '0')}`
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 // The hosted service, as far as the app can tell: accounts by email, one log
 // each, a new ETag on every write, a write refused unless it names the copy it
 // replaces, and a code by email to get a token. `refuse` answers every
@@ -213,12 +239,6 @@ const hostedService = () => {
     source: service.subscribed ? service.source : 'manual',
     expires_at: service.subscribed ? '2099-01-01T00:00:00Z' : '1970-01-01T00:00:00Z'
   })
-// The service issues UUIDs, because StoreKit's appAccountToken has to be one.
-// The nth account signed in gets the nth of these, so a spec knows it ahead.
-const accountId = (n) => `00000000-0000-4000-8000-${`${n}`.padStart(12, '0')}`
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
 
   const signin = (path, sent) => {
     if (path === '/v1/signin/codes') {
@@ -336,6 +356,8 @@ const fakeStoreKit = ({ shelf = Object.entries(PRODUCTS).map(([id, every]) => ({
   store.purchase = (productId, appAccountToken) => {
     called('purchase', productId, appAccountToken)
 
+    // As the Swift plugin does: UUID(uuidString:) or nothing.
+    if (!UUID.test(appAccountToken)) return Promise.reject(new Error('appAccountToken is not a UUID'))
     if (store.answer !== 'purchased') return Promise.resolve({ status: store.answer })
 
     const signedTransaction = `jws.${appAccountToken}.${store.owned.length + 1}`
@@ -356,8 +378,6 @@ const fakeStoreKit = ({ shelf = Object.entries(PRODUCTS).map(([id, every]) => ({
 
     return Promise.resolve()
   }
-    // As the Swift plugin does: UUID(uuidString:) or nothing.
-    if (!UUID.test(appAccountToken)) return Promise.reject(new Error('appAccountToken is not a UUID'))
 
   return store
 }
@@ -467,6 +487,7 @@ const event = (description, payload, optionsFunc) => {
 
 export {
   mountApp,
+  reloadApp,
   describe,
   test,
   responses,
@@ -474,9 +495,9 @@ export {
   s3Bucket,
   s3Response,
   hostedService,
+  accountId,
   fakeStoreKit,
   story,
   event,
   vi
 }
-  accountId,

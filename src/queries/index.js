@@ -764,7 +764,7 @@ class Queries {
     try {
       if (!identity) return []
 
-      return deaths(sessionsIn(this.state.getConfig(identity.id)))
+      return deaths(sessionsIn(this.state.getNote(identity.id, 'runs')))
     } catch (e) {
       return []
     }
