@@ -30,20 +30,27 @@ const channelUrlForFeed = (data) => {
 const META = /<meta\s[^>]*>/gi
 const ATTR = /([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/g
 
-// Attribute order is not fixed, and Rumble quotes nothing, so the tag is
-// read attribute by attribute rather than matched as one shape.
+// Attribute order is not fixed, and Rumble quotes nothing, so a tag is read
+// attribute by attribute rather than matched as one shape. Names lowercased,
+// values with &amp; decoded.
+const attributesOf = (tag) => {
+  const attrs = {}
+
+  for (const [, name, dq, sq, bare] of tag.matchAll(ATTR)) {
+    attrs[name.toLowerCase()] = (dq ?? sq ?? bare).replace(/&amp;/g, '&')
+  }
+
+  return attrs
+}
+
 const ogImage = (html) => {
   for (const [tag] of `${html || ''}`.matchAll(META)) {
-    const attrs = {}
-
-    for (const [, name, dq, sq, bare] of tag.matchAll(ATTR)) {
-      attrs[name.toLowerCase()] = dq ?? sq ?? bare
-    }
+    const attrs = attributesOf(tag)
 
     if (attrs.property === 'og:image' && attrs.content) {
-      return attrs.content.replace(/&amp;/g, '&')
+      return attrs.content
     }
   }
 }
 
-export { isVideoFeedUrl, channelUrlForFeed, ogImage }
+export { isVideoFeedUrl, channelUrlForFeed, ogImage, attributesOf }

@@ -4,6 +4,7 @@ import { encodeHandoff } from '../queries/handoff.js'
 import feedsFromOpml from '../queries/opml.js'
 import UnkeyableEntryError from '../queries/unkeyable-entry-error.js'
 import { channelUrlForFeed, ogImage } from '../queries/channel-icon.js'
+import { feedUrlInPage } from '../queries/feed-discovery.js'
 import fingerprint from './fingerprint.js'
 import account from './account.js'
 import { sessionsIn, started, closed, resumed, nowPlaying } from '../queries/sessions.js'
@@ -612,6 +613,23 @@ class Commands {
       .then((response) => ogImage(response.body), () => undefined)
       .then((icon) => {
         if (icon) {
+  // The feed at an address: the address itself when it answers as a feed,
+  // else the first feed its page names, a YouTube page's channel included.
+  // A response already in hand for the address is read rather than asked for
+  // again; a channel page is 2.3MB.
+  resolveFeedUrl (identity, url, response) {
+    return (response ? Promise.resolve(response) : this.fetchUrl(identity, 'rss', url))
+      .then(({ data, body }) => {
+        if (!data.html) return url
+
+        const found = feedUrlInPage(body, url)
+
+        if (!found) throw new Error(NO_FEED_FOUND)
+
+        return found
+      })
+  }
+
           return this.track(identity, 'feeds', feed.id, 'iconFound', { url: icon })
         }
 

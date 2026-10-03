@@ -26,7 +26,7 @@
         role="status"
         class="text-meta text-ink-muted"
       >
-        Looking for a feed at this address…
+        {{ resolving ? 'Looking for a feed on this page…' : 'Looking for a feed at this address…' }}
       </p>
 
       <!-- A shared link lands here on a feed nobody follows, and following it
@@ -159,7 +159,8 @@ export default {
       filter: '',
       copiedUrl: false,
       menuOpen: false,
-      fetching: false
+      fetching: false,
+      resolving: false
     }
   },
 
@@ -350,6 +351,7 @@ export default {
       this.remoteFeed = null
       this.liveFetchError = null
       this.fetching = true
+      this.resolving = false
 
       // The feed route is a single record, so walking from one feed to the
       // next reuses this component while the request for the one we left is
@@ -370,7 +372,18 @@ export default {
       }
 
       this.app.commands.fetchUrl(this.identity, 'rss', this.url)
-        .then(({ data }) => {
+        .then((response) => {
+          const { data } = response
+
+          // A page, not a feed. Most people paste a site's address; the site
+          // says where its feed is, and that feed's page is where this ends.
+          if (data.html) {
+            this.resolving = true
+
+            return this.app.commands.resolveFeedUrl(this.identity, this.url, response)
+              .then((feedUrl) => { if (stillWanted()) this.$router.replace(`/${feedUrl}`) })
+          }
+
           const entries = (data.entry || data.item) || []
 
           delete data.entry
