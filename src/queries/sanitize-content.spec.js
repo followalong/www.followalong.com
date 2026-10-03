@@ -79,9 +79,45 @@ describe('sanitizeContent as a boundary', () => {
   it('removes script wherever the parser hides it', () => {
     expect(sanitizeContent('<svg><script>alert(1)</script><circle r="1"></circle></svg>')).toEqual('<svg><circle r="1"></circle></svg>')
     expect(sanitizeContent('<svg><foreignObject><iframe src="x"></iframe></foreignObject><a href="javascript:alert(1)"><text>x</text></a></svg>')).toEqual('<svg><a target="_blank"><text>x</text></a></svg>')
-    expect(sanitizeContent('<svg><animate onbegin="alert(1)" attributeName="x" dur="1s"></animate><set attributeName="href" to="javascript:alert(1)"></set></svg>')).toEqual('<svg><animate attributeName="x" dur="1s"></animate><set attributeName="href"></set></svg>')
-    expect(sanitizeContent('<math><mi xlink:href="javascript:alert(1)">x</mi><maction href="javascript:alert(1)">y</maction></math>')).toEqual('<math><mi>x</mi><maction>y</maction></math>')
-    expect(sanitizeContent('<math><annotation-xml encoding="text/html"><script>alert(1)</script></annotation-xml></math>')).toEqual('<math><annotation-xml encoding="text/html"></annotation-xml></math>')
+    // An SVG animation can write an href, so the whole element goes.
+    expect(sanitizeContent('<svg><animate onbegin="alert(1)" attributeName="x" dur="1s"></animate><set attributeName="href" to="javascript:alert(1)"></set></svg>')).toEqual('<svg></svg>')
+    // maction and annotation-xml are MathML's ways back into HTML; the
+    // elements go, maction's words stay.
+    expect(sanitizeContent('<math><mi xlink:href="javascript:alert(1)">x</mi><maction href="javascript:alert(1)">y</maction></math>')).toEqual('<math><mi>x</mi>y</math>')
+    expect(sanitizeContent('<math><annotation-xml encoding="text/html"><script>alert(1)</script></annotation-xml></math>')).toEqual('<math></math>')
     expect(sanitizeContent('<noscript><p title="</noscript><img src=x onerror=alert(1)>">')).not.toContain('onerror')
+  })
+
+  // Markup that is harmless as parsed and dangerous once serialised and parsed
+  // again, which is what v-html does with the result. The output has to read
+  // the same both times.
+  it('reads the same after a second parse', () => {
+    const parse = (html) => {
+      const div = document.createElement('div')
+
+      div.innerHTML = html
+
+      return div
+    }
+
+    const runs = (div) => div.querySelector('script, [onerror], [onload], [href^="javascript"]')
+
+    const vectors = [
+      '<svg></p><title><a id="</title><img src=1 onerror=alert(1)>"></svg>',
+      '<svg></p><style><a id="</style><img src=1 onerror=alert(1)>"></svg>',
+      '<math><mtext><table><mglyph><style><!--</style><img title="--&gt;&lt;img src=1 onerror=alert(1)&gt;">',
+      '<form><math><mtext></form><form><mglyph><style></math><img src onerror=alert(1)>',
+      '<svg><p><textarea><img src=x onerror=alert(1)></textarea></p></svg>',
+      '<math><mtext><table><mglyph><xmp><img src=x onerror=alert(1)>',
+      '<select><iframe></select><img src=x onerror=alert(1)>'
+    ]
+
+    vectors.forEach((vector) => {
+      const once = sanitizeContent(vector)
+      const twice = parse(once)
+
+      expect(runs(twice), vector).toBeNull()
+      expect(twice.innerHTML, vector).toEqual(once)
+    })
   })
 })
