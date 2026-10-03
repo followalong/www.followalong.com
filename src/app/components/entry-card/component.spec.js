@@ -48,21 +48,36 @@ describe('EntryCard', () => {
     expect(card({ summary: 'A preview of the entry.' }).find('[data-summary-badge]').exists()).toBe(false)
   })
 
-  test('opens the reader from the title and the summary, with no button', async () => {
+  test('opens the reader from the title, the summary and the Read cue', async () => {
     const wrapper = card({ summary: 'A summary.', readable: true, subject: '6363' })
-
-    expect(wrapper.find('[data-read-full]').exists()).toBe(false)
 
     await wrapper.get('[aria-label="Toggle entry content 6363"]').trigger('click')
     await wrapper.get('[data-summary]').trigger('click')
+    await wrapper.get('[aria-label="Read 6363"]').trigger('click')
 
-    expect(wrapper.emitted('read')).toHaveLength(2)
+    expect(wrapper.emitted('read')).toHaveLength(3)
   })
 
-  test('leaves the text inert when there is nothing to read', () => {
+  // The title and summary are buttons that look like text. The cue is the
+  // one thing on the card that says there is more to read.
+  test('shows one quiet Read cue, a real button, after the summary', () => {
+    const cue = card({ summary: 'A summary.', readable: true, subject: '6363' }).get('[data-read-cue]')
+
+    expect(cue.element.tagName).toEqual('BUTTON')
+    expect(cue.attributes('type')).toEqual('button')
+    expect(cue.text()).toEqual('Read')
+    expect(cue.classes()).toContain('text-primary')
+  })
+
+  test('shows the cue when there is content but no summary', () => {
+    expect(card({ readable: true, subject: '6363' }).find('[data-read-cue]').exists()).toBe(true)
+  })
+
+  test('leaves the text inert, with no cue, when there is nothing to read', () => {
     const wrapper = card({ summary: 'A summary.' })
 
     expect(wrapper.find('[aria-label^="Toggle entry content"]').exists()).toBe(false)
+    expect(wrapper.find('[data-read-cue]').exists()).toBe(false)
     expect(wrapper.get('[data-summary]').element.tagName).toEqual('DIV')
   })
 

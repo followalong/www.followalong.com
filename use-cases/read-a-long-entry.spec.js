@@ -30,6 +30,16 @@ describe('Read a long entry', () => {
       .toContain('This is an entry that has long content.')
   })
 
+  story('offers the same reader from a visible Read cue', async () => {
+    await app.click('[data-reader-done]')
+    expect(app.find(`[aria-label="Content for ${entryId}"]`).exists()).toEqual(false)
+
+    await app.click(`[aria-label="Read ${entryId}"]`)
+
+    expect(app.find(`[aria-label="Content for ${entryId}"]`).text())
+      .toContain('This is an entry that has long content.')
+  })
+
   describe('Finishing the entry', () => {
     beforeEach(async () => {
       await app.click('[data-reader-done]')

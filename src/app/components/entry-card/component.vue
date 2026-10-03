@@ -86,6 +86,19 @@
         >{{ summaryLabel }}</span>
       </component>
 
+      <!-- The title and summary open the reader but look like text. This is
+ the one thing on the card that says so. -->
+      <button
+        v-if="readable"
+        data-read-cue
+        type="button"
+        :aria-label="subject ? `Read ${subject}` : 'Read'"
+        class="block mt-2 -mb-1.5 py-1.5 text-meta font-semibold text-primary"
+        @click="$emit('read')"
+      >
+        Read
+      </button>
+
       <slot name="player">
         <div
           v-if="media === 'audio'"
