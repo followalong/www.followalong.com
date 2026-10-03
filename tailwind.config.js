@@ -15,11 +15,11 @@ module.exports = {
           muted: '#eaf6ff',
           dim: '#c2e2f7'
         },
-        // Darker sibling of the bar blue: actions and links sit on white, where
-        // #1b8cd8 would only reach 3.4:1 against it.
+        // The same blue as the bars and the app icon: 4.55:1 on white, which
+        // clears the 4.5:1 text needs. Hover goes to the deep bar blue.
         primary: {
-          DEFAULT: '#0f6ba8',
-          hover: '#0b5484'
+          DEFAULT: '#187bbe',
+          hover: '#0f6ba8'
         },
         // Active nav, unread, progress.
         accent: {
