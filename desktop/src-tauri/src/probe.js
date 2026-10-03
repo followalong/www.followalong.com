@@ -9,6 +9,17 @@
   ok('origin', location.origin)
   ok('isSecureContext', window.isSecureContext)
   await tried('indexedDB', async () => (await indexedDB.databases()).map((d) => d.name).join(','))
+  // The restart diagnostic keeps its runs list here (a store "note"), written as the page
+  // goes, so it must both work now and still be there at the next launch.
+  await tried('localStorage', async () => { localStorage.setItem('probe/ping', 'pong'); const v = localStorage.getItem('probe/ping'); localStorage.removeItem('probe/ping'); return v === 'pong' ? 'ok' : 'read back ' + v })
+  await tried('localStorageFromLastLaunch', async () => localStorage.getItem('probe/launch') || 'none')
+  await tried('localStorageThisLaunch', async () => { const now = new Date().toISOString(); localStorage.setItem('probe/launch', now); return now })
+  // The app's notes, as stored: `follow-along/<identity id>/runs` is the restart list itself.
+  await tried('notes', async () => {
+    const keys = []
+    for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i))
+    return keys.filter((k) => k.startsWith('follow-along/')).sort().map((k) => k + '=' + localStorage.getItem(k).slice(0, 400)).join(' ; ') || 'none'
+  })
   await tried('cacheStorage', async () => { const c = await caches.open('probe'); await c.put('/probe', new Response('x')); return !!(await c.match('/probe')) })
   await tried('serviceWorker', async () => !!(await navigator.serviceWorker.register('/sw.js')))
   // The proxy answers 403 to an origin that is not on its list, and feeds stop there.
