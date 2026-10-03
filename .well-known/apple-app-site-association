@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["L22C9S8VZ7.com.followalong.reader"],
+        "components": [
+          { "/": "*" }
+        ]
+      }
+    ]
+  }
+}
