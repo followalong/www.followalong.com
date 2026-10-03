@@ -364,7 +364,7 @@
 				CODE_SIGN_ENTITLEMENTS = "follow-along_iOS/follow-along_iOS.entitlements";
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = Tests/Simulator.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = L22C9S8VZ7;
+				DEVELOPMENT_TEAM = "L22C9S8VZ7";
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -558,7 +558,7 @@
 				CODE_SIGN_ENTITLEMENTS = "follow-along_iOS/follow-along_iOS.entitlements";
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]" = Tests/Simulator.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = L22C9S8VZ7;
+				DEVELOPMENT_TEAM = "L22C9S8VZ7";
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphoneos*]" = x86_64;
 				FRAMEWORK_SEARCH_PATHS = (
