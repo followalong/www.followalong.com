@@ -117,6 +117,14 @@
       </p>
 
       <p
+        v-if="appLink"
+        class="mt-3 text-body text-ink-secondary"
+      >
+        If this phone or Mac has the Follow Along app, open the code there.
+        Set it up sets up this browser instead.
+      </p>
+
+      <p
         v-if="handoffError"
         class="mt-3 text-body text-danger"
       >
@@ -131,6 +139,15 @@
         >
           {{ settingUp ? 'Setting up…' : 'Set it up' }}
         </Button>
+        <a
+          v-if="appLink"
+          data-app-link
+          :href="appLink"
+          aria-label="Open in the app"
+          class="flex-1 rounded-lg px-4 py-2.5 text-body font-semibold text-center border border-hairline-outline text-ink-body"
+        >
+          Open in the app
+        </a>
       </template>
     </Sheet>
 
@@ -149,7 +166,7 @@ import SearchPanel from './components/search-panel/component.vue'
 import PipPlayer from './components/pip-player/component.vue'
 import Sheet from './components/sheet/component.vue'
 import Button from './components/button/component.vue'
-import { decodeHandoff } from '../queries/handoff.js'
+import { decodeHandoff, encodeHandoff } from '../queries/handoff.js'
 import links from '../queries/links.js'
 import openPage from './open-page.js'
 import Commands from '../commands/index.js'
@@ -319,6 +336,12 @@ export default {
     }
   },
   computed: {
+    // The same code, addressed to the native app. Only a browser offers it,
+    // and only while the sheet is open: the code is a secret.
+    appLink () {
+      return this.handoff && !window.__TAURI__ ? `followalong://www.followalong.com/#${encodeHandoff(this.handoff)}` : ''
+    },
+
     page () {
       return PAGES[this.$route.path] || {}
     },

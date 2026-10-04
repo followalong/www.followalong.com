@@ -112,6 +112,44 @@ describe('Set up another device', () => {
       expect(links.handoff).toEqual('')
     })
 
+    // Safari's "Open in the app" banner hands the app an address with the
+    // code already wiped from it, so the sheet carries the code over itself.
+    story('offers to open the same code in the app', async () => {
+      await arrive()
+
+      const href = second.find('a[aria-label="Open in the app"]').attributes('href')
+
+      expect(href).toEqual(`followalong://www.followalong.com/#${link().split('#')[1]}`)
+      expect(second.text()).toContain('If this phone or Mac has the Follow Along app, open the code there.')
+      expect(second.vm.$route.fullPath).not.toContain('setup=')
+    })
+
+    story('reads that link the way the app is handed it', async () => {
+      await arrive()
+
+      const href = second.find('a[aria-label="Open in the app"]').attributes('href')
+
+      second.unmount()
+      app.unmount()
+      app = second = await mountApp({ awsClient: bucket.client })
+
+      follow(href, second.vm.$router)
+      await second.wait()
+
+      expect(second.vm.handoff.d.bucket).toEqual('b')
+    })
+
+    story('does not offer the app from inside the app', async () => {
+      vi.stubGlobal('__TAURI__', {})
+
+      await arrive()
+
+      expect(second.text()).toContain('Set up this device')
+      expect(second.find('a[aria-label="Open in the app"]').exists()).toEqual(false)
+
+      vi.unstubAllGlobals()
+    })
+
     story('brings the identity over when accepted', async () => {
       await arrive()
       await second.click('[aria-label="Set it up"]')
