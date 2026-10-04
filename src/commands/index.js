@@ -1,5 +1,5 @@
 import VERSION from '../state/version.js'
-import { encrypt, decrypt } from '../queries/crypt.js'
+import { encrypt, decrypt, isEncrypted } from '../queries/crypt.js'
 import { encodeHandoff } from '../queries/handoff.js'
 import feedsFromOpml from '../queries/opml.js'
 import UnkeyableEntryError from '../queries/unkeyable-entry-error.js'
@@ -9,6 +9,10 @@ import fingerprint from './fingerprint.js'
 import account from './account.js'
 import { sessionsIn, started, closed, resumed, nowPlaying } from '../queries/sessions.js'
 import { CHANGELOG_URL, CHANGELOG_FEED, CHANGELOG_ENTRY, DEFAULT_ADDONS, DEFAULT_SIGNALS, SAVED_SIGNAL } from './seed.js'
+
+// Either event introduces the identity. A roll up replaces the whole log
+// with one rollup event, so a rolled-up copy has no create left to find.
+const IDENTITY_IN_LOG = /\/identities\/([^/\s]+)\/(?:create|rollup)/
 
 // An empty bucket is not a failure to read; anything else is. The difference
 // matters because writing over a copy we could not read loses whatever the
@@ -1022,6 +1026,36 @@ class Commands {
     return this.copyToClipboard(this.portableIdentity(identity))
   }
 
+  // The same copy as a file, named for the identity and the day. A password
+  // encrypts it the way a bucket's copy is encrypted.
+  identityFile (identity, password) {
+    const slug = this.queries.nameForIdentity(identity).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'identity'
+    const now = new Date()
+    const day = [now.getFullYear(), now.getMonth() + 1, now.getDate()].map((n) => `${n}`.padStart(2, '0')).join('-')
+
+    return encrypt(password)(this.portableIdentity(identity))
+      .then((text) => ({ name: `${slug}-${day}.followalong`, text }))
+  }
+
+  // The other half: a file's text, and its password when it has one.
+  openIdentityFile (raw, password) {
+    const text = `${raw || ''}`.trim()
+
+    if (!text) return Promise.reject(new Error('That file is empty.'))
+
+    if (isEncrypted(text) && !password) {
+      return Promise.reject(new Error('Enter the password for this file.'))
+    }
+
+    return decrypt(password)(text)
+      .catch(() => { throw new Error('That password does not open this file.') })
+      .then((plain) => {
+        if (!IDENTITY_IN_LOG.test(plain)) throw new Error('That file is not a Follow Along copy.')
+
+        return this.importIdentity(plain)
+      })
+  }
+
   // Everything else about the identity is already in the bucket, so the only
   // thing that has to cross the room is how to open it. Small enough to be a
   // picture, which is why this is not the clipboard copy.
@@ -1056,10 +1090,7 @@ class Commands {
 
   importIdentity (raw) {
     const data = `${raw || ''}`.trim()
-    // Either event introduces the identity. A roll up replaces the whole log
-    // with one rollup event, so a rolled-up copy has no create left to find
-    // and looking only for that one rejected a perfectly good backup.
-    const found = data.match(/\/identities\/([^/\s]+)\/(?:create|rollup)/)
+    const found = data.match(IDENTITY_IN_LOG)
 
     if (!found) {
       return Promise.reject(new Error('That does not look like a Follow Along backup.'))

@@ -25,6 +25,14 @@
   // The proxy answers 403 to an origin that is not on its list, and feeds stop there.
   await tried('proxy', async () => (await fetch('https://cors-anywhere.followalong.com/https://changelog.followalong.com/feed.xml')).status)
   await tried('windowOpen', async () => { const w = open('about:blank', '_blank'); if (w) w.close(); return w === null ? 'null' : 'opened' })
+  // Saving a copy of an identity as a file: a download link does nothing here, so the page
+  // needs the share sheet. Asked for both names, because a browser may refuse an extension.
+  await tried('canShareFile', async () => ['copy.followalong', 'copy.txt'].map((name) => {
+    const can = navigator.canShare ? navigator.canShare({ files: [new File(['x'], name, { type: 'text/plain' })] }) : 'no canShare'
+    return name + ':' + can
+  }).join(',') + ' share:' + typeof navigator.share)
+  // Opening one: whether a file input opens a picker cannot be asked without a tap.
+  await tried('fileInput', async () => { const i = document.createElement('input'); i.type = 'file'; return i.type + ' files:' + (i.files ? i.files.length : 'none') + ' File.text:' + typeof File.prototype.text })
   ok('viewport', innerWidth + 'x' + innerHeight + ' dpr=' + devicePixelRatio)
   await tried('safeArea', async () => {
     const d = document.createElement('div')

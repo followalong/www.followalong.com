@@ -95,6 +95,25 @@
         @click="restoreOpen = true"
       />
       <ListRow
+        title="Save a copy to a file"
+        :meta="backupName ? 'everything, backup keys included' : 'feeds, saved items and settings'"
+        :warn="!!backupName"
+        action
+        aria-label="Save identity to a file"
+        @click="saveOpen = true"
+      >
+        <template #trailing>
+          <span class="text-meta font-semibold text-primary flex-none">{{ saved ? 'Saved' : 'Save' }}</span>
+        </template>
+      </ListRow>
+      <ListRow
+        title="Open a copy from a file"
+        meta="a file saved on another device"
+        action
+        aria-label="Open identity from a file"
+        @click="openOpen = true"
+      />
+      <ListRow
         title="Import feeds"
         meta="an OPML file from another reader"
         action
@@ -384,6 +403,109 @@
     </Sheet>
 
     <Sheet
+      :open="saveOpen"
+      title="Save a copy to a file"
+      @close="closeSave"
+    >
+      <p class="text-body text-ink-secondary">
+        This saves your feeds, saved items and settings as one file. On the
+        other device, use Open a copy from a file.
+      </p>
+      <p
+        v-if="backupName"
+        class="mt-3 text-body text-ink-secondary"
+      >
+        The file holds the keys to your storage at {{ backupName }}. With the
+        keys, the other device keeps syncing.
+      </p>
+
+      <!-- The field hands its class to the input, so the gap above the label
+ is the wrapper's. -->
+      <div class="mt-4">
+        <TextField
+          v-model="filePassword"
+          type="password"
+          autocomplete="new-password"
+          label="Password (optional)"
+          aria-label="Password for the new file"
+          :hint="filePassword ? 'You need this password to open the file. It is not kept anywhere.' : ''"
+        />
+      </div>
+
+      <p
+        v-if="!filePassword"
+        class="mt-3 text-body text-danger"
+      >
+        Without a password, anyone who has the file can read it{{ backupName ? ' and use those keys' : '' }}.
+      </p>
+      <p
+        v-if="saveError"
+        class="mt-3 text-body text-danger"
+      >
+        {{ saveError }}
+      </p>
+
+      <template #footer>
+        <Button
+          class="flex-1"
+          aria-label="Save the file"
+          @click="saveIdentityFile"
+        >
+          Save the file
+        </Button>
+      </template>
+    </Sheet>
+
+    <Sheet
+      :open="openOpen"
+      title="Open a copy from a file"
+      @close="closeOpen"
+    >
+      <p class="text-body text-ink-secondary">
+        Choose a file that Save a copy to a file made. It is added alongside
+        what is already here. Nothing is replaced.
+      </p>
+
+      <input
+        type="file"
+        aria-label="Choose a copy"
+        class="block w-full mt-3 text-body text-ink"
+        @change="readIdentityFile"
+      >
+
+      <div
+        v-if="fileLocked"
+        class="mt-4"
+      >
+        <TextField
+          v-model="openPassword"
+          type="password"
+          autocomplete="off"
+          label="Password"
+          aria-label="Password for the file"
+          hint="This file is protected with a password."
+        />
+      </div>
+
+      <p
+        v-if="openError"
+        class="mt-3 text-body text-danger"
+      >
+        {{ openError }}
+      </p>
+
+      <template #footer>
+        <Button
+          class="flex-1"
+          aria-label="Add the copy"
+          @click="openIdentityFile"
+        >
+          Add it
+        </Button>
+      </template>
+    </Sheet>
+
+    <Sheet
       :open="importOpen"
       title="Import feeds from OPML"
       @close="closeImport"
@@ -508,7 +630,15 @@ export default {
     deviceOpen: false,
     DEVICE_HINTS,
     name: '',
-    copied: false
+    copied: false,
+    saveOpen: false,
+    filePassword: '',
+    saveError: '',
+    saved: false,
+    openOpen: false,
+    fileText: null,
+    openPassword: '',
+    openError: ''
   }),
 
   computed: {
@@ -567,6 +697,11 @@ export default {
 
     identities () {
       return this.app.queries.allIdentities()
+    },
+
+    // A file that a password protects starts the way a bucket's copy does.
+    fileLocked () {
+      return `${this.fileText || ''}`.trim().startsWith('fa2:')
     },
 
     addonCount () {
@@ -716,6 +851,62 @@ export default {
           this.$router.push('/')
         })
         .catch((e) => { this.restoreError = e.message })
+    },
+
+    closeSave () {
+      this.saveOpen = false
+      this.saveError = ''
+      this.filePassword = ''
+    },
+
+    saveIdentityFile () {
+      this.saveError = ''
+
+      return this.app.commands.identityFile(this.identity, this.filePassword)
+        .then(({ name, text }) => this.app.saveFile(name, text))
+        .then((left) => {
+          if (!left) return
+
+          this.saved = true
+          this.closeSave()
+        })
+        .catch((e) => { this.saveError = e.message })
+    },
+
+    closeOpen () {
+      this.openOpen = false
+      this.openError = ''
+      this.openPassword = ''
+      this.fileText = null
+    },
+
+    readIdentityFile (e) {
+      const file = e.target.files[0]
+
+      this.openError = ''
+      this.openPassword = ''
+      this.fileText = null
+
+      if (!file) return
+
+      return file.text().then((text) => { this.fileText = text })
+    },
+
+    openIdentityFile () {
+      if (this.fileText === null) {
+        this.openError = 'Choose a file first.'
+        return
+      }
+
+      this.openError = ''
+
+      return this.app.commands.openIdentityFile(this.fileText, this.openPassword)
+        .then((identity) => {
+          this.closeOpen()
+          this.app.setIdentity(identity)
+          this.$router.push('/')
+        })
+        .catch((e) => { this.openError = e.message })
     },
 
     closeImport () {

@@ -63,6 +63,7 @@ const mountApp = (options) => {
         awsClient: options.awsClient || (() => ({ fetch: () => Promise.resolve(s3Response({ status: 404, body: '<Error><Code>NoSuchKey</Code></Error>' })) })),
         hostedFetch: options.hostedFetch || (() => Promise.reject(new TypeError('Failed to fetch'))),
         openPage: options.openPage || vi.fn(() => true),
+        saveFile: options.saveFile || vi.fn(() => Promise.resolve(true)),
         // The web, unless a spec hands it the iOS build's App Store.
         storekit: options.storekit || null
       }
@@ -98,6 +99,25 @@ const mountApp = (options) => {
       await app.wait()
     }
 
+    // The reader picking a file: as much of a File as the app reads.
+    app.chooseFile = async (el, text, name = 'copy.followalong') => {
+      const $el = app.find(el)
+
+      Object.defineProperty($el.element, 'files', { configurable: true, value: [{ name, text: () => Promise.resolve(text) }] })
+
+      await $el.trigger('change')
+      await app.wait()
+    }
+
+    // Waits for something no timer or promise flush reaches, such as a key
+    // being derived from a password.
+    app.until = async (done) => {
+      for (let turn = 0; turn < 400 && !done(); turn++) {
+        await new Promise((resolve) => realTimeout(resolve, 5))
+        await app.wait()
+      }
+    }
+
     app.wait = async () => {
       await flushPromisesAndTimers()
     }
@@ -127,6 +147,9 @@ const reloadApp = async (app, options = {}) => {
     store: new MultiEventStore(app.vm.state._name, 'v2.1', runners)
   }))
 }
+
+// The real clock, for work the fake one cannot hurry: WebCrypto deriving a key.
+const realTimeout = setTimeout
 
 vi.useFakeTimers()
 

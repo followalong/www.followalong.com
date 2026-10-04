@@ -169,6 +169,7 @@ import Button from './components/button/component.vue'
 import { decodeHandoff, encodeHandoff } from '../queries/handoff.js'
 import links from '../queries/links.js'
 import openPage from './open-page.js'
+import saveFile from './save-file.js'
 import Commands from '../commands/index.js'
 import MultiEventStore from '../state/multi-event-store.js'
 import VERSION from '../state/version.js'
@@ -271,6 +272,12 @@ export default {
     openPage: {
       type: Function,
       default: openPage
+    },
+    // (name, text) => a promise of whether the file left: a download, or the
+    // share sheet on a phone and in the native builds.
+    saveFile: {
+      type: Function,
+      default: saveFile
     },
     // The App Store, where the iOS build's StoreKit plugin puts it. Its
     // presence is how the app knows it is the iOS build; everywhere else null.

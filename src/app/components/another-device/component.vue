@@ -64,8 +64,9 @@
         sign in or connect your own storage.
       </p>
       <p class="mt-3 text-meta text-ink-muted">
-        Or use Copy this identity here, then Paste an identity on the other
-        device.
+        Or use Save a copy to a file here, then Open a copy from a file on the
+        other device. Copy this identity and Paste an identity do the same
+        through the clipboard.
       </p>
     </template>
 
