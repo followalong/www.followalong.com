@@ -63,6 +63,13 @@
 
     <Card :padded="false">
       <ListRow
+        title="Set up another device"
+        :meta="DEVICE_HINTS[kept]"
+        action
+        aria-label="Another device"
+        @click="deviceOpen = true"
+      />
+      <ListRow
         title="Add-ons"
         :meta="`${addonCount} installed`"
         to="/add-ons"
@@ -194,6 +201,14 @@
       </span>
       <span class="text-meta font-semibold text-danger flex-none">Forget me</span>
     </button>
+
+    <AnotherDevice
+      :app="app"
+      :identity="identity"
+      :open="deviceOpen"
+      @close="deviceOpen = false"
+      @sign-in="goSignIn"
+    />
 
     <Sheet
       :open="restartsOpen"
@@ -418,6 +433,8 @@ import Card from '../../components/card/component.vue'
 import TextField from '../../components/text-field/component.vue'
 import BackupCard from '../../components/backup-card/component.vue'
 import AccountPanel from '../../components/account-panel/component.vue'
+import AnotherDevice from '../../components/another-device/component.vue'
+import kept from '../../components/another-device/kept.js'
 
 const CHANGELOG_PATH = '/https://changelog.followalong.com/feed.xml'
 
@@ -431,6 +448,22 @@ const STRATEGY_LABELS = {
   none: 'No password',
   ask: 'Ask me each time',
   store: 'Saved on this device'
+}
+
+// What the row promises, by where this device keeps its feeds.
+const DEVICE_HINTS = {
+  bucket: 'show it a code to scan',
+  account: 'sign in there with the same email',
+  unpaid: 'once this account is paid',
+  nowhere: 'this device is the only copy'
+}
+
+// What becomes of the copy kept elsewhere when this device forgets its own.
+const FORGOTTEN = {
+  bucket: 'The copy in your own storage stays. Nothing there is deleted.',
+  account: 'The copy in your account stays. Nothing there is deleted.',
+  unpaid: 'Your account is not paid. What it has not synced is gone for good.',
+  nowhere: 'This device is the only copy. It is gone for good.'
 }
 
 const STRATEGY_HINTS = {
@@ -448,7 +481,8 @@ export default {
     Card,
     TextField,
     BackupCard,
-    AccountPanel
+    AccountPanel,
+    AnotherDevice
   },
 
   props: ['app', 'identity'],
@@ -471,6 +505,8 @@ export default {
     switchOpen: false,
     copyOpen: false,
     restartsOpen: false,
+    deviceOpen: false,
+    DEVICE_HINTS,
     name: '',
     copied: false
   }),
@@ -490,6 +526,20 @@ export default {
       const remote = this.app.queries.remoteAdapterForIdentity(this.identity)
 
       return remote && !remote.data.bucket ? this.app.queries.accountForIdentity(this.identity) : null
+    },
+
+    kept () {
+      return kept(this.app.queries, this.identity)
+    },
+
+    // What stays on this device, then what becomes of the copy elsewhere.
+    forgetting () {
+      const others = this.identities.length - 1
+      const here = !others
+        ? 'A new identity takes its place, following only the Changelog.'
+        : others === 1 ? 'Your other identity stays.' : `Your ${others} other identities stay.`
+
+      return `${here} ${FORGOTTEN[this.kept]}`
     },
 
     contents () {
@@ -612,6 +662,15 @@ export default {
       const identities = this.app.queries.allIdentities()
 
       this.useIdentity(identities[identities.length - 1])
+    },
+
+    // The sheet's Sign in: put the reader in the field that starts it.
+    goSignIn () {
+      this.deviceOpen = false
+
+      const field = this.$el.querySelector('input[aria-label="Email"], input[aria-label="Code"]')
+
+      if (field) field.focus()
     },
 
     askToCopy () {
