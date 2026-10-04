@@ -18,7 +18,7 @@ const localStorage = {
   key: (i) => Array.from(stored.keys())[i],
   get length () { return stored.size }
 }
-const element = { style: {}, remove () {}, getBoundingClientRect: () => ({ left: 0, width: 0, right: 0 }), innerText: 'page' }
+const element = { style: {}, remove () {}, click () {}, getBoundingClientRect: () => ({ left: 0, width: 0, right: 0 }), innerText: 'Save a copy  Saved' }
 Object.assign(globalThis, {
   window: globalThis,
   location: { origin: 'probe://test' },
@@ -30,13 +30,13 @@ Object.assign(globalThis, {
   document: { createElement: () => element, body: { appendChild () {} }, querySelector: () => element }
 })
 
-const run = () => new Promise((resolve) => {
+const run = (script = src.replace('__PROBE_SAVE__', '')) => new Promise((resolve) => {
   globalThis.fetch = (url) => {
     if (url.startsWith('probe://')) resolve(decodeURIComponent(url.split('report=')[1]).split('\n'))
     return Promise.resolve({ status: 0 })
   }
   // eslint-disable-next-line no-eval
-  eval(src)
+  eval(script)
 })
 const line = (lines, key) => (lines.find((l) => l.startsWith(key + '=')) || assert.fail(`no ${key}= line in\n${lines.join('\n')}`)).slice(key.length + 1)
 
@@ -50,6 +50,15 @@ const line = (lines, key) => (lines.find((l) => l.startsWith(key + '=')) || asse
   const second = await run()
   assert.strictEqual(line(second, 'localStorageFromLastLaunch'), line(first, 'localStorageThisLaunch'))
   assert.ok(!stored.has('probe/ping'), 'the round-trip key is cleaned up')
+
+  // The Mac save lines appear only when probe.rs names a mode, and carry the command's answer.
+  assert.ok(!second.some((l) => l.startsWith('saveFile=')), 'no save line without a mode')
+  const invoked = []
+  globalThis.__TAURI__ = { core: { invoke: (name, args) => { invoked.push([name, args]); return Promise.resolve(name === 'save_file') } } }
+  const saving = await run(src.replace('__PROBE_SAVE__', 'dir'))
+  assert.strictEqual(line(saving, 'saveFile'), 'true')
+  assert.strictEqual(line(saving, 'savePage'), 'Save a copy Saved')
+  assert.deepStrictEqual(invoked.find(([name]) => name === 'save_file'), ['save_file', { name: 'probe.followalong', text: 'probe copy' }])
   console.log('probe: ok')
 })().catch((e) => { console.error(e.message); process.exit(1) })
 JS

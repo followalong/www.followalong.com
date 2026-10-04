@@ -13,6 +13,9 @@ const browser = ({ tauri, coarse = false, navigator = {} } = {}) => {
   return clicked
 }
 
+// The iPhone app is the native build with the StoreKit plugin; the Mac app has none.
+const iphone = () => ({ storekit: {} })
+const mac = (invoke) => ({ core: { invoke } })
 const sheet = (share) => ({ canShare: ({ files }) => files.length === 1, share })
 
 describe('saveFile', () => {
@@ -49,31 +52,56 @@ describe('saveFile', () => {
     expect(clicked).toHaveLength(1)
   })
 
-  test('opens the share sheet in a native build', async () => {
+  test('opens the share sheet in the iPhone app', async () => {
     const share = vi.fn(() => Promise.resolve())
 
-    browser({ tauri: {}, navigator: sheet(share) })
+    browser({ tauri: iphone(), navigator: sheet(share) })
 
     expect(await saveFile('a.followalong', 'text')).toBe(true)
     expect(share).toHaveBeenCalled()
   })
 
   test('answers false when the reader backs out of the share sheet', async () => {
-    browser({ tauri: {}, navigator: sheet(() => Promise.reject(Object.assign(new Error('cancelled'), { name: 'AbortError' }))) })
+    browser({ tauri: iphone(), navigator: sheet(() => Promise.reject(Object.assign(new Error('cancelled'), { name: 'AbortError' }))) })
 
     expect(await saveFile('a.followalong', 'text')).toBe(false)
   })
 
   test('says so when the share sheet fails', async () => {
-    browser({ tauri: {}, navigator: sheet(() => Promise.reject(new Error('NotAllowedError'))) })
+    browser({ tauri: iphone(), navigator: sheet(() => Promise.reject(new Error('NotAllowedError'))) })
 
     await expect(saveFile('a.followalong', 'text')).rejects.toThrow('This device could not share the file. Use Copy this identity instead.')
   })
 
-  test('says so in a native build that cannot share a file, where a download does nothing', async () => {
-    const clicked = browser({ tauri: {} })
+  test('says so in an iPhone app that cannot share a file, where a download does nothing', async () => {
+    const clicked = browser({ tauri: iphone() })
 
     await expect(saveFile('a.followalong', 'text')).rejects.toThrow('This app cannot save a file on this device. Use Copy this identity instead.')
     expect(clicked).toEqual([])
+  })
+
+  test('opens the save panel in the Mac app, whose share sheet has no save', async () => {
+    const share = vi.fn()
+    const invoke = vi.fn(() => Promise.resolve(true))
+    const clicked = browser({ tauri: mac(invoke), navigator: sheet(share) })
+
+    expect(await saveFile('a.followalong', 'text')).toBe(true)
+    expect(invoke.mock.calls).toEqual([['save_file', { name: 'a.followalong', text: 'text' }]])
+    expect(share).not.toHaveBeenCalled()
+    expect(clicked).toEqual([])
+  })
+
+  test('answers false when the reader cancels the save panel', async () => {
+    browser({ tauri: mac(() => Promise.resolve(false)) })
+
+    expect(await saveFile('a.followalong', 'text')).toBe(false)
+  })
+
+  test('says so when the Mac app cannot write the file', async () => {
+    // The shell rejects with a bare string, not an Error.
+    // eslint-disable-next-line prefer-promise-reject-errors
+    browser({ tauri: mac(() => Promise.reject('Permission denied')) })
+
+    await expect(saveFile('a.followalong', 'text')).rejects.toThrow('This app cannot save a file on this device. Use Copy this identity instead.')
   })
 })

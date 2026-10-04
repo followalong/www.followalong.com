@@ -16,6 +16,9 @@ document.addEventListener('click', (event) => {
 }, true)
 "#;
 
+#[cfg(desktop)]
+const COLUMN: f64 = 640.0;
+
 #[tauri::command]
 fn open_url(app: tauri::AppHandle, url: tauri::Url) {
     // Feed content is not trusted: only an address a browser opens.
@@ -38,6 +41,53 @@ fn open_url(app: tauri::AppHandle, url: tauri::Url) {
     });
 }
 
+// The Mac app's way to hand the reader a file: a download link does nothing in the webview
+// and the Mac share sheet has no save. The page gives a suggested name and the text, never a
+// path: the file goes only where the reader pointed the panel. Answers false on a cancel.
+#[cfg(target_os = "macos")]
+#[tauri::command(async)]
+fn save_file(app: tauri::AppHandle, name: String, text: String) -> Result<bool, String> {
+    let path = match probe::save_dir() {
+        Some(dir) => std::path::Path::new(&name).file_name().map(|name| dir.join(name)),
+        None => {
+            let (answer, panel) = std::sync::mpsc::channel();
+            app.run_on_main_thread(move || {
+                let _ = answer.send(save_panel(&name));
+            })
+            .map_err(|e| e.to_string())?;
+            panel.recv().map_err(|e| e.to_string())?
+        }
+    };
+    match path {
+        Some(path) => std::fs::write(path, text).map(|_| true).map_err(|e| e.to_string()),
+        None => Ok(false),
+    }
+}
+
+// Main thread only. None when the reader cancels.
+#[cfg(target_os = "macos")]
+fn save_panel(name: &str) -> Option<std::path::PathBuf> {
+    use objc2::{class, msg_send, runtime::AnyObject};
+    const OK: isize = 1; // NSModalResponseOK
+    let name = std::ffi::CString::new(name).ok()?;
+    unsafe {
+        let name: *mut AnyObject = msg_send![class!(NSString), stringWithUTF8String: name.as_ptr()];
+        let panel: *mut AnyObject = msg_send![class!(NSSavePanel), savePanel];
+        let _: () = msg_send![panel, setNameFieldStringValue: name];
+        let answer: isize = msg_send![panel, runModal];
+        if answer != OK {
+            return None;
+        }
+        let url: *mut AnyObject = msg_send![panel, URL];
+        let path: *mut AnyObject = msg_send![url, path];
+        let path: *const std::ffi::c_char = msg_send![path, UTF8String];
+        if path.is_null() {
+            return None;
+        }
+        Some(std::ffi::CStr::from_ptr(path).to_str().ok()?.into())
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default();
@@ -47,8 +97,12 @@ pub fn run() {
     #[cfg(target_os = "ios")]
     let builder = builder.plugin(tauri_plugin_storekit::init());
 
+    #[cfg(target_os = "macos")]
+    let builder = builder.invoke_handler(tauri::generate_handler![open_url, save_file, probe::abort_modal]);
+    #[cfg(not(target_os = "macos"))]
+    let builder = builder.invoke_handler(tauri::generate_handler![open_url]);
+
     builder
-        .invoke_handler(tauri::generate_handler![open_url])
         .register_uri_scheme_protocol("probe", |_ctx, req| {
             probe::report(&req.uri().to_string());
             tauri::http::Response::new(Vec::new())
@@ -65,12 +119,17 @@ pub fn run() {
                 window
             };
 
-            // iOS honours a size and clips the page to it, so only desktop gets one.
+            // iOS honours a size and clips the page to it, so only desktop gets one. The window
+            // opens as wide as the page's one column (`app` in tailwind.config.js), so a fresh
+            // launch has no margin beside it; in a wider window the column sits in the middle.
             #[cfg(desktop)]
             let window = window
                 .title("Follow Along")
-                .inner_size(1100.0, 800.0)
+                .inner_size(COLUMN, 800.0)
                 .min_inner_size(380.0, 480.0);
+            // The blue app bar already says the name; the native bar keeps the lights only.
+            #[cfg(target_os = "macos")]
+            let window = window.hidden_title(true);
 
             let window = window.build()?;
             if probe::requested() {

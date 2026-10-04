@@ -15,6 +15,11 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 serde_json = "1"
 
+# save_file reaches NSSavePanel by hand: the dialog plugin would add rfd and the fs plugin to
+# the lock. tauri already holds objc2 on the Mac, so this names it and adds nothing.
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+
 # open_url reaches UIApplication by hand: the opener plugin's Swift package does not link on iOS.
 # StoreKit sells the sync subscription on iOS. It is ours, in plugins/storekit; the Mac never
 # compiles or links it.
