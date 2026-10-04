@@ -111,10 +111,10 @@ import Button from '../button/component.vue'
 import TextField from '../text-field/component.vue'
 import QrCode from '../qr-code/component.vue'
 import kept from './kept.js'
+import { PUBLIC_URL } from '../../../queries/public-url.js'
 
 // Another device opens the setup link in its browser. The native app's own
 // address (tauri://localhost) opens nothing there.
-const PUBLIC_URL = 'https://www.followalong.com'
 const appUrl = () => /^https?:/.test(window.location.origin) ? window.location.origin : PUBLIC_URL
 
 // How another device gets these feeds, which depends on where this device

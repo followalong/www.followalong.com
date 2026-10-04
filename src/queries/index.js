@@ -11,6 +11,7 @@ import UnkeyableEntryError from './unkeyable-entry-error.js'
 import excerpt from './presenters/excerpt.js'
 import { sessionsIn, deaths } from './sessions.js'
 import { isVideoFeedUrl } from './channel-icon.js'
+import { PUBLIC_URL } from './public-url.js'
 
 // How long a feed is considered fresh. The poll ticks more often than this
 // so a feed that just came out of backoff is picked up promptly.
@@ -841,7 +842,11 @@ class Queries {
   videoForEntry (entry) {
     const youtubeId = getAttr(entry, 'id')
     if (typeof youtubeId === 'string' && youtubeId.slice(0, 9) === 'yt:video:') {
-      return `https://www.youtube.com/embed/${youtubeId.slice(9)}?&rel=0&modestbranding=1&playsinline=1`
+      // YouTube refuses a frame with no web referrer (error 153), which is
+      // every native build, so there the site's own page frames it.
+      return window.__TAURI__
+        ? `${PUBLIC_URL}/watch.html?v=${youtubeId.slice(9)}`
+        : `https://www.youtube.com/embed/${youtubeId.slice(9)}?&rel=0&modestbranding=1&playsinline=1`
     }
 
     if (getAttr(entry, 'media:player')) {

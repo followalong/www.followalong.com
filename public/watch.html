@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Follow Along</title>
+<style>
+html, body { height: 100%; margin: 0; background: #000; }
+iframe { display: block; width: 100%; height: 100%; border: 0; }
+</style>
+</head>
+<body>
+<script>
+// The native app runs at tauri://localhost, which is no referrer YouTube
+// accepts (error 153). It frames this page, and this page frames the video.
+(function () {
+  var id = new URLSearchParams(location.search).get('v')
+  if (!/^[A-Za-z0-9_-]{11}$/.test(id)) return
+
+  var frame = document.createElement('iframe')
+  frame.setAttribute('src', 'https://www.youtube.com/embed/' + id + '?rel=0&modestbranding=1&playsinline=1')
+  frame.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share')
+  frame.setAttribute('allowfullscreen', '')
+  frame.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin')
+  document.body.appendChild(frame)
+})()
+</script>
+</body>
+</html>
