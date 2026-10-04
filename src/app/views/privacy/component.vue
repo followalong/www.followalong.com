@@ -68,7 +68,7 @@ const PARTS = [
     title: 'Deleting your data',
     body: [
       'Delete account on the You page deletes the copy the service holds and your email address.',
-      'Forget this identity on the You page removes everything on this device.'
+      'Forget on the You page removes the identity in use from this device.'
     ]
   },
   {

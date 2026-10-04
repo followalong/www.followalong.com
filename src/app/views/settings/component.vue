@@ -196,8 +196,8 @@
       @click="forgetIdentity"
     >
       <span>
-        <span class="block text-sm font-bold text-danger">Forget this identity</span>
-        <span class="block text-meta text-ink-secondary mt-0.5">Removes all traces on this device</span>
+        <span class="block text-sm font-bold text-danger">Forget {{ app.queries.nameForIdentity(identity) }}</span>
+        <span class="block text-meta text-ink-secondary mt-0.5">Removes only this identity from this device. {{ forgetting }}</span>
       </span>
       <span class="text-meta font-semibold text-danger flex-none">Forget me</span>
     </button>
@@ -748,7 +748,7 @@ export default {
     },
 
     forgetIdentity () {
-      this.app.confirm('Are you sure you want to remove this identity?')
+      this.app.confirm(`Forget ${this.app.queries.nameForIdentity(this.identity)}? This removes only this identity from this device. ${this.forgetting}`)
         .then(() => this.app.commands.forgetIdentity(this.identity))
         .then(() => this.app.setIdentity(this.app.queries.allIdentities()[0]))
         .then(() => this.$router.push('/'))
