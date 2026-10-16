@@ -6,7 +6,7 @@ const bar = (options = {}) => {
   return mount(AppBar, {
     props: { title: 'Home', ...options.props },
     slots: options.slots,
-    global: { stubs: { RouterLink: { template: '<a><slot /></a>', props: ['to'] } } }
+    global: { stubs: { RouterLink: { template: '<a :href="to"><slot /></a>', props: ['to'] } } }
   })
 }
 
@@ -47,11 +47,20 @@ describe('AppBar', () => {
     expect(bar().find('[data-bar-logo]').exists()).toBe(true)
   })
 
-  test('swaps the logo for a back circle on a sub-page', () => {
+  // The back circle used to take the logo's place, so on a feed page a tap
+  // where the logo always is went to the feeds list instead of home.
+  test('adds a back circle on a sub-page and keeps the logo', () => {
     const wrapper = bar({ props: { back: '/following' } })
 
-    expect(wrapper.find('[data-bar-logo]').exists()).toBe(false)
     expect(wrapper.get('[data-bar-back]').attributes('aria-label')).toEqual('Back')
+    expect(wrapper.find('[data-bar-logo]').exists()).toBe(true)
+  })
+
+  test('sends the logo and title home from every page, and Back where the page says', () => {
+    const wrapper = bar({ props: { back: '/following' } })
+
+    expect(wrapper.get('[data-bar-home]').attributes('href')).toEqual('/')
+    expect(wrapper.get('[data-bar-back]').attributes('href')).toEqual('/following')
   })
 
   test('fills the right slot from the action slot', () => {

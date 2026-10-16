@@ -21,7 +21,6 @@
         class="flex-1 min-w-0 flex items-center gap-3 -ml-2 pl-2 rounded-nav"
       >
         <img
-          v-if="!back"
           data-bar-logo
           :src="logoIcon"
           class="h-slot w-slot flex-none"
@@ -53,7 +52,7 @@ import logoIcon from '../../../assets/imgs/logo-house.svg'
 export default {
   props: {
     title: { type: String, required: true },
-    // A sub-page swaps the logo for the back circle; it never gains nav.
+    // A sub-page adds the back circle before the logo; it never gains nav.
     back: { type: String, default: '' }
   },
   data: () => ({ logoIcon })
