@@ -191,12 +191,19 @@ export default {
 
     signalCards () {
       return this.app.queries.cardsForIdentityForSignal(this.identity, this.signal)
+    },
+
+    // Names the list by ids, which survive a fold. The signal object does
+    // not: a sync that merges anything rebuilds it, and watching the object
+    // read every such sync as a change of list.
+    listKey () {
+      return `${(this.identity || {}).id}/${(this.signal || {}).id}`
     }
   },
 
   watch: {
     // A different list, read from its own beginning.
-    signal () {
+    listKey () {
       this.limit = LIMIT
       this.app.commands.showNewEntries(this.identity)
       this.app.commands.scrollToTop()
