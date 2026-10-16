@@ -1,9 +1,14 @@
 <template>
   <div
     data-pip
-    class="fixed bottom-tab-bar inset-x-0 mx-auto w-full max-w-app z-40 px-3 flex justify-end pointer-events-none"
+    class="fixed bottom-tab-bar inset-x-0 mx-auto w-full max-w-app z-40 app:px-3 flex justify-end pointer-events-none"
   >
-    <div class="w-pip rounded-xl overflow-hidden shadow-2xl pointer-events-auto">
+    <!-- The width of the column on a phone; a small box at the right once the
+         window is wider than the column. -->
+    <div
+      data-pip-box
+      class="w-full app:w-pip app:rounded-xl overflow-hidden shadow-2xl pointer-events-auto"
+    >
       <div
         v-if="showHistory"
         data-pip-history

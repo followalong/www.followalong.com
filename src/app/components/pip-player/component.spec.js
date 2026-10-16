@@ -23,6 +23,20 @@ describe('PipPlayer', () => {
     expect(el.classes()).toContain('justify-end')
   })
 
+  // Edge to edge on a phone, where a small box wastes most of a small
+  // screen; the small box at the right once the window is wider than the column.
+  test('fills the column on a phone and floats as a small box in a wide window', () => {
+    const el = player().get('[data-pip]')
+    const box = player().get('[data-pip-box]')
+
+    expect(el.classes()).not.toContain('px-3')
+    expect(el.classes()).toContain('app:px-3')
+    expect(box.classes()).toContain('w-full')
+    expect(box.classes()).toContain('app:w-pip')
+    expect(box.classes()).not.toContain('rounded-xl')
+    expect(box.classes()).toContain('app:rounded-xl')
+  })
+
   test('keeps a 16:9 frame', () => {
     expect(player().get('[data-pip-frame]').classes()).toContain('aspect-video')
   })
