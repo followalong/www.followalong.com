@@ -8,6 +8,7 @@ import runners from '../src/state/runners.js'
 import MultiEventStore from '../src/state/multi-event-store.js'
 import App from '../src/app/component.vue'
 import { PRODUCTS } from '../src/adapters/storekit.js'
+import { follow } from '../src/queries/links.js'
 
 const mountApp = (options) => {
   return new Promise(async (resolve) => {
@@ -121,6 +122,10 @@ const mountApp = (options) => {
     app.wait = async () => {
       await flushPromisesAndTimers()
     }
+
+    // A link that arrives while the app is still loading, as the native shell
+    // hands over the one that launched it.
+    if (options.link) follow(options.link, router)
 
     await app.wait()
 

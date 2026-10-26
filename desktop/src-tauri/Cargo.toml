@@ -34,3 +34,8 @@ lto = true
 codegen-units = 1
 panic = "abort"
 strip = true
+
+# tao 0.37.2 with tauri-apps/tao#1376: a link that launches the app on iOS reaches the page.
+# Drop this and patches/ once a tao release carries it.
+[patch.crates-io]
+tao = { path = "patches/tao" }

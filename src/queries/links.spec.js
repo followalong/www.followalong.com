@@ -14,7 +14,11 @@ const browser = (href) => {
     addEventListener: (name, fn) => { listeners[name] = fn }
   }
 
-  window.arrives = (address) => listeners['open-url']({ detail: { url: address } })
+  // The native shell leaves each link on `window` and then says so.
+  window.arrives = (address) => {
+    window.followalongLinks = (window.followalongLinks || []).concat(address)
+    listeners['open-url']()
+  }
   window.hashChanges = (hash) => {
     window.location.hash = hash
     window.location.href = `https://www.followalong.com${window.location.pathname}${hash}`
@@ -60,6 +64,16 @@ describe('links into the app', () => {
       expect(mount).toHaveBeenCalledWith('')
       expect(links.signin).toEqual({ code: '123456', email: 'a+b@example.com' })
       expect(router.push).toHaveBeenCalledWith('/settings')
+    })
+
+    test('follows a link the native shell left before the page listened', () => {
+      const window = browser('tauri://localhost/')
+      window.followalongLinks = ['followalong://settings']
+
+      bootWithLinks({ window, router }, mount)
+
+      expect(router.push).toHaveBeenCalledWith('/settings')
+      expect(window.followalongLinks).toEqual([])
     })
 
     test('leaves a plain address to the router', () => {

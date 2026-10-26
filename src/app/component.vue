@@ -167,7 +167,7 @@ import PipPlayer from './components/pip-player/component.vue'
 import Sheet from './components/sheet/component.vue'
 import Button from './components/button/component.vue'
 import { decodeHandoff, encodeHandoff } from '../queries/handoff.js'
-import links from '../queries/links.js'
+import links, { holdLinks, releaseLinks } from '../queries/links.js'
 import openPage from './open-page.js'
 import saveFile from './save-file.js'
 import Commands from '../commands/index.js'
@@ -431,6 +431,8 @@ export default {
   // painted app rather than in front of it. Waiting on the network to confirm
   // a copy that is already here bought nothing and cost the whole load.
   mounted () {
+    holdLinks()
+
     // A merge re-folds the log, so the identity held here is re-pointed at
     // the one that replaced it.
     this.stopPulling = this.commands.pullWhileOpen(() => this.identity, () => {
@@ -448,6 +450,7 @@ export default {
 
         this.isLoading = false
         this.setIdentity(this.queries.allIdentities()[0])
+        this.$nextTick(() => releaseLinks(this.$router))
 
         // Before anything can start a backup, so the config still describes
         // the run that died rather than this one.

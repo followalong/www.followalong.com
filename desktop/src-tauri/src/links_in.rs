@@ -1,8 +1,9 @@
 // Links into the app: a Universal Link (https://www.followalong.com/...) or the followalong://
 // scheme, on macOS and iOS. tao turns both into RunEvent::Opened, at launch or while running.
-// The page gets each one as `open-url` on `window`, the whole URL with its fragment, because the
-// app's own links carry their payload there (#setup=..., #signin=...). A link that arrives before
-// the page has loaded waits for it.
+// Each one is left on `window.followalongLinks`, the whole URL with its fragment, because the app's
+// own links carry their payload there (#setup=..., #signin=...), and `open-url` says so. The page
+// can finish loading before its script listens, so it also takes what is waiting when it boots. A
+// link that arrives before the page has loaded waits for it.
 
 use std::sync::Mutex;
 use tauri::{webview::PageLoadEvent, AppHandle, Manager, Runtime, Url, WebviewWindow};
@@ -40,7 +41,7 @@ fn deliver<R: Runtime>(window: &WebviewWindow<R>, urls: Vec<String>) {
 
 fn dispatch(url: &str) -> String {
     format!(
-        "window.dispatchEvent(new CustomEvent('open-url', {{ detail: {{ url: {} }} }}))",
+        "(window.followalongLinks = window.followalongLinks || []).push({}); window.dispatchEvent(new Event('open-url'))",
         serde_json::to_string(url).unwrap_or_default()
     )
 }
@@ -54,7 +55,7 @@ mod tests {
         let link = "https://www.followalong.com/#setup=a%2Bb&x=\"'<";
         assert_eq!(
             dispatch(link),
-            r#"window.dispatchEvent(new CustomEvent('open-url', { detail: { url: "https://www.followalong.com/#setup=a%2Bb&x=\"'<" } }))"#
+            r#"(window.followalongLinks = window.followalongLinks || []).push("https://www.followalong.com/#setup=a%2Bb&x=\"'<"); window.dispatchEvent(new Event('open-url'))"#
         );
     }
 }

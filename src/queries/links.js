@@ -1,16 +1,16 @@
 import { reactive } from 'vue'
 
 // Links into the app, through three doors: the address bar at boot, a
-// fragment pasted into the running tab, and the native shell's `open-url`
-// event, which carries a Universal Link (https://www.followalong.com/...) or
-// the custom scheme (followalong://...). Each is read once, and a fragment
+// fragment pasted into the running tab, and the native shell, which leaves a
+// Universal Link (https://www.followalong.com/...) or the custom scheme
+// (followalong://...) on `window` and fires `open-url`. Each is read once, and a fragment
 // that carries credentials leaves the address bar in the same breath.
 const SETUP = '#setup='
 const SIGNIN = '#signin='
 
 // Where the app is told what arrived. The shell watches `handoff`; the
 // account panel takes `signin`.
-const links = reactive({ handoff: '', signin: null })
+const links = reactive({ handoff: '', signin: null, waiting: null })
 
 // Path and fragment, whichever door. The custom scheme puts the path's first
 // segment where a URL keeps its host, so this is not `new URL()`.
@@ -30,6 +30,8 @@ const signInFrom = (hash) => {
 }
 
 const follow = (url, router) => {
+  if (links.waiting) return links.waiting.push(url)
+
   const { path, hash } = split(url)
 
   if (hash.startsWith(SETUP)) {
@@ -40,6 +42,17 @@ const follow = (url, router) => {
   } else {
     router.push(path)
   }
+}
+
+// The shell's first paint sends / to the default signal, which cancels any
+// navigation still in flight, so a link that arrives before it waits for it.
+const holdLinks = () => { links.waiting = [] }
+
+const releaseLinks = (router) => {
+  const urls = links.waiting || []
+
+  links.waiting = null
+  urls.forEach((url) => follow(url, router))
 }
 
 const wipe = ({ location, history }) => history.replaceState(null, '', `${location.pathname}${location.search || ''}`)
@@ -58,7 +71,12 @@ const bootWithLinks = ({ window, router }, mount) => {
 
   if (hash && !setup) follow(href, router)
 
-  window.addEventListener('open-url', (event) => follow(event.detail.url, router))
+  // The native shell leaves each link on `window` before it says so, because
+  // the one that launched the app can come before this listens.
+  const take = () => (window.followalongLinks || []).splice(0).forEach((url) => follow(url, router))
+
+  take()
+  window.addEventListener('open-url', take)
   window.addEventListener('hashchange', () => {
     const { hash } = split(window.location.href)
 
@@ -69,5 +87,5 @@ const bootWithLinks = ({ window, router }, mount) => {
   })
 }
 
-export { bootWithLinks, follow, split }
+export { bootWithLinks, follow, holdLinks, releaseLinks, split }
 export default links

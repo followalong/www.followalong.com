@@ -39,6 +39,14 @@ describe('Sign in from a link', () => {
     expect(links.signin).toEqual(null)
   })
 
+  story('signs the device in when the link launches the app', async () => {
+    app.unmount()
+    app = await mountApp({ hostedFetch: service.fetch, state: { abc123: { config: {}, data: SEED } }, link: link(service.code) })
+    await settle()
+
+    expect(app.text()).toContain(`Signed in as ${EMAIL}.`)
+  })
+
   story('is taken by the You page already open', async () => {
     await app.click('[aria-label="You"]')
 

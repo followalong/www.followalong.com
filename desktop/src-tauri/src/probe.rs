@@ -9,7 +9,7 @@
 
 // Set before the page loads, so the report can show a link that arrived at launch.
 pub const OPEN_URL_LISTENER: &str =
-    "window.addEventListener('open-url', (e) => (window.__probeOpenUrls ||= []).push(e.detail.url))";
+    "window.addEventListener('open-url', () => (window.__probeOpenUrls ||= []).push(...window.followalongLinks.slice(-1)))";
 
 pub fn requested() -> bool {
     std::env::var_os("PROBE").is_some()
