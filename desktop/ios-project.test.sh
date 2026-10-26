@@ -28,6 +28,7 @@ for text, where in [(yml, "project.yml"), (pbx, "the Xcode project; run xcodegen
 assert plist.get("ITSAppUsesNonExemptEncryption") is False, "Info.plist does not declare export compliance; run xcodegen"
 assert plist.get("UIStatusBarStyle") == "UIStatusBarStyleLightContent" and plist.get("UIViewControllerBasedStatusBarAppearance") is False, "Info.plist does not set the light status bar; run xcodegen"
 assert "FollowAlong.storekit" in scheme and "follow-along_iOSTests" in scheme, "the scheme lost the StoreKit configuration or the test target; run xcodegen"
+assert plist.get("UIApplicationSceneManifest", {}).get("UIApplicationSupportsMultipleScenes") is False, "Info.plist does not adopt the scene lifecycle, which iOS 27 traps on at launch; run xcodegen"
 assert any(t.get("CFBundleURLSchemes") == ["followalong"] for t in plist.get("CFBundleURLTypes", [])), "Info.plist does not register followalong://; run xcodegen"
 assert entitlements.get("com.apple.developer.associated-domains") == ["applinks:www.followalong.com"], "the entitlements lost the associated domain; run xcodegen"
 assert "Tests/Simulator.entitlements" in pbx, "the simulator build lost get-task-allow, which the StoreKit test needs; run xcodegen"

@@ -63,6 +63,11 @@ targets:
         # `ios init` drops these too; ios-project.test.sh fails until they are back.
         UIViewControllerBasedStatusBarAppearance: false
         UIStatusBarStyle: UIStatusBarStyleLightContent
+        # iOS 27 traps at launch in an app with no scene manifest. Tao supplies the scene
+        # delegate itself, so the manifest names no configuration. `ios init` drops it;
+        # ios-project.test.sh fails until it is back.
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
         # followalong:// opens the app where a Universal Link cannot (no AASA yet, or a
         # handoff from another app). `ios init` drops it; ios-project.test.sh fails until it is back.
         CFBundleURLTypes:
