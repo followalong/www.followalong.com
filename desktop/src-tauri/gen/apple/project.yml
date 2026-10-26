@@ -58,10 +58,10 @@ targets:
         # which is exempt. Declared so App Store Connect does not ask on every upload.
         # `ios init` drops this key; ios-project.test.sh fails until it is back.
         ITSAppUsesNonExemptEncryption: false
-        # The app bar is blue, so the clock and battery are white. The web page owns nothing
-        # above the safe area, and Tauri's view controller sets no style of its own.
+        # The app bar is blue, so the clock and battery are white. iOS 27 asks the root view
+        # controller for that, so lib.rs gives tao's one; UIStatusBarStyle covers the launch.
         # `ios init` drops these too; ios-project.test.sh fails until they are back.
-        UIViewControllerBasedStatusBarAppearance: false
+        UIViewControllerBasedStatusBarAppearance: true
         UIStatusBarStyle: UIStatusBarStyleLightContent
         # iOS 27 traps at launch in an app with no scene manifest. Tao supplies the scene
         # delegate itself, so the manifest names no configuration. `ios init` drops it;

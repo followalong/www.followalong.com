@@ -26,7 +26,7 @@ assert setting("iOS") == conf["bundle"]["iOS"]["minimumSystemVersion"], "project
 for text, where in [(yml, "project.yml"), (pbx, "the Xcode project; run xcodegen")]:
     assert "ios-build-number.sh" in text, f"the Set Build Number phase is missing from {where}"
 assert plist.get("ITSAppUsesNonExemptEncryption") is False, "Info.plist does not declare export compliance; run xcodegen"
-assert plist.get("UIStatusBarStyle") == "UIStatusBarStyleLightContent" and plist.get("UIViewControllerBasedStatusBarAppearance") is False, "Info.plist does not set the light status bar; run xcodegen"
+assert plist.get("UIStatusBarStyle") == "UIStatusBarStyleLightContent" and plist.get("UIViewControllerBasedStatusBarAppearance") is True, "Info.plist does not let the view controller set the light status bar, which iOS 27 asks it for; run xcodegen"
 assert "FollowAlong.storekit" in scheme and "follow-along_iOSTests" in scheme, "the scheme lost the StoreKit configuration or the test target; run xcodegen"
 assert plist.get("UIApplicationSceneManifest", {}).get("UIApplicationSupportsMultipleScenes") is False, "Info.plist does not adopt the scene lifecycle, which iOS 27 traps on at launch; run xcodegen"
 tao = f"{root}/patches/tao/src/platform_impl/ios/app_state.rs"

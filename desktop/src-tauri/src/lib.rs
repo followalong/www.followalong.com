@@ -88,6 +88,21 @@ fn save_panel(name: &str) -> Option<std::path::PathBuf> {
     }
 }
 
+// The clock and battery sit over the blue app bar, so they are white. iOS 27 takes that from the
+// root view controller alone, and tao's names no style, so its class gets one.
+#[cfg(target_os = "ios")]
+unsafe fn light_status_bar(controller: *mut objc2::runtime::AnyObject) {
+    use objc2::{ffi, runtime::{AnyObject, Imp, Sel}, sel};
+    const LIGHT_CONTENT: isize = 1; // UIStatusBarStyleLightContent
+    extern "C-unwind" fn light(_: &AnyObject, _: Sel) -> isize {
+        LIGHT_CONTENT
+    }
+    let class = ffi::object_getClass(controller) as *mut _;
+    let imp: Imp = std::mem::transmute(light as extern "C-unwind" fn(&AnyObject, Sel) -> isize);
+    ffi::class_addMethod(class, sel!(preferredStatusBarStyle), imp, c"q@:".as_ptr());
+    let _: () = objc2::msg_send![&*controller, setNeedsStatusBarAppearanceUpdate];
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default();
@@ -132,6 +147,8 @@ pub fn run() {
             let window = window.hidden_title(true);
 
             let window = window.build()?;
+            #[cfg(target_os = "ios")]
+            window.with_webview(|webview| unsafe { light_status_bar(webview.view_controller().cast()) })?;
             if probe::requested() {
                 probe::spawn(window);
             }
