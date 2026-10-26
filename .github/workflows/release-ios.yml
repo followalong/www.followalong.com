@@ -1,0 +1,14 @@
+name: Release iOS
+
+# Builds main and sends it to TestFlight. The steps live in testflight.yml, which 66 Scripts
+# runs too.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: release-ios
+
+jobs:
+  testflight:
+    uses: ./.github/workflows/testflight.yml
+    secrets: inherit
