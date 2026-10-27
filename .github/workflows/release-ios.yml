@@ -1,8 +1,10 @@
 name: Release iOS
 
-# Builds main and sends it to TestFlight. The steps live in testflight.yml, which 66 Scripts
-# runs too.
+# Builds the pushed version tag, or main when run by hand, and sends it to TestFlight.
+# The steps live in testflight.yml, which 66 Scripts runs too.
 on:
+  push:
+    tags: ["v*"]
   workflow_dispatch:
 
 concurrency:
