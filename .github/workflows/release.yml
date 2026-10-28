@@ -1,0 +1,44 @@
+name: Release
+
+# A version tag sends the iOS app to TestFlight and publishes the notarized Mac app as the
+# GitHub release of that tag. Run by hand, it sends the chosen ref to TestFlight, and on a
+# tag it makes the Mac release too. The steps live in dallasread/releases, which 66 Scripts
+# and Reviewer call as well. Another owner's repo cannot inherit secrets, so each is named.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+
+permissions:
+  contents: read
+
+jobs:
+  specs:
+    uses: ./.github/workflows/ci.yml
+
+  testflight:
+    needs: specs
+    uses: dallasread/releases/.github/workflows/testflight.yml@main
+    secrets:
+      APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+      APPLE_DISTRIBUTION_P12: ${{ secrets.APPLE_DISTRIBUTION_P12 }}
+      APPLE_DISTRIBUTION_P12_PASSWORD: ${{ secrets.APPLE_DISTRIBUTION_P12_PASSWORD }}
+
+  macos:
+    needs: specs
+    if: github.ref_type == 'tag'
+    uses: dallasread/releases/.github/workflows/macos-release.yml@main
+    permissions:
+      contents: write
+    secrets:
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
