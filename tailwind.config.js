@@ -96,11 +96,6 @@ module.exports = {
         // control or two, so the title starts in the same place on every page.
         slot: '34px'
       },
-      // The one breakpoint: the window is wider than the column. Reads the
-      // same number as maxWidth.app, so the two cannot drift.
-      screens: {
-        app: '640px'
-      },
       maxWidth: {
         // The whole app, at every size. There is no wider layout to fall into.
         app: '640px',
@@ -115,9 +110,6 @@ module.exports = {
       // Just enough press feedback to feel like a button.
       scale: {
         98: '.98'
-      },
-      width: {
-        pip: '310px'
       },
       spacing: {
         // Minimum touch target.
