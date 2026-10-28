@@ -8,6 +8,7 @@
 #   NOTARY_PROFILE          a `notarytool store-credentials` profile, or
 #   APPLE_API_KEY_PATH + APPLE_API_KEY + APPLE_API_ISSUER, or
 #   APPLE_ID + APPLE_PASSWORD + APPLE_TEAM_ID
+# It ends with the GitHub release v<version> at HEAD, made by the followalong gh account.
 set -e
 here=$(cd "$(dirname "$0")" && pwd)
 name=$(sed -n 's/.*"productName": "\(.*\)".*/\1/p' "$here/src-tauri/tauri.conf.json")
@@ -16,6 +17,8 @@ arch=$(uname -m | sed 's/^arm64$/aarch64/')
 
 # Credentials are checked before the build, so a missing one costs no wait.
 "$here/signing.test.sh"
+"$here/github-release.sh" check "$version"
+token=$(gh auth token --user followalong)
 if [ -n "$NOTARY_PROFILE" ]; then
   set -- --keychain-profile "$NOTARY_PROFILE"
 elif [ -n "$APPLE_API_KEY" ] && [ -n "$APPLE_API_ISSUER" ] && [ -n "$APPLE_API_KEY_PATH" ]; then
@@ -52,3 +55,8 @@ codesign --verify --deep --strict --verbose=2 "$app"
 spctl --assess --type execute --verbose "$app"
 xcrun stapler validate "$app"
 ls -lh "$dmg"
+
+# gh names an asset after its file and turns the space into a dot.
+asset=$(mktemp -d)/$(echo "$name" | tr ' ' -)_${version}_${arch}.dmg
+cp "$dmg" "$asset"
+GH_TOKEN=$token "$here/github-release.sh" create "$version" "$name $version" "$asset"
